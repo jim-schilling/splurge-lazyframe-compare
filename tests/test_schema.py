@@ -1,0 +1,389 @@
+"""Tests for the schema module."""
+
+import pytest
+import polars as pl
+from datetime import date
+
+from splurge_lazyframe_compare.core.schema import (
+    ColumnDefinition,
+    ColumnMapping,
+    ComparisonSchema,
+    ComparisonConfig,
+)
+from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
+
+
+class TestColumnDefinition:
+    """Test ColumnDefinition class."""
+
+    def test_column_definition_creation(self) -> None:
+        """Test creating a ColumnDefinition."""
+        col_def = ColumnDefinition(
+            column_name="test_col",
+            friendly_name="Test Column",
+            polars_dtype=pl.Int64,
+            nullable=False,
+        )
+
+        assert col_def.column_name == "test_col"
+        assert col_def.friendly_name == "Test Column"
+        assert col_def.polars_dtype == pl.Int64
+        assert col_def.nullable is False
+
+    def test_validate_column_exists(self) -> None:
+        """Test column existence validation."""
+        col_def = ColumnDefinition(
+            column_name="test_col",
+            friendly_name="Test Column",
+            polars_dtype=pl.Int64,
+            nullable=False,
+        )
+
+        # Test with existing column
+        df = pl.LazyFrame({"test_col": [1, 2, 3]})
+        assert col_def.validate_column_exists(df) is True
+
+        # Test with missing column
+        df = pl.LazyFrame({"other_col": [1, 2, 3]})
+        assert col_def.validate_column_exists(df) is False
+
+    def test_validate_data_type(self) -> None:
+        """Test data type validation."""
+        col_def = ColumnDefinition(
+            column_name="test_col",
+            friendly_name="Test Column",
+            polars_dtype=pl.Int64,
+            nullable=False,
+        )
+
+        # Test with correct data type
+        df = pl.LazyFrame({"test_col": [1, 2, 3]})
+        assert col_def.validate_data_type(df) is True
+
+        # Test with wrong data type
+        df = pl.LazyFrame({"test_col": ["a", "b", "c"]})
+        assert col_def.validate_data_type(df) is False
+
+        # Test with missing column
+        df = pl.LazyFrame({"other_col": [1, 2, 3]})
+        assert col_def.validate_data_type(df) is False
+
+
+class TestColumnMapping:
+    """Test ColumnMapping class."""
+
+    def test_column_mapping_creation(self) -> None:
+        """Test creating a ColumnMapping."""
+        mapping = ColumnMapping(
+            left_column="left_col",
+            right_column="right_col",
+            comparison_name="standard_name",
+        )
+
+        assert mapping.left_column == "left_col"
+        assert mapping.right_column == "right_col"
+        assert mapping.comparison_name == "standard_name"
+
+
+class TestComparisonSchema:
+    """Test ComparisonSchema class."""
+
+    def test_schema_creation(self) -> None:
+        """Test creating a ComparisonSchema."""
+        columns = {
+            "id": ColumnDefinition("id", "ID", pl.Int64, False),
+            "name": ColumnDefinition("name", "Name", pl.Utf8, True),
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],
+        )
+
+        assert len(schema.columns) == 2
+        assert "id" in schema.columns
+        assert "name" in schema.columns
+        assert schema.primary_key_columns == ["id"]
+
+    def test_validate_schema_success(self) -> None:
+        """Test successful schema validation."""
+        columns = {
+            "id": ColumnDefinition("id", "ID", pl.Int64, False),
+            "name": ColumnDefinition("name", "Name", pl.Utf8, True),
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],
+        )
+
+        df = pl.LazyFrame({
+            "id": [1, 2, 3],
+            "name": ["Alice", "Bob", "Charlie"],
+        })
+
+        errors = schema.validate_schema(df)
+        assert len(errors) == 0
+
+    def test_validate_schema_missing_columns(self) -> None:
+        """Test schema validation with missing columns."""
+        columns = {
+            "id": ColumnDefinition("id", "ID", pl.Int64, False),
+            "name": ColumnDefinition("name", "Name", pl.Utf8, True),
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],
+        )
+
+        df = pl.LazyFrame({"id": [1, 2, 3]})  # Missing 'name' column
+
+        errors = schema.validate_schema(df)
+        assert len(errors) == 1
+        assert "Missing columns" in errors[0]
+
+    def test_validate_schema_wrong_data_type(self) -> None:
+        """Test schema validation with wrong data types."""
+        columns = {
+            "id": ColumnDefinition("id", "ID", pl.Int64, False),
+            "name": ColumnDefinition("name", "Name", pl.Utf8, True),
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],
+        )
+
+        df = pl.LazyFrame({
+            "id": ["1", "2", "3"],  # Wrong type (string instead of int)
+            "name": ["Alice", "Bob", "Charlie"],
+        })
+
+        errors = schema.validate_schema(df)
+        assert len(errors) == 1
+        assert "expected" in errors[0] and "got" in errors[0]
+
+    def test_validate_schema_nullable_violation(self) -> None:
+        """Test schema validation with nullable constraint violations."""
+        columns = {
+            "id": ColumnDefinition("id", "ID", pl.Int64, False),
+            "name": ColumnDefinition("name", "Name", pl.Utf8, False),  # Not nullable
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],
+        )
+
+        df = pl.LazyFrame({
+            "id": [1, 2, 3],
+            "name": ["Alice", None, "Charlie"],  # Contains null
+        })
+
+        errors = schema.validate_schema(df)
+        assert len(errors) == 1
+        assert "null values found" in errors[0]
+
+    def test_validate_schema_missing_primary_key(self) -> None:
+        """Test schema validation with missing primary key column."""
+        columns = {
+            "name": ColumnDefinition("name", "Name", pl.Utf8, True),
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],  # 'id' not in columns
+        )
+
+        df = pl.LazyFrame({"name": ["Alice", "Bob", "Charlie"]})
+
+        errors = schema.validate_schema(df)
+        assert len(errors) == 1
+        assert "not defined in schema" in errors[0]
+
+    def test_get_primary_key_definition(self) -> None:
+        """Test getting primary key column definitions."""
+        columns = {
+            "id": ColumnDefinition("id", "ID", pl.Int64, False),
+            "name": ColumnDefinition("name", "Name", pl.Utf8, True),
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],
+        )
+
+        pk_defs = schema.get_primary_key_definition()
+        assert len(pk_defs) == 1
+        assert pk_defs[0].column_name == "id"
+
+    def test_get_compare_columns(self) -> None:
+        """Test getting non-primary key columns."""
+        columns = {
+            "id": ColumnDefinition("id", "ID", pl.Int64, False),
+            "name": ColumnDefinition("name", "Name", pl.Utf8, True),
+            "age": ColumnDefinition("age", "Age", pl.Int64, True),
+        }
+        schema = ComparisonSchema(
+            columns=columns,
+            primary_key_columns=["id"],
+        )
+
+        compare_cols = schema.get_compare_columns()
+        assert len(compare_cols) == 2
+        assert "name" in compare_cols
+        assert "age" in compare_cols
+        assert "id" not in compare_cols
+
+
+class TestComparisonConfig:
+    """Test ComparisonConfig class."""
+
+    def test_config_creation(self) -> None:
+        """Test creating a ComparisonConfig."""
+        left_columns = {
+            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
+            "amount": ColumnDefinition("amount", "Amount", pl.Float64, False),
+        }
+        right_columns = {
+            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
+            "total": ColumnDefinition("total", "Amount", pl.Float64, False),
+        }
+
+        left_schema = ComparisonSchema(
+            columns=left_columns,
+            primary_key_columns=["customer_id"],
+        )
+        right_schema = ComparisonSchema(
+            columns=right_columns,
+            primary_key_columns=["cust_id"],
+        )
+
+        mappings = [
+            ColumnMapping("customer_id", "cust_id", "customer_id"),
+            ColumnMapping("amount", "total", "amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            primary_key_columns=["customer_id"],
+        )
+
+        assert config.left_schema == left_schema
+        assert config.right_schema == right_schema
+        assert len(config.column_mappings) == 2
+        assert config.primary_key_columns == ["customer_id"]
+        assert config.ignore_case is False
+        assert config.null_equals_null is True
+
+    def test_config_validation_empty_schemas(self) -> None:
+        """Test config validation with empty schemas."""
+        left_schema = ComparisonSchema(columns={}, primary_key_columns=[])
+        right_schema = ComparisonSchema(columns={}, primary_key_columns=[])
+
+        with pytest.raises(SchemaValidationError) as exc_info:
+            ComparisonConfig(
+                left_schema=left_schema,
+                right_schema=right_schema,
+                column_mappings=[],
+                primary_key_columns=[],
+            )
+
+        assert "no columns defined" in str(exc_info.value)
+
+    def test_config_validation_no_primary_keys(self) -> None:
+        """Test config validation with no primary keys."""
+        left_columns = {
+            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
+        }
+        right_columns = {
+            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
+        }
+
+        left_schema = ComparisonSchema(
+            columns=left_columns,
+            primary_key_columns=["customer_id"],
+        )
+        right_schema = ComparisonSchema(
+            columns=right_columns,
+            primary_key_columns=["cust_id"],
+        )
+
+        mappings = [
+            ColumnMapping("customer_id", "cust_id", "customer_id"),
+        ]
+
+        with pytest.raises(SchemaValidationError) as exc_info:
+            ComparisonConfig(
+                left_schema=left_schema,
+                right_schema=right_schema,
+                column_mappings=mappings,
+                primary_key_columns=[],  # No primary keys
+            )
+
+        assert "No primary key columns defined" in str(exc_info.value)
+
+    def test_config_validation_missing_mapped_columns(self) -> None:
+        """Test config validation with missing mapped columns."""
+        left_columns = {
+            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
+        }
+        right_columns = {
+            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
+        }
+
+        left_schema = ComparisonSchema(
+            columns=left_columns,
+            primary_key_columns=["customer_id"],
+        )
+        right_schema = ComparisonSchema(
+            columns=right_columns,
+            primary_key_columns=["cust_id"],
+        )
+
+        # Mapping references non-existent column
+        mappings = [
+            ColumnMapping("customer_id", "cust_id", "customer_id"),
+            ColumnMapping("missing_col", "cust_id", "missing"),  # 'missing_col' not in left schema
+        ]
+
+        with pytest.raises(SchemaValidationError) as exc_info:
+            ComparisonConfig(
+                left_schema=left_schema,
+                right_schema=right_schema,
+                column_mappings=mappings,
+                primary_key_columns=["customer_id"],
+            )
+
+        assert "missing mapped columns" in str(exc_info.value)
+
+    def test_config_validation_missing_primary_key_mapping(self) -> None:
+        """Test config validation with missing primary key mapping."""
+        left_columns = {
+            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
+            "amount": ColumnDefinition("amount", "Amount", pl.Float64, False),
+        }
+        right_columns = {
+            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
+            "total": ColumnDefinition("total", "Amount", pl.Float64, False),
+        }
+
+        left_schema = ComparisonSchema(
+            columns=left_columns,
+            primary_key_columns=["customer_id"],
+        )
+        right_schema = ComparisonSchema(
+            columns=right_columns,
+            primary_key_columns=["cust_id"],
+        )
+
+        # Mapping doesn't include primary key
+        mappings = [
+            ColumnMapping("amount", "total", "amount"),
+        ]
+
+        with pytest.raises(SchemaValidationError) as exc_info:
+            ComparisonConfig(
+                left_schema=left_schema,
+                right_schema=right_schema,
+                column_mappings=mappings,
+                primary_key_columns=["customer_id"],
+            )
+
+        assert "not found in column mappings" in str(exc_info.value)
