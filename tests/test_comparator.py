@@ -1,18 +1,18 @@
 """Tests for the comparator module."""
 
-import pytest
 import polars as pl
+import pytest
 
+from splurge_lazyframe_compare.core.comparator import LazyFrameComparator
 from splurge_lazyframe_compare.core.schema import (
     ColumnDefinition,
     ColumnMapping,
-    ComparisonSchema,
     ComparisonConfig,
+    ComparisonSchema,
 )
-from splurge_lazyframe_compare.core.comparator import LazyFrameComparator
 from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
-    SchemaValidationError,
     PrimaryKeyViolationError,
+    SchemaValidationError,
 )
 
 
@@ -97,6 +97,118 @@ class TestLazyFrameComparator:
         assert results.summary.value_differences_count == 0
         assert results.summary.left_only_count == 0
         assert results.summary.right_only_count == 0
+
+    def test_value_differences_alternating_column_order(self) -> None:
+        """Test that value differences show alternating Left/Right columns for non-PK columns."""
+        from datetime import date
+
+        # Create test data with differences
+        left_data = {
+            "customer_id": [1, 2],
+            "order_date": [date(2023, 1, 1), date(2023, 1, 2)],
+            "amount": [100.0, 200.0],
+            "status": ["pending", "completed"],
+        }
+        right_data = {
+            "cust_id": [1, 2],
+            "order_dt": [date(2023, 1, 1), date(2023, 1, 2)],
+            "total_amount": [150.0, 200.0],  # Different amount for customer 1
+            "order_status": ["pending", "shipped"],  # Different status for customer 2
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        results = self.comparator.compare(left=left_df, right=right_df)
+
+        # Should have value differences
+        assert results.summary.value_differences_count == 2
+
+        # Get the value differences DataFrame
+        value_diff_df = results.value_differences.collect()
+        
+        # Check that columns are in the correct alternating order
+        expected_columns = [
+            "PK_customer_id", "PK_order_date",  # Primary key columns first
+            "L_amount", "R_amount",             # Then alternating Left/Right
+            "L_status", "R_status"
+        ]
+        
+        assert list(value_diff_df.columns) == expected_columns
+
+    def test_left_only_records_clean_columns(self) -> None:
+        """Test that left-only records show only primary keys and left columns (no null right columns)."""
+        from datetime import date
+
+        # Create test data with left-only records
+        left_data = {
+            "customer_id": [1, 2],
+            "order_date": [date(2023, 1, 1), date(2023, 1, 2)],
+            "amount": [100.0, 200.0],
+            "status": ["pending", "completed"],
+        }
+        right_data = {
+            "cust_id": [1],  # Only customer 1 exists in right
+            "order_dt": [date(2023, 1, 1)],
+            "total_amount": [100.0],
+            "order_status": ["pending"],
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        results = self.comparator.compare(left=left_df, right=right_df)
+
+        # Should have 1 left-only record
+        assert results.summary.left_only_count == 1
+
+        # Get the left-only records DataFrame
+        left_only_df = results.left_only_records.collect()
+        
+        # Check that columns are clean (no right columns)
+        expected_columns = [
+            "PK_customer_id", "PK_order_date",  # Primary key columns first
+            "L_amount", "L_status"              # Then left columns only
+        ]
+        
+        assert list(left_only_df.columns) == expected_columns
+
+    def test_right_only_records_clean_columns(self) -> None:
+        """Test that right-only records show only primary keys and right columns (no null left columns)."""
+        from datetime import date
+
+        # Create test data with right-only records
+        left_data = {
+            "customer_id": [1],  # Only customer 1 exists in left
+            "order_date": [date(2023, 1, 1)],
+            "amount": [100.0],
+            "status": ["pending"],
+        }
+        right_data = {
+            "cust_id": [1, 2],
+            "order_dt": [date(2023, 1, 1), date(2023, 1, 2)],
+            "total_amount": [100.0, 200.0],
+            "order_status": ["pending", "completed"],
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        results = self.comparator.compare(left=left_df, right=right_df)
+
+        # Should have 1 right-only record
+        assert results.summary.right_only_count == 1
+
+        # Get the right-only records DataFrame
+        right_only_df = results.right_only_records.collect()
+        
+        # Check that columns are clean (no left columns)
+        expected_columns = [
+            "PK_customer_id", "PK_order_date",  # Primary key columns first
+            "R_amount", "R_status"              # Then right columns only
+        ]
+        
+        assert list(right_only_df.columns) == expected_columns
 
     def test_compare_with_value_differences(self) -> None:
         """Test comparison with value differences."""
@@ -339,7 +451,6 @@ class TestLazyFrameComparator:
 
     def test_compare_empty_dataframes(self) -> None:
         """Test comparison of empty DataFrames."""
-        from datetime import date
 
         # Create empty test data
         left_data = {

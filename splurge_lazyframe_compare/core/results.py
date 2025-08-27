@@ -3,10 +3,29 @@
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any
+
 import polars as pl
 
 from splurge_lazyframe_compare.core.schema import ComparisonConfig
+
+# Private constants
+_DEFAULT_OUTPUT_DIR = "."
+_DEFAULT_FORMAT = "parquet"
+_VALUE_DIFFERENCES_FILENAME = "value_differences_{}.{}"
+_LEFT_ONLY_FILENAME = "left_only_records_{}.{}"
+_RIGHT_ONLY_FILENAME = "right_only_records_{}.{}"
+_SUMMARY_FILENAME = "comparison_summary_{}.json"
+_TIMESTAMP_FORMAT = "%Y%m%d_%H%M%S"
+_REPORT_HEADER = "=" * 60
+_REPORT_TITLE = "SPLURGE LAZYFRAME COMPARISON SUMMARY"
+_RECORD_COUNTS_SECTION = "RECORD COUNTS:"
+_COMPARISON_RESULTS_SECTION = "COMPARISON RESULTS:"
+_PERCENTAGES_SECTION = "PERCENTAGES (of Left DataFrame):"
+_VALUE_DIFFERENCES_SECTION = "VALUE DIFFERENCES SAMPLES:"
+_LEFT_ONLY_SECTION = "LEFT-ONLY RECORDS SAMPLES:"
+_RIGHT_ONLY_SECTION = "RIGHT-ONLY RECORDS SAMPLES:"
+_SECTION_SEPARATOR = "-" * 40
 
 
 @dataclass
@@ -34,6 +53,7 @@ class ComparisonSummary:
     @classmethod
     def create(
         cls,
+        *,
         total_left_records: int,
         total_right_records: int,
         value_differences: pl.LazyFrame,
@@ -82,10 +102,10 @@ class ValueDifference:
         friendly_column_name: Human-readable column name.
     """
 
-    primary_key_values: Dict[str, any]
+    primary_key_values: dict[str, Any]
     column_name: str
-    left_value: any
-    right_value: any
+    left_value: Any
+    right_value: Any
     friendly_column_name: str
 
 
@@ -116,8 +136,11 @@ class ComparisonResults:
         return ComparisonReport(self)
 
     def export_results(
-        self, *, format: str = "parquet", output_dir: str = "."
-    ) -> Dict[str, str]:
+        self,
+        *,
+        format: str = _DEFAULT_FORMAT,
+        output_dir: str = _DEFAULT_OUTPUT_DIR
+    ) -> dict[str, str]:
         """Export results to files.
 
         Args:
@@ -127,42 +150,45 @@ class ComparisonResults:
         Returns:
             Dictionary mapping result type to file path.
         """
-        import os
         from pathlib import Path
 
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime(_TIMESTAMP_FORMAT)
         results = {}
 
         # Export value differences
         if self.value_differences.select(pl.len()).collect().item() > 0:
-            value_diff_path = output_path / f"value_differences_{timestamp}.{format}"
-            self._export_lazyframe(self.value_differences, value_diff_path, format)
+            value_diff_path = output_path / _VALUE_DIFFERENCES_FILENAME.format(timestamp, format)
+            self._export_lazyframe(lazyframe=self.value_differences, file_path=value_diff_path, format=format)
             results["value_differences"] = str(value_diff_path)
 
         # Export left-only records
         if self.left_only_records.select(pl.len()).collect().item() > 0:
-            left_only_path = output_path / f"left_only_records_{timestamp}.{format}"
-            self._export_lazyframe(self.left_only_records, left_only_path, format)
+            left_only_path = output_path / _LEFT_ONLY_FILENAME.format(timestamp, format)
+            self._export_lazyframe(lazyframe=self.left_only_records, file_path=left_only_path, format=format)
             results["left_only_records"] = str(left_only_path)
 
         # Export right-only records
         if self.right_only_records.select(pl.len()).collect().item() > 0:
-            right_only_path = output_path / f"right_only_records_{timestamp}.{format}"
-            self._export_lazyframe(self.right_only_records, right_only_path, format)
+            right_only_path = output_path / _RIGHT_ONLY_FILENAME.format(timestamp, format)
+            self._export_lazyframe(lazyframe=self.right_only_records, file_path=right_only_path, format=format)
             results["right_only_records"] = str(right_only_path)
 
         # Export summary
-        summary_path = output_path / f"comparison_summary_{timestamp}.json"
-        self._export_summary(summary_path)
+        summary_path = output_path / _SUMMARY_FILENAME.format(timestamp)
+        self._export_summary(file_path=summary_path)
         results["summary"] = str(summary_path)
 
         return results
 
     def _export_lazyframe(
-        self, lazyframe: pl.LazyFrame, file_path: Path, format: str
+        self,
+        *,
+        lazyframe: pl.LazyFrame,
+        file_path: Path,
+        format: str = _DEFAULT_FORMAT
     ) -> None:
         """Export a LazyFrame to a file.
 
@@ -171,16 +197,16 @@ class ComparisonResults:
             file_path: Path to save the file.
             format: Output format.
         """
-        if format == "parquet":
+        if format.lower() == "parquet":
             lazyframe.sink_parquet(file_path)
-        elif format == "csv":
+        elif format.lower() == "csv":
             lazyframe.sink_csv(file_path)
-        elif format == "json":
+        elif format.lower() == "json":
             lazyframe.sink_json(file_path)
         else:
             raise ValueError(f"Unsupported format: {format}")
 
-    def _export_summary(self, file_path: Path) -> None:
+    def _export_summary(self, *, file_path: Path) -> None:
         """Export summary to JSON file.
 
         Args:
@@ -226,16 +252,16 @@ class ComparisonReport:
         summary = self.results.summary
 
         report_lines = [
-            "=" * 60,
-            "POLARS LAZYFRAME COMPARISON SUMMARY",
-            "=" * 60,
+            _REPORT_HEADER,
+            _REPORT_TITLE,
+            _REPORT_HEADER,
             f"Comparison Timestamp: {summary.comparison_timestamp}",
             "",
-            "RECORD COUNTS:",
+            _RECORD_COUNTS_SECTION,
             f"  Left DataFrame:  {summary.total_left_records:,} records",
             f"  Right DataFrame: {summary.total_right_records:,} records",
             "",
-            "COMPARISON RESULTS:",
+            _COMPARISON_RESULTS_SECTION,
             f"  Matching Records:      {summary.matching_records:,}",
             f"  Value Differences:     {summary.value_differences_count:,}",
             f"  Left-Only Records:     {summary.left_only_count:,}",
@@ -250,7 +276,7 @@ class ComparisonReport:
             left_only_pct = (summary.left_only_count / summary.total_left_records) * 100
 
             report_lines.extend([
-                "PERCENTAGES (of Left DataFrame):",
+                _PERCENTAGES_SECTION,
                 f"  Matching:      {match_pct:.1f}%",
                 f"  Differences:   {diff_pct:.1f}%",
                 f"  Left-Only:     {left_only_pct:.1f}%",
@@ -279,8 +305,8 @@ class ComparisonReport:
         # Add value differences samples
         if self.results.summary.value_differences_count > 0:
             report_lines.extend([
-                "VALUE DIFFERENCES SAMPLES:",
-                "-" * 40,
+                _VALUE_DIFFERENCES_SECTION,
+                _SECTION_SEPARATOR,
             ])
 
             # Get sample of value differences
@@ -295,8 +321,8 @@ class ComparisonReport:
         # Add left-only samples
         if self.results.summary.left_only_count > 0:
             report_lines.extend([
-                "LEFT-ONLY RECORDS SAMPLES:",
-                "-" * 40,
+                _LEFT_ONLY_SECTION,
+                _SECTION_SEPARATOR,
             ])
 
             sample_left = self.results.left_only_records.limit(max_samples).collect()
@@ -310,8 +336,8 @@ class ComparisonReport:
         # Add right-only samples
         if self.results.summary.right_only_count > 0:
             report_lines.extend([
-                "RIGHT-ONLY RECORDS SAMPLES:",
-                "-" * 40,
+                _RIGHT_ONLY_SECTION,
+                _SECTION_SEPARATOR,
             ])
 
             sample_right = self.results.right_only_records.limit(max_samples).collect()

@@ -8,15 +8,16 @@ This example shows how to:
 4. Generate and display comparison reports
 """
 
-import polars as pl
 from datetime import date
 
+import polars as pl
+
 from splurge_lazyframe_compare import (
-    LazyFrameComparator,
-    ComparisonConfig,
-    ComparisonSchema,
     ColumnDefinition,
     ColumnMapping,
+    ComparisonConfig,
+    ComparisonSchema,
+    LazyFrameComparator,
 )
 
 

@@ -1,14 +1,14 @@
 """Tests for the schema module."""
 
-import pytest
+
 import polars as pl
-from datetime import date
+import pytest
 
 from splurge_lazyframe_compare.core.schema import (
     ColumnDefinition,
     ColumnMapping,
-    ComparisonSchema,
     ComparisonConfig,
+    ComparisonSchema,
 )
 from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
 

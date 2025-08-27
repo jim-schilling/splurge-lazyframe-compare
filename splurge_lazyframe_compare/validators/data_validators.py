@@ -1,10 +1,22 @@
 """Data quality validation for the comparison framework."""
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+
 import polars as pl
 
 from splurge_lazyframe_compare.utils.type_helpers import is_numeric_dtype
+
+# Private constants
+_COMPLETENESS_FAILED_MSG = "Completeness validation failed: {} missing columns, {} null columns"
+_ALL_COLUMNS_PRESENT_MSG = "All required columns are present and contain data"
+_DTYPE_FAILED_MSG = "Data type validation failed: {} mismatches found"
+_ALL_DTYPES_CORRECT_MSG = "All columns have expected data types"
+_RANGE_FAILED_MSG = "Range validation failed: {} violations found"
+_ALL_RANGES_CORRECT_MSG = "All numeric columns fall within expected ranges"
+_PATTERN_FAILED_MSG = "Pattern validation failed: {} violations found"
+_ALL_PATTERNS_CORRECT_MSG = "All string columns match expected patterns"
+_UNIQUENESS_FAILED_MSG = "Uniqueness validation failed: {} violations found"
+_ALL_UNIQUE_MSG = "All specified columns contain unique values"
 
 
 @dataclass
@@ -19,7 +31,7 @@ class ValidationResult:
 
     is_valid: bool
     message: str
-    details: Optional[Dict] = None
+    details: dict | None = None
 
 
 class DataQualityValidator:
@@ -34,7 +46,10 @@ class DataQualityValidator:
         pass
 
     def validate_completeness(
-        self, *, df: pl.LazyFrame, required_columns: List[str]
+        self,
+        *,
+        df: pl.LazyFrame,
+        required_columns: list[str]
     ) -> ValidationResult:
         """Validate that required columns are present and not entirely null.
 
@@ -67,16 +82,19 @@ class DataQualityValidator:
                 "missing_columns": missing_columns,
                 "null_columns": null_columns,
             }
-            message = f"Completeness validation failed: {len(missing_columns)} missing columns, {len(null_columns)} null columns"
+            message = _COMPLETENESS_FAILED_MSG.format(len(missing_columns), len(null_columns))
             return ValidationResult(is_valid=False, message=message, details=details)
 
         return ValidationResult(
             is_valid=True,
-            message="All required columns are present and contain data",
+            message=_ALL_COLUMNS_PRESENT_MSG,
         )
 
     def validate_data_types(
-        self, *, df: pl.LazyFrame, expected_types: Dict[str, pl.DataType]
+        self,
+        *,
+        df: pl.LazyFrame,
+        expected_types: dict[str, pl.DataType]
     ) -> ValidationResult:
         """Validate that columns have expected data types.
 
@@ -101,16 +119,19 @@ class DataQualityValidator:
 
         if type_mismatches:
             details = {"type_mismatches": type_mismatches}
-            message = f"Data type validation failed: {len(type_mismatches)} mismatches found"
+            message = _DTYPE_FAILED_MSG.format(len(type_mismatches))
             return ValidationResult(is_valid=False, message=message, details=details)
 
         return ValidationResult(
             is_valid=True,
-            message="All columns have expected data types",
+            message=_ALL_DTYPES_CORRECT_MSG,
         )
 
     def validate_numeric_ranges(
-        self, *, df: pl.LazyFrame, column_ranges: Dict[str, Dict[str, float]]
+        self,
+        *,
+        df: pl.LazyFrame,
+        column_ranges: dict[str, dict[str, float]]
     ) -> ValidationResult:
         """Validate that numeric columns fall within expected ranges.
 
@@ -156,16 +177,19 @@ class DataQualityValidator:
 
         if range_violations:
             details = {"range_violations": range_violations}
-            message = f"Range validation failed: {len(range_violations)} violations found"
+            message = _RANGE_FAILED_MSG.format(len(range_violations))
             return ValidationResult(is_valid=False, message=message, details=details)
 
         return ValidationResult(
             is_valid=True,
-            message="All numeric columns fall within expected ranges",
+            message=_ALL_RANGES_CORRECT_MSG,
         )
 
     def validate_string_patterns(
-        self, *, df: pl.LazyFrame, column_patterns: Dict[str, str]
+        self,
+        *,
+        df: pl.LazyFrame,
+        column_patterns: dict[str, str]
     ) -> ValidationResult:
         """Validate that string columns match expected patterns.
 
@@ -203,16 +227,19 @@ class DataQualityValidator:
 
         if pattern_violations:
             details = {"pattern_violations": pattern_violations}
-            message = f"Pattern validation failed: {len(pattern_violations)} violations found"
+            message = _PATTERN_FAILED_MSG.format(len(pattern_violations))
             return ValidationResult(is_valid=False, message=message, details=details)
 
         return ValidationResult(
             is_valid=True,
-            message="All string columns match expected patterns",
+            message=_ALL_PATTERNS_CORRECT_MSG,
         )
 
     def validate_uniqueness(
-        self, *, df: pl.LazyFrame, unique_columns: List[str]
+        self,
+        *,
+        df: pl.LazyFrame,
+        unique_columns: list[str]
     ) -> ValidationResult:
         """Validate that specified columns contain unique values.
 
@@ -247,24 +274,24 @@ class DataQualityValidator:
 
         if uniqueness_violations:
             details = {"uniqueness_violations": uniqueness_violations}
-            message = f"Uniqueness validation failed: {len(uniqueness_violations)} violations found"
+            message = _UNIQUENESS_FAILED_MSG.format(len(uniqueness_violations))
             return ValidationResult(is_valid=False, message=message, details=details)
 
         return ValidationResult(
             is_valid=True,
-            message="All specified columns contain unique values",
+            message=_ALL_UNIQUE_MSG,
         )
 
     def run_comprehensive_validation(
         self,
         *,
         df: pl.LazyFrame,
-        required_columns: Optional[List[str]] = None,
-        expected_types: Optional[Dict[str, pl.DataType]] = None,
-        column_ranges: Optional[Dict[str, Dict[str, float]]] = None,
-        column_patterns: Optional[Dict[str, str]] = None,
-        unique_columns: Optional[List[str]] = None,
-    ) -> List[ValidationResult]:
+        required_columns: list[str] | None = None,
+        expected_types: dict[str, pl.DataType] | None = None,
+        column_ranges: dict[str, dict[str, float]] | None = None,
+        column_patterns: dict[str, str] | None = None,
+        unique_columns: list[str] | None = None,
+    ) -> list[ValidationResult]:
         """Run a comprehensive set of data quality validations.
 
         Args:

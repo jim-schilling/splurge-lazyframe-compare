@@ -1,10 +1,10 @@
 """Custom exceptions for the comparison framework."""
 
 from .comparison_exceptions import (
-    ComparisonError,
-    SchemaValidationError,
-    PrimaryKeyViolationError,
     ColumnMappingError,
+    ComparisonError,
+    PrimaryKeyViolationError,
+    SchemaValidationError,
 )
 
 __all__ = [
