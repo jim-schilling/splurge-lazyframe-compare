@@ -45,23 +45,23 @@ def sample_config(sample_dataframes):
     left_df, right_df = sample_dataframes
 
     left_columns = {
-        "id": ColumnDefinition("id", "ID", pl.Int64, False),
-        "name": ColumnDefinition("name", "Name", pl.Utf8, False),
-        "amount": ColumnDefinition("amount", "Amount", pl.Float64, False),
+        "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+        "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
+        "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=False),
     }
-    left_schema = ComparisonSchema(columns=left_columns, primary_key_columns=["id"])
+    left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
 
     right_columns = {
-        "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-        "customer_name": ColumnDefinition("customer_name", "Customer Name", pl.Utf8, False),
-        "total_amount": ColumnDefinition("total_amount", "Amount", pl.Float64, False),
+        "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+        "customer_name": ColumnDefinition(name="customer_name", alias="Customer Name", datatype=pl.Utf8, nullable=False),
+        "total_amount": ColumnDefinition(name="total_amount", alias="Amount", datatype=pl.Float64, nullable=False),
     }
-    right_schema = ComparisonSchema(columns=right_columns, primary_key_columns=["customer_id"])
+    right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
 
     mappings = [
-        ColumnMapping("id", "customer_id", "id"),
-        ColumnMapping("name", "customer_name", "name"),
-        ColumnMapping("amount", "total_amount", "amount"),
+        ColumnMapping(left="id", right="customer_id", name="id"),
+        ColumnMapping(left="name", right="customer_name", name="name"),
+        ColumnMapping(left="amount", right="total_amount", name="amount"),
     ]
 
     config = ComparisonConfig(
@@ -97,10 +97,10 @@ class TestValidationService:
         df = pl.LazyFrame({"wrong_column": [1, 2, 3]})
 
         columns = {
-            "id": ColumnDefinition("id", "ID", pl.Int64, False),
-            "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
         }
-        schema = ComparisonSchema(columns=columns, primary_key_columns=["id"])
+        schema = ComparisonSchema(columns=columns, pk_columns=["id"])
 
         service = ValidationService()
 
@@ -395,10 +395,10 @@ class TestValidationService:
         df = pl.LazyFrame(schema={"id": pl.Int64, "name": pl.Utf8})
 
         columns = {
-            "id": ColumnDefinition("id", "ID", pl.Int64, False),
-            "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
         }
-        schema = ComparisonSchema(columns=columns, primary_key_columns=["id"])
+        schema = ComparisonSchema(columns=columns, pk_columns=["id"])
 
         service = ValidationService()
         # Should not raise any exceptions for empty dataframe with correct schema
@@ -595,9 +595,9 @@ class TestConfigHelpers:
             "primary_key_columns": ["id", "name"],
             "column_mappings": [
                 {
-                    "left_column": "id",
-                    "right_column": "customer_id",
-                    "comparison_name": "id"
+                    "left": "id",
+                    "right": "customer_id",
+                    "name": "id"
                 }
             ],
             "null_equals_null": True,
@@ -738,7 +738,7 @@ class TestConfigHelpers:
         assert len(config["column_mappings"]) == 3  # id, name, amount
 
         # Check that common columns are auto-mapped
-        mapping_names = [m["comparison_name"] for m in config["column_mappings"]]
+        mapping_names = [m["name"] for m in config["column_mappings"]]
         assert "id" in mapping_names
         assert "name" in mapping_names
         assert "amount" in mapping_names
@@ -760,7 +760,7 @@ class TestConfigHelpers:
 
         # Should only map the columns that exist in left_df
         assert len(config["column_mappings"]) == 2
-        mapping_names = [m["comparison_name"] for m in config["column_mappings"]]
+        mapping_names = [m["name"] for m in config["column_mappings"]]
         assert "id" in mapping_names
         assert "name" in mapping_names
 
@@ -1216,56 +1216,56 @@ class TestTypeHelpers:
 
     def test_is_numeric_dtype(self):
         """Test numeric data type detection."""
-        from splurge_lazyframe_compare.utils.type_helpers import is_numeric_dtype
+        from splurge_lazyframe_compare.utils.type_helpers import is_numeric_datatype
 
         # Test numeric types
-        assert is_numeric_dtype(pl.Int64) is True
-        assert is_numeric_dtype(pl.Float32) is True
-        assert is_numeric_dtype(pl.Int8) is True
-        assert is_numeric_dtype(pl.UInt64) is True
+        assert is_numeric_datatype(pl.Int64) is True
+        assert is_numeric_datatype(pl.Float32) is True
+        assert is_numeric_datatype(pl.Int8) is True
+        assert is_numeric_datatype(pl.UInt64) is True
 
         # Test non-numeric types
-        assert is_numeric_dtype(pl.Utf8) is False
-        assert is_numeric_dtype(pl.Boolean) is False
-        assert is_numeric_dtype(pl.Date) is False
+        assert is_numeric_datatype(pl.Utf8) is False
+        assert is_numeric_datatype(pl.Boolean) is False
+        assert is_numeric_datatype(pl.Date) is False
 
     def test_is_numeric_dtype_fallback(self):
         """Test numeric data type detection fallback."""
-        from splurge_lazyframe_compare.utils.type_helpers import is_numeric_dtype
+        from splurge_lazyframe_compare.utils.type_helpers import is_numeric_datatype
 
         # Create a mock data type that doesn't have is_numeric method
         class MockDataType:
             pass
 
         # Should return False for types without is_numeric method
-        assert is_numeric_dtype(MockDataType()) is False
+        assert is_numeric_datatype(MockDataType()) is False
 
     def test_get_friendly_dtype_name(self):
         """Test human-readable data type names."""
-        from splurge_lazyframe_compare.utils.type_helpers import get_friendly_dtype_name
+        from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_name
 
         # Test known types - using actual string representations
-        assert get_friendly_dtype_name(pl.Int64) == "Int64"
-        assert get_friendly_dtype_name(pl.Float32) == "Float32"
-        assert get_friendly_dtype_name(pl.Utf8) == "String"
-        assert get_friendly_dtype_name(pl.Boolean) == "Boolean"
-        assert get_friendly_dtype_name(pl.Date) == "Date"
-        assert get_friendly_dtype_name(pl.Datetime) == "Datetime"
-        assert get_friendly_dtype_name(pl.Categorical) == "Categorical"
-        assert get_friendly_dtype_name(pl.List) == "List"
-        assert get_friendly_dtype_name(pl.Struct) == "Struct"
-        assert get_friendly_dtype_name(pl.Null) == "Null"
+        assert get_polars_datatype_name(pl.Int64) == "Int64"
+        assert get_polars_datatype_name(pl.Float32) == "Float32"
+        assert get_polars_datatype_name(pl.Utf8) == "String"
+        assert get_polars_datatype_name(pl.Boolean) == "Boolean"
+        assert get_polars_datatype_name(pl.Date) == "Date"
+        assert get_polars_datatype_name(pl.Datetime) == "Datetime"
+        assert get_polars_datatype_name(pl.Categorical) == "Categorical"
+        assert get_polars_datatype_name(pl.List) == "List"
+        assert get_polars_datatype_name(pl.Struct) == "Struct"
+        assert get_polars_datatype_name(pl.Null) == "Null"
 
     def test_get_friendly_dtype_name_unknown(self):
         """Test human-readable names for unknown data types."""
-        from splurge_lazyframe_compare.utils.type_helpers import get_friendly_dtype_name
+        from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_name
 
         # Test unknown type
         class UnknownDataType:
             pass
 
         # Should return string representation for unknown types
-        result = get_friendly_dtype_name(UnknownDataType())
+        result = get_polars_datatype_name(UnknownDataType())
         assert isinstance(result, str)
         assert len(result) > 0
 
@@ -2013,33 +2013,33 @@ class TestComparisonOrchestratorComprehensive:
         """Set up test fixtures for ComparisonOrchestrator tests."""
         # Create test schemas
         self.left_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),
-            "amount": ColumnDefinition("amount", "Order Amount", pl.Float64, False),
-            "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype=pl.Date, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+            "status": ColumnDefinition(name="status", alias="Order Status", datatype=pl.Utf8, nullable=True),
         }
         self.right_columns = {
-            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-            "order_dt": ColumnDefinition("order_dt", "Order Date", pl.Date, False),
-            "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False),
-            "order_status": ColumnDefinition("order_status", "Order Status", pl.Utf8, True),
+            "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
+            "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+            "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True),
         }
 
         self.left_schema = ComparisonSchema(
             columns=self.left_columns,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
         )
         self.right_schema = ComparisonSchema(
             columns=self.right_columns,
-            primary_key_columns=["cust_id", "order_dt"],
+            pk_columns=["cust_id", "order_dt"],
         )
 
         # Create column mappings
         self.mappings = [
-            ColumnMapping("customer_id", "cust_id", "customer_id"),
-            ColumnMapping("order_date", "order_dt", "order_date"),
-            ColumnMapping("amount", "total_amount", "amount"),
-            ColumnMapping("status", "order_status", "status"),
+            ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+            ColumnMapping(left="order_date", right="order_dt", name="order_date"),
+            ColumnMapping(left="amount", right="total_amount", name="amount"),
+            ColumnMapping(left="status", right="order_status", name="status"),
         ]
 
         # Create configuration

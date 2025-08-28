@@ -5,7 +5,7 @@ This example shows how to use the ComparisonOrchestrator and
 service-based LazyFrameComparator for comparing DataFrames.
 """
 
-from datetime import date
+from datetime import date, datetime
 
 import polars as pl
 
@@ -32,7 +32,16 @@ def create_sample_data():
             date(2023, 1, 5),
         ],
         "amount": [100.0, 200.0, 300.0, 400.0, 500.0],
+        "tags": [["urgent", "premium"], ["standard"], ["express", "gift"], ["bulk"], ["repeat"]],
+        "metadata": [{"source": "web"}, {"source": "mobile"}, {"source": "api"}, {"source": "batch"}, {"source": "web"}],
         "status": ["pending", "completed", "pending", "cancelled", "completed"],
+        "created_at": [
+            datetime(2023, 1, 1, 10, 0, 0),
+            datetime(2023, 1, 2, 11, 30, 0),
+            datetime(2023, 1, 3, 9, 15, 0),
+            datetime(2023, 1, 4, 14, 45, 0),
+            datetime(2023, 1, 5, 16, 20, 0),
+        ],
     }
 
     # Right dataset (target system) - with some differences
@@ -46,7 +55,16 @@ def create_sample_data():
             date(2023, 1, 6),
         ],
         "total_amount": [100.0, 250.0, 300.0, 400.0, 600.0],  # Customer 2 amount different
+        "category": ["retail", "wholesale", "retail", "enterprise", "retail"],
+        "tags": [["urgent", "premium"], ["standard"], ["express"], ["bulk"], ["new_customer"]],
         "order_status": ["pending", "completed", "shipped", "cancelled", "pending"],  # Customer 3 status different
+        "processed_at": [
+            datetime(2023, 1, 1, 10, 30, 0),
+            datetime(2023, 1, 2, 12, 0, 0),
+            datetime(2023, 1, 3, 10, 0, 0),
+            datetime(2023, 1, 4, 15, 15, 0),
+            datetime(2023, 1, 6, 9, 0, 0),
+        ],
     }
 
     left_df = pl.LazyFrame(left_data)
@@ -57,28 +75,38 @@ def create_sample_data():
 
 def define_schemas():
     """Define schemas for the left and right datasets."""
-    # Left schema
+    # Left schema - showcasing complex datatypes with string names
     left_columns = {
-        "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-        "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),
-        "amount": ColumnDefinition("amount", "Order Amount", pl.Float64, False),
-        "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),
+        # Simple datatypes using string names
+        "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype="Int64", nullable=False),
+        "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype="Date", nullable=False),
+        "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype="Float64", nullable=False),
+        # Complex datatypes using string names
+        "tags": ColumnDefinition(name="tags", alias="Tags", datatype="List", nullable=True),
+        "metadata": ColumnDefinition(name="metadata", alias="Metadata", datatype="Struct", nullable=True),
+        "status": ColumnDefinition(name="status", alias="Order Status", datatype="String", nullable=True),
+        "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype="Datetime", nullable=False),
     }
     left_schema = ComparisonSchema(
         columns=left_columns,
-        primary_key_columns=["customer_id", "order_date"],
+        pk_columns=["customer_id", "order_date"],
     )
 
-    # Right schema
+    # Right schema - mixing approaches and showcasing categorical data
     right_columns = {
-        "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-        "order_dt": ColumnDefinition("order_dt", "Order Date", pl.Date, False),
-        "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False),
-        "order_status": ColumnDefinition("order_status", "Order Status", pl.Utf8, True),
+        # Using direct Polars datatypes
+        "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+        "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
+        "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+        # Using string names for complex types
+        "category": ColumnDefinition(name="category", alias="Category", datatype="Categorical", nullable=False),
+        "tags": ColumnDefinition(name="tags", alias="Tags", datatype="List", nullable=True),
+        "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype="String", nullable=True),
+        "processed_at": ColumnDefinition(name="processed_at", alias="Processed At", datatype="Datetime", nullable=True),
     }
     right_schema = ComparisonSchema(
         columns=right_columns,
-        primary_key_columns=["cust_id", "order_dt"],
+        pk_columns=["cust_id", "order_dt"],
     )
 
     return left_schema, right_schema
@@ -87,10 +115,17 @@ def define_schemas():
 def create_column_mappings():
     """Create column mappings between the datasets."""
     return [
-        ColumnMapping("customer_id", "cust_id", "customer_id"),
-        ColumnMapping("order_date", "order_dt", "order_date"),
-        ColumnMapping("amount", "total_amount", "amount"),
-        ColumnMapping("status", "order_status", "status"),
+        # Primary key mappings
+        ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+        ColumnMapping(left="order_date", right="order_dt", name="order_date"),
+        # Value comparison mappings
+        ColumnMapping(left="amount", right="total_amount", name="amount"),
+        ColumnMapping(left="status", right="order_status", name="status"),
+        # Additional complex datatype mappings
+        ColumnMapping(left="tags", right="tags", name="tags"),
+        ColumnMapping(left="created_at", right="processed_at", name="timestamp"),
+        # Right-only columns (no left equivalent)
+        # Note: "category" and "metadata" are not mapped as they don't have equivalents
     ]
 
 

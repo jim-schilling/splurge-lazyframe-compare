@@ -171,14 +171,14 @@ class ComparisonService(BaseService):
             # Create difference conditions for each mapped column
             diff_conditions = []
             for mapping in config.column_mappings:
-                if mapping.comparison_name in config.primary_key_columns:
+                if mapping.name in config.primary_key_columns:
                     # Primary key columns use PK_ prefix
-                    left_col = f"{PRIMARY_KEY_PREFIX}{mapping.comparison_name}"
+                    left_col = f"{PRIMARY_KEY_PREFIX}{mapping.name}"
                     right_col = left_col  # Same column since they're joined on PK
                 else:
                     # Non-primary key columns use L_ and R_ prefixes
-                    left_col = f"{LEFT_PREFIX}{mapping.comparison_name}"
-                    right_col = f"{RIGHT_PREFIX}{mapping.comparison_name}"
+                    left_col = f"{LEFT_PREFIX}{mapping.name}"
+                    right_col = f"{RIGHT_PREFIX}{mapping.name}"
 
                 # Handle null comparisons based on config
                 if config.null_equals_null:
@@ -189,9 +189,9 @@ class ComparisonService(BaseService):
                 # Apply tolerance for numeric columns if specified
                 if (
                     config.tolerance
-                    and mapping.comparison_name in config.tolerance
+                    and mapping.name in config.tolerance
                 ):
-                    tolerance = config.tolerance[mapping.comparison_name]
+                    tolerance = config.tolerance[mapping.name]
                     condition = (pl.col(left_col) - pl.col(right_col)).abs() > tolerance
 
                 diff_conditions.append(condition)

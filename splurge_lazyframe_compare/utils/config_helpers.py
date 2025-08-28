@@ -188,7 +188,7 @@ def validate_config(config: dict[str, Any]) -> list[str]:
             for i, mapping in enumerate(mappings):
                 if not isinstance(mapping, dict):
                     errors.append(f"column_mappings[{i}] must be a dictionary")
-                elif not all(key in mapping for key in ["left_column", "right_column", "comparison_name"]):
+                elif not all(key in mapping for key in ["left", "right", "name"]):
                     errors.append(f"column_mappings[{i}] missing required keys")
 
     # Validate null policy
@@ -226,9 +226,9 @@ def create_default_config() -> dict[str, Any]:
         "primary_key_columns": ["id"],
         "column_mappings": [
             {
-                "left_column": "id",
-                "right_column": "customer_id",
-                "comparison_name": "id"
+                "left": "id",
+                "right": "customer_id",
+                "name": "id"
             }
         ],
         "ignore_case": False,
@@ -319,25 +319,25 @@ def create_config_from_dataframes(
         common_columns = left_columns & right_columns
         for col in common_columns:
             mappings.append({
-                "left_column": col,
-                "right_column": col,
-                "comparison_name": col
+                "left": col,
+                "right": col,
+                "name": col
             })
 
         # Add remaining columns as separate mappings
         for col in left_columns - common_columns:
             mappings.append({
-                "left_column": col,
-                "right_column": col,  # Same name for simplicity
-                "comparison_name": col
+                "left": col,
+                "right": col,  # Same name for simplicity
+                "name": col
             })
     else:
         # Use all columns from left as base
         for col in left_columns:
             mappings.append({
-                "left_column": col,
-                "right_column": col,
-                "comparison_name": col
+                "left": col,
+                "right": col,
+                "name": col
             })
 
     return {

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import polars as pl
 
 from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
+from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_type
 
 
 @dataclass
@@ -24,21 +25,36 @@ class SchemaConstants:
     NO_PK_MSG: str = "No primary key columns defined"
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ColumnDefinition:
     """Defines a column with metadata for comparison.
 
     Attributes:
-        column_name: The actual column name in the DataFrame.
-        friendly_name: Human-readable name for the column.
-        polars_dtype: Expected Polars data type for the column.
+        name: The actual column name in the DataFrame.
+        alias: Human-readable name for the column.
+        datatype: Expected Polars datatype or datatype-name for the column.
         nullable: Whether the column can contain null values.
     """
 
-    column_name: str
-    friendly_name: str
-    polars_dtype: pl.DataType
+    name: str
+    alias: str
+    datatype: pl.DataType | str
     nullable: bool = SchemaConstants.DEFAULT_NULLABLE
+
+    def __post_init__(self) -> None:
+        """Validate that all attributes are valid."""
+        if not self.name or not self.name.strip():
+            raise ValueError("ColumnDefinition.name cannot be None, empty, or whitespace-only")
+        if not self.alias or not self.alias.strip():
+            raise ValueError("ColumnDefinition.alias cannot be None, empty, or whitespace-only")
+        if isinstance(self.datatype, str):
+            self.datatype = get_polars_datatype_type(self.datatype)
+        # Check if datatype is a valid polars data type
+        try:
+            # Check if it's a valid polars data type by trying to create a schema
+            schema = pl.Schema({"test": self.datatype})
+        except Exception:
+            raise ValueError("ColumnDefinition.datatype must be a valid polars data type")
 
     def validate_column_exists(self, df: pl.LazyFrame) -> bool:
         """Check if column exists in DataFrame.
@@ -49,7 +65,7 @@ class ColumnDefinition:
         Returns:
             True if column exists, False otherwise.
         """
-        return self.column_name in df.collect_schema().names()
+        return self.name in df.collect_schema().names()
 
     def validate_data_type(self, df: pl.LazyFrame) -> bool:
         """Validate column data type matches definition.
@@ -64,37 +80,46 @@ class ColumnDefinition:
             return False
 
         schema = df.collect_schema()
-        col_index = schema.names().index(self.column_name)
+        col_index = schema.names().index(self.name)
         actual_dtype = schema.dtypes()[col_index]
-        return actual_dtype == self.polars_dtype
+        return actual_dtype == self.datatype
+    
 
-
-@dataclass
+@dataclass(kw_only=True)
 class ColumnMapping:
     """Maps columns between left and right DataFrames.
 
     Attributes:
-        left_column: Column name in the left DataFrame.
-        right_column: Column name in the right DataFrame.
-        comparison_name: Standardized name for comparison.
+        name: Standardized name for comparison.
+        left: Column name in the left DataFrame.
+        right: Column name in the right DataFrame.
     """
 
-    left_column: str
-    right_column: str
-    comparison_name: str
+    name: str
+    left: str
+    right: str
+
+    def __post_init__(self) -> None:
+        """Validate that all attributes are non-empty and non-whitespace."""
+        if not self.name or not self.name.strip():
+            raise ValueError("ColumnMapping.name cannot be None, empty, or whitespace-only")
+        if not self.left or not self.left.strip():
+            raise ValueError("ColumnMapping.left cannot be None, empty, or whitespace-only")
+        if not self.right or not self.right.strip():
+            raise ValueError("ColumnMapping.right cannot be None, empty, or whitespace-only")
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ComparisonSchema:
     """Schema definition for a LazyFrame in comparison.
 
     Attributes:
         columns: Dictionary mapping column names to their definitions.
-        primary_key_columns: List of column names that form the primary key.
+        pk_columns: List of column names that form the primary key.
     """
 
     columns: dict[str, ColumnDefinition]
-    primary_key_columns: list[str]
+    pk_columns: list[str]
 
     def validate_schema(self, df: pl.LazyFrame) -> list[str]:
         """Validate DataFrame against schema, return validation errors.
@@ -124,9 +149,9 @@ class ComparisonSchema:
             if col_name in df_columns:
                 actual_dtype = df_dtypes[df_column_names.index(col_name)]
                 # Allow Null dtype for empty DataFrames
-                if actual_dtype != col_def.polars_dtype and actual_dtype != pl.Null:
+                if actual_dtype != col_def.datatype and actual_dtype != pl.Null:
                     errors.append(
-                        SchemaConstants.WRONG_DTYPE_MSG.format(col_name, col_def.polars_dtype, actual_dtype)
+                        SchemaConstants.WRONG_DTYPE_MSG.format(col_name, col_def.datatype, actual_dtype)
                     )
 
         # Validate nullable constraints
@@ -137,7 +162,7 @@ class ComparisonSchema:
                     errors.append(SchemaConstants.NULL_VIOLATION_MSG.format(col_name, null_count))
 
         # Validate primary key columns exist
-        for pk_col in self.primary_key_columns:
+        for pk_col in self.pk_columns:
             if pk_col not in self.columns:
                 errors.append(SchemaConstants.PK_NOT_DEFINED_MSG.format(pk_col))
 
@@ -149,7 +174,7 @@ class ComparisonSchema:
         Returns:
             List of ColumnDefinition objects for primary key columns.
         """
-        return [self.columns[col] for col in self.primary_key_columns]
+        return [self.columns[col] for col in self.pk_columns]
 
     def get_compare_columns(self) -> list[str]:
         """Get non-primary-key columns for comparison.
@@ -157,7 +182,7 @@ class ComparisonSchema:
         Returns:
             List of column names that are not part of the primary key.
         """
-        return [col for col in self.columns.keys() if col not in self.primary_key_columns]
+        return [col for col in self.columns.keys() if col not in self.pk_columns]
 
 
 @dataclass
@@ -202,8 +227,8 @@ class ComparisonConfig:
             errors.append(SchemaConstants.NO_PK_MSG)
 
         # Validate column mappings
-        left_mapped_columns = {mapping.left_column for mapping in self.column_mappings}
-        right_mapped_columns = {mapping.right_column for mapping in self.column_mappings}
+        left_mapped_columns = {mapping.left for mapping in self.column_mappings}
+        right_mapped_columns = {mapping.right for mapping in self.column_mappings}
 
         # Check that mapped columns exist in schemas
         left_schema_columns = set(self.left_schema.columns.keys())
@@ -220,7 +245,7 @@ class ComparisonConfig:
 
         # Validate primary key columns are mapped
         for pk_col in self.primary_key_columns:
-            if not any(mapping.comparison_name == pk_col for mapping in self.column_mappings):
+            if not any(mapping.name == pk_col for mapping in self.column_mappings):
                 errors.append(f"Primary key column '{pk_col}' not found in column mappings")
 
         if errors:

@@ -123,7 +123,7 @@ from .logging_helpers import (
     performance_monitor,
     update_operation_context,
 )
-from .type_helpers import get_friendly_dtype_name, is_numeric_dtype
+from .type_helpers import get_polars_datatype_name, is_numeric_datatype
 
 __all__ = [
     # Constants
@@ -235,6 +235,6 @@ __all__ = [
     "performance_monitor",
     "update_operation_context",
     # Type helpers
-    "is_numeric_dtype",
-    "get_friendly_dtype_name",
+    "is_numeric_datatype",
+    "get_polars_datatype_name",
 ]

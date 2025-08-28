@@ -68,28 +68,32 @@ def define_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
     Returns:
         Tuple of (left_schema, right_schema).
     """
-    # Left schema
+    # Left schema - demonstrating mixed datatype usage
     left_columns = {
-        "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-        "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),
-        "amount": ColumnDefinition("amount", "Order Amount", pl.Float64, False),
-        "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),
+        # Using string datatype names (recommended for readability)
+        "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype="Int64", nullable=False),
+        "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype="Date", nullable=False),
+        # Using direct Polars datatypes
+        "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+        "status": ColumnDefinition(name="status", alias="Order Status", datatype=pl.Utf8, nullable=True),
     }
     left_schema = ComparisonSchema(
         columns=left_columns,
-        primary_key_columns=["customer_id", "order_date"],
+        pk_columns=["customer_id", "order_date"],
     )
 
-    # Right schema
+    # Right schema - mixing both approaches for demonstration
     right_columns = {
-        "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-        "order_dt": ColumnDefinition("order_dt", "Order Date", pl.Date, False),
-        "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False),
-        "order_status": ColumnDefinition("order_status", "Order Status", pl.Utf8, True),
+        # Using direct Polars datatypes
+        "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+        "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
+        # Using string datatype names
+        "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype="Float64", nullable=False),
+        "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype="String", nullable=True),
     }
     right_schema = ComparisonSchema(
         columns=right_columns,
-        primary_key_columns=["cust_id", "order_dt"],
+        pk_columns=["cust_id", "order_dt"],
     )
 
     return left_schema, right_schema
@@ -102,10 +106,10 @@ def create_column_mappings() -> list[ColumnMapping]:
         List of ColumnMapping objects.
     """
     return [
-        ColumnMapping("customer_id", "cust_id", "customer_id"),
-        ColumnMapping("order_date", "order_dt", "order_date"),
-        ColumnMapping("amount", "total_amount", "amount"),
-        ColumnMapping("status", "order_status", "status"),
+        ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+        ColumnMapping(left="order_date", right="order_dt", name="order_date"),
+        ColumnMapping(left="amount", right="total_amount", name="amount"),
+        ColumnMapping(left="status", right="order_status", name="status"),
     ]
 
 

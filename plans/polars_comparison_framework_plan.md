@@ -281,8 +281,8 @@ def _find_value_differences(self, left: pl.LazyFrame, right: pl.LazyFrame) -> pl
     # Create difference conditions for each mapped column
     diff_conditions = []
     for mapping in self.config.column_mappings:
-        left_col = mapping.left_column
-        right_col = f"{mapping.right_column}_right"
+        left_col = mapping.left
+        right_col = f"{mapping.right}_right"
         
         # Handle null comparisons based on config
         if self.config.null_equals_null:

@@ -32,29 +32,29 @@ class TestEdgeCasesEmptyDataFrames:
     def setup_method(self) -> None:
         """Set up test fixtures."""
         self.left_columns = {
-            "id": ColumnDefinition("id", "ID", pl.Int64, False),
-            "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
         }
         self.right_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "full_name": ColumnDefinition("full_name", "Full Name", pl.Utf8, False),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "full_name": ColumnDefinition(name="full_name", alias="Full Name", datatype=pl.Utf8, nullable=False),
         }
 
         self.left_schema = ComparisonSchema(
             columns=self.left_columns,
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         self.right_schema = ComparisonSchema(
             columns=self.right_columns,
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         self.config = ComparisonConfig(
             left_schema=self.left_schema,
             right_schema=self.right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("name", "full_name", "name"),
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="name", right="full_name", name="name"),
             ],
             primary_key_columns=["id"],
         )
@@ -178,25 +178,25 @@ class TestDataTypeEdgeCases:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "timestamp": ColumnDefinition("timestamp", "Timestamp", pl.Datetime, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "timestamp": ColumnDefinition(name="timestamp", alias="Timestamp", datatype=pl.Datetime(time_unit="us"), nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "event_time": ColumnDefinition("event_time", "Event Time", pl.Datetime, False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "event_time": ColumnDefinition(name="event_time", alias="Event Time", datatype=pl.Datetime(time_unit="us"), nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("timestamp", "event_time", "timestamp"),
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="timestamp", right="event_time", name="timestamp"),
             ],
             primary_key_columns=["id"],
         )
@@ -226,25 +226,25 @@ class TestDataTypeEdgeCases:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "tags": ColumnDefinition("tags", "Tags", pl.List(pl.Utf8), False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "tags": ColumnDefinition(name="tags", alias="Tags", datatype=pl.List(pl.Utf8), nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "categories": ColumnDefinition("categories", "Categories", pl.List(pl.Utf8), False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "categories": ColumnDefinition(name="categories", alias="Categories", datatype=pl.List(pl.Utf8), nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("tags", "categories", "tags"),
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="tags", right="categories", name="tags"),
             ],
             primary_key_columns=["id"],
         )
@@ -283,25 +283,25 @@ class TestDataTypeEdgeCases:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "address": ColumnDefinition("address", "Address", pl.Struct(address_schema), False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "address": ColumnDefinition(name="address", alias="Address", datatype=pl.Struct(address_schema), nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "location": ColumnDefinition("location", "Location", pl.Struct(address_schema), False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "location": ColumnDefinition(name="location", alias="Location", datatype=pl.Struct(address_schema), nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("address", "location", "address"),
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="address", right="location", name="address"),
             ],
             primary_key_columns=["id"],
         )
@@ -331,25 +331,25 @@ class TestDataTypeEdgeCases:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "optional_field": ColumnDefinition("optional_field", "Optional Field", pl.Utf8, True),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "optional_field": ColumnDefinition(name="optional_field", alias="Optional Field", datatype=pl.Utf8, nullable=True),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "optional_data": ColumnDefinition("optional_data", "Optional Data", pl.Utf8, True),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "optional_data": ColumnDefinition(name="optional_data", alias="Optional Data", datatype=pl.Utf8, nullable=True),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("optional_field", "optional_data", "optional_field"),
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="optional_field", right="optional_data", name="optional_field"),
             ],
             primary_key_columns=["id"],
             null_equals_null=True,
@@ -380,25 +380,25 @@ class TestDataTypeEdgeCases:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "value": ColumnDefinition("value", "Value", pl.Float64, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "value": ColumnDefinition(name="value", alias="Value", datatype=pl.Float64, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "amount": ColumnDefinition("amount", "Amount", pl.Float64, False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("value", "amount", "value"),
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="value", right="amount", name="value"),
             ],
             primary_key_columns=["id"],
             tolerance={"value": 1e-10},  # Very small tolerance
@@ -423,17 +423,17 @@ class TestConfigurationValidationEdgeCases:
         """Test configuration validation with empty column mappings."""
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "full_name": ColumnDefinition("full_name", "Full Name", pl.Utf8, False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "full_name": ColumnDefinition(name="full_name", alias="Full Name", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         with pytest.raises((ValueError, SchemaValidationError)):
@@ -448,17 +448,17 @@ class TestConfigurationValidationEdgeCases:
         """Test configuration with primary key not in mappings."""
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "full_name": ColumnDefinition("full_name", "Full Name", pl.Utf8, False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "full_name": ColumnDefinition(name="full_name", alias="Full Name", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         with pytest.raises((ValueError, SchemaValidationError)):
@@ -466,7 +466,7 @@ class TestConfigurationValidationEdgeCases:
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=[
-                    ColumnMapping("name", "full_name", "name"),
+                    ColumnMapping(left="name", right="full_name", name="name"),
                     # Missing primary key mapping
                 ],
                 primary_key_columns=["id"],
@@ -476,19 +476,19 @@ class TestConfigurationValidationEdgeCases:
         """Test configuration with duplicate comparison names in mappings."""
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "name": ColumnDefinition("name", "Name", pl.Utf8, False),
-                "email": ColumnDefinition("email", "Email", pl.Utf8, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
+                "email": ColumnDefinition(name="email", alias="Email", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "full_name": ColumnDefinition("full_name", "Full Name", pl.Utf8, False),
-                "email_addr": ColumnDefinition("email_addr", "Email Address", pl.Utf8, False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "full_name": ColumnDefinition(name="full_name", alias="Full Name", datatype=pl.Utf8, nullable=False),
+                "email_addr": ColumnDefinition(name="email_addr", alias="Email Address", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         # This should work - duplicate comparison names are allowed
@@ -496,9 +496,9 @@ class TestConfigurationValidationEdgeCases:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("name", "full_name", "name"),
-                ColumnMapping("email", "email_addr", "name"),  # Same comparison name
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="name", right="full_name", name="name"),
+                ColumnMapping(left="email", right="email_addr", name="name"),  # Same comparison name
             ],
             primary_key_columns=["id"],
         )
@@ -533,32 +533,32 @@ class TestPerformanceAndScalability:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "value": ColumnDefinition("value", "Value", pl.Float64, False),
-                "category": ColumnDefinition("category", "Category", pl.Utf8, False),
-                "active": ColumnDefinition("active", "Active", pl.Boolean, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "value": ColumnDefinition(name="value", alias="Value", datatype=pl.Float64, nullable=False),
+                "category": ColumnDefinition(name="category", alias="Category", datatype=pl.Utf8, nullable=False),
+                "active": ColumnDefinition(name="active", alias="Active", datatype=pl.Boolean, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         right_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "value": ColumnDefinition("value", "Value", pl.Float64, False),
-                "category": ColumnDefinition("category", "Category", pl.Utf8, False),
-                "active": ColumnDefinition("active", "Active", pl.Boolean, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "value": ColumnDefinition(name="value", alias="Value", datatype=pl.Float64, nullable=False),
+                "category": ColumnDefinition(name="category", alias="Category", datatype=pl.Utf8, nullable=False),
+                "active": ColumnDefinition(name="active", alias="Active", datatype=pl.Boolean, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "id", "id"),
-                ColumnMapping("value", "value", "value"),
-                ColumnMapping("category", "category", "category"),
-                ColumnMapping("active", "active", "active"),
+                ColumnMapping(left="id", right="id", name="id"),
+                ColumnMapping(left="value", right="value", name="value"),
+                ColumnMapping(left="category", right="category", name="category"),
+                ColumnMapping(left="active", right="active", name="active"),
             ],
             primary_key_columns=["id"],
             tolerance={"value": 5.0},  # Allow some tolerance for floating point differences
@@ -592,10 +592,10 @@ class TestPerformanceAndScalability:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "data": ColumnDefinition("data", "Data", pl.Utf8, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "data": ColumnDefinition(name="data", alias="Data", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         right_schema = left_schema
@@ -604,8 +604,8 @@ class TestPerformanceAndScalability:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "id", "id"),
-                ColumnMapping("data", "data", "data"),
+                ColumnMapping(left="id", right="id", name="id"),
+                ColumnMapping(left="data", right="data", name="data"),
             ],
             primary_key_columns=["id"],
         )
@@ -678,31 +678,31 @@ class TestRealWorldUsagePatterns:
         # Define schemas
         left_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "first_name": ColumnDefinition("first_name", "First Name", pl.Utf8, False),
-                "last_name": ColumnDefinition("last_name", "Last Name", pl.Utf8, False),
-                "email": ColumnDefinition("email", "Email", pl.Utf8, False),
-                "phone": ColumnDefinition("phone", "Phone", pl.Utf8, False),
-                "signup_date": ColumnDefinition("signup_date", "Signup Date", pl.Date, False),
-                "last_login": ColumnDefinition("last_login", "Last Login", pl.Date, False),
-                "account_balance": ColumnDefinition("account_balance", "Account Balance", pl.Float64, False),
-                "is_active": ColumnDefinition("is_active", "Is Active", pl.Utf8, False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "first_name": ColumnDefinition(name="first_name", alias="First Name", datatype=pl.Utf8, nullable=False),
+                "last_name": ColumnDefinition(name="last_name", alias="Last Name", datatype=pl.Utf8, nullable=False),
+                "email": ColumnDefinition(name="email", alias="Email", datatype=pl.Utf8, nullable=False),
+                "phone": ColumnDefinition(name="phone", alias="Phone", datatype=pl.Utf8, nullable=False),
+                "signup_date": ColumnDefinition(name="signup_date", alias="Signup Date", datatype=pl.Date, nullable=False),
+                "last_login": ColumnDefinition(name="last_login", alias="Last Login", datatype=pl.Date, nullable=False),
+                "account_balance": ColumnDefinition(name="account_balance", alias="Account Balance", datatype=pl.Float64, nullable=False),
+                "is_active": ColumnDefinition(name="is_active", alias="Is Active", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         right_schema = ComparisonSchema(
             columns={
-                "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-                "fname": ColumnDefinition("fname", "First Name", pl.Utf8, False),
-                "lname": ColumnDefinition("lname", "Last Name", pl.Utf8, False),
-                "email_addr": ColumnDefinition("email_addr", "Email", pl.Utf8, False),
-                "contact_phone": ColumnDefinition("contact_phone", "Phone", pl.Utf8, False),
-                "registration_date": ColumnDefinition("registration_date", "Registration Date", pl.Date, False),
-                "balance": ColumnDefinition("balance", "Balance", pl.Float64, False),
-                "status": ColumnDefinition("status", "Status", pl.Utf8, False),
+                "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "fname": ColumnDefinition(name="fname", alias="First Name", datatype=pl.Utf8, nullable=False),
+                "lname": ColumnDefinition(name="lname", alias="Last Name", datatype=pl.Utf8, nullable=False),
+                "email_addr": ColumnDefinition(name="email_addr", alias="Email", datatype=pl.Utf8, nullable=False),
+                "contact_phone": ColumnDefinition(name="contact_phone", alias="Phone", datatype=pl.Utf8, nullable=False),
+                "registration_date": ColumnDefinition(name="registration_date", alias="Registration Date", datatype=pl.Date, nullable=False),
+                "balance": ColumnDefinition(name="balance", alias="Balance", datatype=pl.Float64, nullable=False),
+                "status": ColumnDefinition(name="status", alias="Status", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["cust_id"],
+            pk_columns=["cust_id"],
         )
 
         # Define mappings
@@ -710,14 +710,14 @@ class TestRealWorldUsagePatterns:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("customer_id", "cust_id", "customer_id"),
-                ColumnMapping("first_name", "fname", "first_name"),
-                ColumnMapping("last_name", "lname", "last_name"),
-                ColumnMapping("email", "email_addr", "email"),
-                ColumnMapping("phone", "contact_phone", "phone"),
-                ColumnMapping("signup_date", "registration_date", "signup_date"),
-                ColumnMapping("account_balance", "balance", "account_balance"),
-                ColumnMapping("is_active", "status", "status"),
+                ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+                ColumnMapping(left="first_name", right="fname", name="first_name"),
+                ColumnMapping(left="last_name", right="lname", name="last_name"),
+                ColumnMapping(left="email", right="email_addr", name="email"),
+                ColumnMapping(left="phone", right="contact_phone", name="phone"),
+                ColumnMapping(left="signup_date", right="registration_date", name="signup_date"),
+                ColumnMapping(left="account_balance", right="balance", name="account_balance"),
+                ColumnMapping(left="is_active", right="status", name="status"),
             ],
             primary_key_columns=["customer_id"],
             ignore_case=True,
@@ -799,18 +799,18 @@ class TestRealWorldUsagePatterns:
         # Define schema once
         schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "value": ColumnDefinition("value", "Value", pl.Utf8, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "value": ColumnDefinition(name="value", alias="Value", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         config = ComparisonConfig(
             left_schema=schema,
             right_schema=schema,
             column_mappings=[
-                ColumnMapping("id", "id", "id"),
-                ColumnMapping("value", "value", "value"),
+                ColumnMapping(left="id", right="id", name="id"),
+                ColumnMapping(left="value", right="value", name="value"),
             ],
             primary_key_columns=["id"],
         )
@@ -869,25 +869,25 @@ class TestRealWorldUsagePatterns:
         # Create config that expects different columns
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),  # This column doesn't exist
-                "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),  # This column doesn't exist
+                "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-                "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "customer_id", "id"),
-                ColumnMapping("name", "name", "name"),
+                ColumnMapping(left="id", right="customer_id", name="id"),
+                ColumnMapping(left="name", right="name", name="name"),
             ],
             primary_key_columns=["id"],
         )
@@ -935,11 +935,11 @@ class TestRealWorldUsagePatterns:
 
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "value": ColumnDefinition("value", "Value", pl.Utf8, False),
-                "number": ColumnDefinition("number", "Number", pl.Float64, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "value": ColumnDefinition(name="value", alias="Value", datatype=pl.Utf8, nullable=False),
+                "number": ColumnDefinition(name="number", alias="Number", datatype=pl.Float64, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         right_schema = left_schema
@@ -949,9 +949,9 @@ class TestRealWorldUsagePatterns:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "id", "id"),
-                ColumnMapping("value", "value", "value"),
-                ColumnMapping("number", "number", "number"),
+                ColumnMapping(left="id", right="id", name="id"),
+                ColumnMapping(left="value", right="value", name="value"),
+                ColumnMapping(left="number", right="number", name="number"),
             ],
             primary_key_columns=["id"],
             ignore_case=False,
@@ -962,9 +962,9 @@ class TestRealWorldUsagePatterns:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=[
-                ColumnMapping("id", "id", "id"),
-                ColumnMapping("value", "value", "value"),
-                ColumnMapping("number", "number", "number"),
+                ColumnMapping(left="id", right="id", name="id"),
+                ColumnMapping(left="value", right="value", name="value"),
+                ColumnMapping(left="number", right="number", name="number"),
             ],
             primary_key_columns=["id"],
             ignore_case=True,

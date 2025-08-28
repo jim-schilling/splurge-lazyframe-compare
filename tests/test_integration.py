@@ -76,43 +76,43 @@ def complex_config(complex_dataframes):
 
     # Define left schema
     left_columns = {
-        "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-        "first_name": ColumnDefinition("first_name", "First Name", pl.Utf8, False),
-        "last_name": ColumnDefinition("last_name", "Last Name", pl.Utf8, False),
-        "email": ColumnDefinition("email", "Email", pl.Utf8, False),
-        "balance": ColumnDefinition("balance", "Balance", pl.Float64, False),
-        "active": ColumnDefinition("active", "Active Status", pl.Boolean, False),
-        "signup_date": ColumnDefinition("signup_date", "Signup Date", pl.Date, False),
+        "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+        "first_name": ColumnDefinition(name="first_name", alias="First Name", datatype=pl.Utf8, nullable=False),
+        "last_name": ColumnDefinition(name="last_name", alias="Last Name", datatype=pl.Utf8, nullable=False),
+        "email": ColumnDefinition(name="email", alias="Email", datatype=pl.Utf8, nullable=False),
+        "balance": ColumnDefinition(name="balance", alias="Balance", datatype=pl.Float64, nullable=False),
+        "active": ColumnDefinition(name="active", alias="Active Status", datatype=pl.Boolean, nullable=False),
+        "signup_date": ColumnDefinition(name="signup_date", alias="Signup Date", datatype=pl.Date, nullable=False),
     }
     left_schema = ComparisonSchema(
         columns=left_columns,
-        primary_key_columns=["customer_id"]
+        pk_columns=["customer_id"]
     )
 
     # Define right schema
     right_columns = {
-        "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-        "fname": ColumnDefinition("fname", "First Name", pl.Utf8, False),
-        "lname": ColumnDefinition("lname", "Last Name", pl.Utf8, False),
-        "email_addr": ColumnDefinition("email_addr", "Email", pl.Utf8, False),
-        "account_balance": ColumnDefinition("account_balance", "Balance", pl.Float64, False),
-        "is_active": ColumnDefinition("is_active", "Active Status", pl.Boolean, False),
-        "registration_date": ColumnDefinition("registration_date", "Registration Date", pl.Date, False),
+        "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+        "fname": ColumnDefinition(name="fname", alias="First Name", datatype=pl.Utf8, nullable=False),
+        "lname": ColumnDefinition(name="lname", alias="Last Name", datatype=pl.Utf8, nullable=False),
+        "email_addr": ColumnDefinition(name="email_addr", alias="Email", datatype=pl.Utf8, nullable=False),
+        "account_balance": ColumnDefinition(name="account_balance", alias="Balance", datatype=pl.Float64, nullable=False),
+        "is_active": ColumnDefinition(name="is_active", alias="Active Status", datatype=pl.Boolean, nullable=False),
+        "registration_date": ColumnDefinition(name="registration_date", alias="Registration Date", datatype=pl.Date, nullable=False),
     }
     right_schema = ComparisonSchema(
         columns=right_columns,
-        primary_key_columns=["cust_id"]
+        pk_columns=["cust_id"]
     )
 
     # Define column mappings
     mappings = [
-        ColumnMapping("customer_id", "cust_id", "customer_id"),
-        ColumnMapping("first_name", "fname", "first_name"),
-        ColumnMapping("last_name", "lname", "last_name"),
-        ColumnMapping("email", "email_addr", "email"),
-        ColumnMapping("balance", "account_balance", "balance"),
-        ColumnMapping("active", "is_active", "active"),
-        ColumnMapping("signup_date", "registration_date", "signup_date"),
+        ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+        ColumnMapping(left="first_name", right="fname", name="first_name"),
+        ColumnMapping(left="last_name", right="lname", name="last_name"),
+        ColumnMapping(left="email", right="email_addr", name="email"),
+        ColumnMapping(left="balance", right="account_balance", name="balance"),
+        ColumnMapping(left="active", right="is_active", name="active"),
+        ColumnMapping(left="signup_date", right="registration_date", name="signup_date"),
     ]
 
     config = ComparisonConfig(

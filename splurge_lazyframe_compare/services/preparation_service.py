@@ -85,14 +85,14 @@ class DataPreparationService(BaseService):
             right_mapping = {}
 
             for mapping in config.column_mappings:
-                if mapping.comparison_name in config.primary_key_columns:
+                if mapping.name in config.primary_key_columns:
                     # Primary key columns get PK_ prefix
-                    left_mapping[mapping.left_column] = f"{PRIMARY_KEY_PREFIX}{mapping.comparison_name}"
-                    right_mapping[mapping.right_column] = f"{PRIMARY_KEY_PREFIX}{mapping.comparison_name}"
+                    left_mapping[mapping.left] = f"{PRIMARY_KEY_PREFIX}{mapping.name}"
+                    right_mapping[mapping.right] = f"{PRIMARY_KEY_PREFIX}{mapping.name}"
                 else:
                     # Non-primary key columns get L_ and R_ prefixes
-                    left_mapping[mapping.left_column] = f"{LEFT_PREFIX}{mapping.comparison_name}"
-                    right_mapping[mapping.right_column] = f"{RIGHT_PREFIX}{mapping.comparison_name}"
+                    left_mapping[mapping.left] = f"{LEFT_PREFIX}{mapping.name}"
+                    right_mapping[mapping.right] = f"{RIGHT_PREFIX}{mapping.name}"
 
             # Apply mappings
             mapped_left = left.rename(left_mapping)
@@ -103,12 +103,12 @@ class DataPreparationService(BaseService):
             right_columns = []
 
             for mapping in config.column_mappings:
-                if mapping.comparison_name in config.primary_key_columns:
-                    left_columns.append(f"{PRIMARY_KEY_PREFIX}{mapping.comparison_name}")
-                    right_columns.append(f"{PRIMARY_KEY_PREFIX}{mapping.comparison_name}")
+                if mapping.name in config.primary_key_columns:
+                    left_columns.append(f"{PRIMARY_KEY_PREFIX}{mapping.name}")
+                    right_columns.append(f"{PRIMARY_KEY_PREFIX}{mapping.name}")
                 else:
-                    left_columns.append(f"{LEFT_PREFIX}{mapping.comparison_name}")
-                    right_columns.append(f"{RIGHT_PREFIX}{mapping.comparison_name}")
+                    left_columns.append(f"{LEFT_PREFIX}{mapping.name}")
+                    right_columns.append(f"{RIGHT_PREFIX}{mapping.name}")
 
             mapped_left = mapped_left.select(left_columns)
             mapped_right = mapped_right.select(right_columns)
@@ -160,12 +160,12 @@ class DataPreparationService(BaseService):
         # Add non-primary key columns in alternating Left/Right order
         non_pk_mappings = [
             mapping for mapping in config.column_mappings
-            if mapping.comparison_name not in config.primary_key_columns
+            if mapping.name not in config.primary_key_columns
         ]
 
         for mapping in non_pk_mappings:
-            left_col = f"{LEFT_PREFIX}{mapping.comparison_name}"
-            right_col = f"{RIGHT_PREFIX}{mapping.comparison_name}"
+            left_col = f"{LEFT_PREFIX}{mapping.name}"
+            right_col = f"{RIGHT_PREFIX}{mapping.name}"
             column_order.extend([left_col, right_col])
 
         return column_order
@@ -185,11 +185,11 @@ class DataPreparationService(BaseService):
         # Add only left columns for non-primary key columns
         non_pk_mappings = [
             mapping for mapping in config.column_mappings
-            if mapping.comparison_name not in config.primary_key_columns
+            if mapping.name not in config.primary_key_columns
         ]
 
         for mapping in non_pk_mappings:
-            left_col = f"{LEFT_PREFIX}{mapping.comparison_name}"
+            left_col = f"{LEFT_PREFIX}{mapping.name}"
             column_order.append(left_col)
 
         return column_order
@@ -209,11 +209,11 @@ class DataPreparationService(BaseService):
         # Add only right columns for non-primary key columns
         non_pk_mappings = [
             mapping for mapping in config.column_mappings
-            if mapping.comparison_name not in config.primary_key_columns
+            if mapping.name not in config.primary_key_columns
         ]
 
         for mapping in non_pk_mappings:
-            right_col = f"{RIGHT_PREFIX}{mapping.comparison_name}"
+            right_col = f"{RIGHT_PREFIX}{mapping.name}"
             column_order.append(right_col)
 
         return column_order

@@ -153,8 +153,9 @@ def get_null_summary(df: pl.LazyFrame) -> dict[str, dict[str, int | float]]:
     try:
         total_rows = df.select(pl.len()).collect().item()
         summary = {}
+        schema = df.collect_schema()
 
-        for col in df.columns:
+        for col in schema.names():
             null_count = df.select(pl.col(col).is_null().sum()).collect().item()
             null_percentage = (null_count / total_rows * 100) if total_rows > 0 else 0
 

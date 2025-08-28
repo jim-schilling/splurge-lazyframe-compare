@@ -19,7 +19,7 @@ A simple example demonstrating the basic usage of the comparison framework with 
 python examples/basic_comparison_example.py
 ```
 
-### 2. Service Architecture Example (`new_service_example.py`)
+### 2. Service Architecture Example (`service_example.py`)
 
 A comprehensive demonstration of the framework's service-oriented architecture, showcasing modularity and dependency injection.
 
@@ -32,7 +32,7 @@ A comprehensive demonstration of the framework's service-oriented architecture, 
 
 **Usage:**
 ```bash
-python examples/new_service_example.py
+python examples/service_example.py
 ```
 
 ### 4. Performance Comparison Example (`performance_comparison_example.py`)
@@ -160,7 +160,7 @@ All examples can be run directly:
 python examples/basic_comparison_example.py
 
 # Service architecture
-python examples/new_service_example.py
+python examples/service_example.py
 
 # Performance example
 python examples/performance_comparison_example.py

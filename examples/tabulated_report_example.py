@@ -73,30 +73,39 @@ def define_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
     Returns:
         Tuple of (left_schema, right_schema).
     """
-    # Left schema
+    # Left schema - showcasing string datatype names for complex types
     left_columns = {
-        "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-        "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),
-        "amount": ColumnDefinition("amount", "Order Amount", pl.Float64, False),
-        "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),
-        "priority": ColumnDefinition("priority", "Priority Level", pl.Utf8, True),
+        # Using string datatype names for better readability
+        "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype="Int64", nullable=False),
+        "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype="Date", nullable=False),
+        "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype="Float64", nullable=False),
+        # Complex datatypes using string names
+        "tags": ColumnDefinition(name="tags", alias="Tags", datatype="List", nullable=True),
+        "metadata": ColumnDefinition(name="metadata", alias="Metadata", datatype="Struct", nullable=True),
+        "status": ColumnDefinition(name="status", alias="Order Status", datatype="String", nullable=True),
+        "priority": ColumnDefinition(name="priority", alias="Priority Level", datatype="Categorical", nullable=True),
+        "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype="Datetime", nullable=False),
     }
     left_schema = ComparisonSchema(
         columns=left_columns,
-        primary_key_columns=["customer_id", "order_date"],
+        pk_columns=["customer_id", "order_date"],
     )
 
-    # Right schema
+    # Right schema - mixing direct datatypes and string names
     right_columns = {
-        "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-        "order_dt": ColumnDefinition("order_dt", "Order Date", pl.Date, False),
-        "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False),
-        "order_status": ColumnDefinition("order_status", "Order Status", pl.Utf8, True),
-        "priority_level": ColumnDefinition("priority_level", "Priority Level", pl.Utf8, True),
+        # Using direct Polars datatypes
+        "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+        "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
+        "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+        # Using string names for complex types
+        "categories": ColumnDefinition(name="categories", alias="Categories", datatype="List", nullable=True),
+        "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype="String", nullable=True),
+        "priority_level": ColumnDefinition(name="priority_level", alias="Priority Level", datatype="Categorical", nullable=True),
+        "processed_at": ColumnDefinition(name="processed_at", alias="Processed At", datatype="Datetime", nullable=True),
     }
     right_schema = ComparisonSchema(
         columns=right_columns,
-        primary_key_columns=["cust_id", "order_dt"],
+        pk_columns=["cust_id", "order_dt"],
     )
 
     return left_schema, right_schema
@@ -109,11 +118,11 @@ def create_column_mappings() -> list[ColumnMapping]:
         List of ColumnMapping objects.
     """
     return [
-        ColumnMapping("customer_id", "cust_id", "customer_id"),
-        ColumnMapping("order_date", "order_dt", "order_date"),
-        ColumnMapping("amount", "total_amount", "amount"),
-        ColumnMapping("status", "order_status", "status"),
-        ColumnMapping("priority", "priority_level", "priority"),
+        ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+        ColumnMapping(left="order_date", right="order_dt", name="order_date"),
+        ColumnMapping(left="amount", right="total_amount", name="amount"),
+        ColumnMapping(left="status", right="order_status", name="status"),
+        ColumnMapping(left="priority", right="priority_level", name="priority"),
     ]
 
 

@@ -23,33 +23,33 @@ class TestLazyFrameComparator:
         """Set up test fixtures."""
         # Create test schemas
         self.left_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),
-            "amount": ColumnDefinition("amount", "Order Amount", pl.Float64, False),
-            "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype=pl.Date, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+            "status": ColumnDefinition(name="status", alias="Order Status", datatype=pl.Utf8, nullable=True),
         }
         self.right_columns = {
-            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-            "order_dt": ColumnDefinition("order_dt", "Order Date", pl.Date, False),
-            "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False),
-            "order_status": ColumnDefinition("order_status", "Order Status", pl.Utf8, True),
+            "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
+            "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+            "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True),
         }
 
         self.left_schema = ComparisonSchema(
             columns=self.left_columns,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
         )
         self.right_schema = ComparisonSchema(
             columns=self.right_columns,
-            primary_key_columns=["cust_id", "order_dt"],
+            pk_columns=["cust_id", "order_dt"],
         )
 
         # Create column mappings
         self.mappings = [
-            ColumnMapping("customer_id", "cust_id", "customer_id"),
-            ColumnMapping("order_date", "order_dt", "order_date"),
-            ColumnMapping("amount", "total_amount", "amount"),
-            ColumnMapping("status", "order_status", "status"),
+            ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+            ColumnMapping(left="order_date", right="order_dt", name="order_date"),
+            ColumnMapping(left="amount", right="total_amount", name="amount"),
+            ColumnMapping(left="status", right="order_status", name="status"),
         ]
 
         # Create configuration
@@ -678,17 +678,17 @@ class TestLazyFrameComparator:
         # Create a simple comparator for this test
         simple_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition("id", "ID", pl.Int64, False),
-                "name": ColumnDefinition("name", "Name", pl.Utf8, False),
+                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+                "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
             },
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         simple_config = ComparisonConfig(
             left_schema=simple_schema,
             right_schema=simple_schema,
             column_mappings=[
-                ColumnMapping("id", "id", "id"),
-                ColumnMapping("name", "name", "name"),
+                ColumnMapping(left="id", right="id", name="id"),
+                ColumnMapping(left="name", right="name", name="name"),
             ],
             primary_key_columns=["id"],
         )
@@ -787,33 +787,33 @@ class TestComparisonReport:
 
         # Create test schemas
         left_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),
-            "amount": ColumnDefinition("amount", "Order Amount", pl.Float64, False),
-            "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype=pl.Date, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+            "status": ColumnDefinition(name="status", alias="Order Status", datatype=pl.Utf8, nullable=True),
         }
         right_columns = {
-            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-            "order_dt": ColumnDefinition("order_dt", "Order Date", pl.Date, False),
-            "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False),
-            "order_status": ColumnDefinition("order_status", "Order Status", pl.Utf8, True),
+            "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
+            "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+            "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True),
         }
 
         left_schema = ComparisonSchema(
             columns=left_columns,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
         )
         right_schema = ComparisonSchema(
             columns=right_columns,
-            primary_key_columns=["cust_id", "order_dt"],
+            pk_columns=["cust_id", "order_dt"],
         )
 
         # Create column mappings
         mappings = [
-            ColumnMapping("customer_id", "cust_id", "customer_id"),
-            ColumnMapping("order_date", "order_dt", "order_date"),
-            ColumnMapping("amount", "total_amount", "amount"),
-            ColumnMapping("status", "order_status", "status"),
+            ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+            ColumnMapping(left="order_date", right="order_dt", name="order_date"),
+            ColumnMapping(left="amount", right="total_amount", name="amount"),
+            ColumnMapping(left="status", right="order_status", name="status"),
         ]
 
         # Create configuration

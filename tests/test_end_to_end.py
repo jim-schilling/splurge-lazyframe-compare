@@ -42,27 +42,27 @@ class TestEndToEndScenarios:
         # Step 1: Set up configuration
         # Define schemas
         left_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "name": ColumnDefinition("name", "Customer Name", pl.Utf8, False),
-            "email": ColumnDefinition("email", "Email Address", pl.Utf8, False),
-            "balance": ColumnDefinition("balance", "Account Balance", pl.Float64, False),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "name": ColumnDefinition(name="name", alias="Customer Name", datatype=pl.Utf8, nullable=False),
+            "email": ColumnDefinition(name="email", alias="Email Address", datatype=pl.Utf8, nullable=False),
+            "balance": ColumnDefinition(name="balance", alias="Account Balance", datatype=pl.Float64, nullable=False),
         }
-        left_schema = ComparisonSchema(columns=left_columns, primary_key_columns=["customer_id"])
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["customer_id"])
 
         right_columns = {
-            "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-            "full_name": ColumnDefinition("full_name", "Customer Name", pl.Utf8, False),
-            "email_addr": ColumnDefinition("email_addr", "Email Address", pl.Utf8, False),
-            "account_balance": ColumnDefinition("account_balance", "Account Balance", pl.Float64, False),
+            "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "full_name": ColumnDefinition(name="full_name", alias="Customer Name", datatype=pl.Utf8, nullable=False),
+            "email_addr": ColumnDefinition(name="email_addr", alias="Email Address", datatype=pl.Utf8, nullable=False),
+            "account_balance": ColumnDefinition(name="account_balance", alias="Account Balance", datatype=pl.Float64, nullable=False),
         }
-        right_schema = ComparisonSchema(columns=right_columns, primary_key_columns=["cust_id"])
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["cust_id"])
 
         # Define mappings
         mappings = [
-            ColumnMapping("customer_id", "cust_id", "customer_id"),
-            ColumnMapping("name", "full_name", "name"),
-            ColumnMapping("email", "email_addr", "email"),
-            ColumnMapping("balance", "account_balance", "balance"),
+            ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+            ColumnMapping(left="name", right="full_name", name="name"),
+            ColumnMapping(left="email", right="email_addr", name="email"),
+            ColumnMapping(left="balance", right="account_balance", name="balance"),
         ]
 
         config = ComparisonConfig(
@@ -148,29 +148,29 @@ class TestEndToEndScenarios:
         )
 
         left_columns = {
-            "id": ColumnDefinition("id", "Product ID", pl.Int64, False),
-            "name": ColumnDefinition("name", "Product Name", pl.Utf8, False),
-            "price": ColumnDefinition("price", "Price", pl.Float64, False),
-            "in_stock": ColumnDefinition("in_stock", "In Stock", pl.Boolean, False),
-            "created_date": ColumnDefinition("created_date", "Created Date", pl.Date, False),
+            "id": ColumnDefinition(name="id", alias="Product ID", datatype=pl.Int64, nullable=False),
+            "name": ColumnDefinition(name="name", alias="Product Name", datatype=pl.Utf8, nullable=False),
+            "price": ColumnDefinition(name="price", alias="Price", datatype=pl.Float64, nullable=False),
+            "in_stock": ColumnDefinition(name="in_stock", alias="In Stock", datatype=pl.Boolean, nullable=False),
+            "created_date": ColumnDefinition(name="created_date", alias="Created Date", datatype=pl.Date, nullable=False),
         }
-        left_schema = ComparisonSchema(columns=left_columns, primary_key_columns=["id"])
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
 
         right_columns = {
-            "product_id": ColumnDefinition("product_id", "Product ID", pl.Int64, False),
-            "product_name": ColumnDefinition("product_name", "Product Name", pl.Utf8, False),
-            "cost": ColumnDefinition("cost", "Cost", pl.Float64, False),
-            "available": ColumnDefinition("available", "Available", pl.Boolean, False),
-            "release_date": ColumnDefinition("release_date", "Release Date", pl.Date, False),
+            "product_id": ColumnDefinition(name="product_id", alias="Product ID", datatype=pl.Int64, nullable=False),
+            "product_name": ColumnDefinition(name="product_name", alias="Product Name", datatype=pl.Utf8, nullable=False),
+            "cost": ColumnDefinition(name="cost", alias="Cost", datatype=pl.Float64, nullable=False),
+            "available": ColumnDefinition(name="available", alias="Available", datatype=pl.Boolean, nullable=False),
+            "release_date": ColumnDefinition(name="release_date", alias="Release Date", datatype=pl.Date, nullable=False),
         }
-        right_schema = ComparisonSchema(columns=right_columns, primary_key_columns=["product_id"])
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["product_id"])
 
         mappings = [
-            ColumnMapping("id", "product_id", "id"),
-            ColumnMapping("name", "product_name", "name"),
-            ColumnMapping("price", "cost", "price"),
-            ColumnMapping("in_stock", "available", "in_stock"),
-            ColumnMapping("created_date", "release_date", "created_date"),
+            ColumnMapping(left="id", right="product_id", name="id"),
+            ColumnMapping(left="name", right="product_name", name="name"),
+            ColumnMapping(left="price", right="cost", name="price"),
+            ColumnMapping(left="in_stock", right="available", name="in_stock"),
+            ColumnMapping(left="created_date", right="release_date", name="created_date"),
         ]
 
         config = ComparisonConfig(
@@ -228,26 +228,26 @@ class TestEndToEndScenarios:
         )
 
         left_columns = {
-            "id": ColumnDefinition("id", "ID", pl.Int64, False),
-            "value": ColumnDefinition("value", "Value", pl.Float64, False),
-            "category": ColumnDefinition("category", "Category", pl.Utf8, False),
-            "active": ColumnDefinition("active", "Active", pl.Boolean, False),
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "value": ColumnDefinition(name="value", alias="Value", datatype=pl.Float64, nullable=False),
+            "category": ColumnDefinition(name="category", alias="Category", datatype=pl.Utf8, nullable=False),
+            "active": ColumnDefinition(name="active", alias="Active", datatype=pl.Boolean, nullable=False),
         }
-        left_schema = ComparisonSchema(columns=left_columns, primary_key_columns=["id"])
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
 
         right_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "amount": ColumnDefinition("amount", "Amount", pl.Float64, False),
-            "type": ColumnDefinition("type", "Type", pl.Utf8, False),
-            "enabled": ColumnDefinition("enabled", "Enabled", pl.Boolean, False),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=False),
+            "type": ColumnDefinition(name="type", alias="Type", datatype=pl.Utf8, nullable=False),
+            "enabled": ColumnDefinition(name="enabled", alias="Enabled", datatype=pl.Boolean, nullable=False),
         }
-        right_schema = ComparisonSchema(columns=right_columns, primary_key_columns=["customer_id"])
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
 
         mappings = [
-            ColumnMapping("id", "customer_id", "id"),
-            ColumnMapping("value", "amount", "value"),
-            ColumnMapping("category", "type", "category"),
-            ColumnMapping("active", "enabled", "active"),
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="value", right="amount", name="value"),
+            ColumnMapping(left="category", right="type", name="category"),
+            ColumnMapping(left="active", right="enabled", name="active"),
         ]
 
         config = ComparisonConfig(
@@ -295,24 +295,24 @@ class TestEndToEndScenarios:
 
         # Create schemas
         left_columns = {
-            'id': ColumnDefinition('id', 'ID', pl.Int64, False),
-            'name': ColumnDefinition('name', 'Name', pl.Utf8, False),
-            'score': ColumnDefinition('score', 'Score', pl.Float64, False),
+            'id': ColumnDefinition(name='id', alias='ID', datatype=pl.Int64, nullable=False),
+            'name': ColumnDefinition(name='name', alias='Name', datatype=pl.Utf8, nullable=False),
+            'score': ColumnDefinition(name='score', alias='Score', datatype=pl.Float64, nullable=False),
         }
-        left_schema = ComparisonSchema(columns=left_columns, primary_key_columns=['id'])
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=['id'])
 
         right_columns = {
-            'student_id': ColumnDefinition('student_id', 'Student ID', pl.Int64, False),
-            'student_name': ColumnDefinition('student_name', 'Student Name', pl.Utf8, False),
-            'grade': ColumnDefinition('grade', 'Grade', pl.Float64, False),
+            'student_id': ColumnDefinition(name='student_id', alias='Student ID', datatype=pl.Int64, nullable=False),
+            'student_name': ColumnDefinition(name='student_name', alias='Student Name', datatype=pl.Utf8, nullable=False),
+            'grade': ColumnDefinition(name='grade', alias='Grade', datatype=pl.Float64, nullable=False),
         }
-        right_schema = ComparisonSchema(columns=right_columns, primary_key_columns=['student_id'])
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=['student_id'])
 
         # Create column mappings
         column_mappings = [
-            ColumnMapping('id', 'student_id', 'id'),
-            ColumnMapping('name', 'student_name', 'name'),
-            ColumnMapping('score', 'grade', 'score'),
+            ColumnMapping(left='id', right='student_id', name='id'),
+            ColumnMapping(left='name', right='student_name', name='name'),
+            ColumnMapping(left='score', right='grade', name='score'),
         ]
 
         config = ComparisonConfig(
@@ -369,20 +369,23 @@ class TestEndToEndScenarios:
             from splurge_lazyframe_compare.models.schema import ComparisonSchema
 
             # Create minimal schemas from DataFrames since we don't save full schema info
+            left_schema_obj = left_df.collect_schema()
+            right_schema_obj = right_df.collect_schema()
+
             left_schema = ComparisonSchema(
                 columns={
-                    col: ColumnDefinition(col, col, left_df.select(col).dtypes[0], True)
-                    for col in left_df.collect_schema().names()
+                    col: ColumnDefinition(name=col, alias=col, datatype=left_schema_obj.dtypes()[i], nullable=True)
+                    for i, col in enumerate(left_schema_obj.names())
                 },
-                primary_key_columns=['id']
+                pk_columns=['id']
             )
 
             right_schema = ComparisonSchema(
                 columns={
-                    col: ColumnDefinition(col, col, right_df.select(col).dtypes[0], True)
-                    for col in right_df.collect_schema().names()
+                    col: ColumnDefinition(name=col, alias=col, datatype=right_schema_obj.dtypes()[i], nullable=True)
+                    for i, col in enumerate(right_schema_obj.names())
                 },
-                primary_key_columns=['student_id']
+                pk_columns=['student_id']
             )
 
             # Reconstruct column mappings from loaded config
@@ -440,20 +443,20 @@ class TestEndToEndScenarios:
         )
 
         left_columns = {
-            "id": ColumnDefinition("id", "ID", pl.Int64, False),  # NOT NULL
-            "name": ColumnDefinition("name", "Name", pl.Utf8, False),  # NOT NULL
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),  # NOT NULL
+            "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),  # NOT NULL
         }
-        left_schema = ComparisonSchema(columns=left_columns, primary_key_columns=["id"])
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
 
         right_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "customer_name": ColumnDefinition("customer_name", "Customer Name", pl.Utf8, False),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "customer_name": ColumnDefinition(name="customer_name", alias="Customer Name", datatype=pl.Utf8, nullable=False),
         }
-        right_schema = ComparisonSchema(columns=right_columns, primary_key_columns=["customer_id"])
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
 
         mappings = [
-            ColumnMapping("id", "customer_id", "id"),
-            ColumnMapping("name", "customer_name", "name"),
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="name", right="customer_name", name="name"),
         ]
 
         config = ComparisonConfig(
@@ -501,20 +504,20 @@ class TestEndToEndScenarios:
         from splurge_lazyframe_compare import ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema
 
         left_columns = {
-            "id": ColumnDefinition("id", "ID", pl.Int64, False),
-            "value": ColumnDefinition("value", "Value", pl.Int64, False),
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "value": ColumnDefinition(name="value", alias="Value", datatype=pl.Int64, nullable=False),
         }
-        left_schema = ComparisonSchema(columns=left_columns, primary_key_columns=["id"])
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
 
         right_columns = {
-            "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-            "amount": ColumnDefinition("amount", "Amount", pl.Int64, False),
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Int64, nullable=False),
         }
-        right_schema = ComparisonSchema(columns=right_columns, primary_key_columns=["customer_id"])
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
 
         mappings = [
-            ColumnMapping("id", "customer_id", "id"),
-            ColumnMapping("value", "amount", "value"),
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="value", right="amount", name="value"),
         ]
 
         config = ComparisonConfig(

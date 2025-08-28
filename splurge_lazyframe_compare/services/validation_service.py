@@ -28,7 +28,7 @@ from splurge_lazyframe_compare.utils.constants import (
     UNIQUENESS_FAILED_MSG,
     ZERO_THRESHOLD,
 )
-from splurge_lazyframe_compare.utils.type_helpers import is_numeric_dtype
+from splurge_lazyframe_compare.utils.type_helpers import is_numeric_datatype
 
 
 class ValidationService(BaseService):
@@ -95,15 +95,15 @@ class ValidationService(BaseService):
             # Get the actual primary key columns for this DataFrame
             if df_name == LEFT_DF_NAME:
                 pk_columns = [
-                    mapping.left_column
+                    mapping.left
                     for mapping in config.column_mappings
-                    if mapping.comparison_name in config.primary_key_columns
+                    if mapping.name in config.primary_key_columns
                 ]
             else:
                 pk_columns = [
-                    mapping.right_column
+                    mapping.right
                     for mapping in config.column_mappings
-                    if mapping.comparison_name in config.primary_key_columns
+                    if mapping.name in config.primary_key_columns
                 ]
 
             # Check for duplicates
@@ -239,13 +239,15 @@ class ValidationService(BaseService):
         """
         try:
             range_violations = []
+            schema = df.collect_schema()
 
             for col_name, range_constraints in column_ranges.items():
-                if col_name not in df.columns:
+                if col_name not in schema.names():
                     continue
 
-                col_type = df.select(pl.col(col_name)).dtypes[FIRST_COLUMN_INDEX]
-                if not is_numeric_dtype(col_type):
+                col_index = schema.names().index(col_name)
+                col_type = schema.dtypes()[col_index]
+                if not is_numeric_datatype(col_type):
                     continue
 
                 # Check minimum value
@@ -300,12 +302,14 @@ class ValidationService(BaseService):
         """
         try:
             pattern_violations = []
+            schema = df.collect_schema()
 
             for col_name, pattern in column_patterns.items():
-                if col_name not in df.columns:
+                if col_name not in schema.names():
                     continue
 
-                col_type = df.select(pl.col(col_name)).dtypes[FIRST_COLUMN_INDEX]
+                col_index = schema.names().index(col_name)
+                col_type = schema.dtypes()[col_index]
                 if col_type != pl.Utf8:
                     continue
 
@@ -354,9 +358,10 @@ class ValidationService(BaseService):
         """
         try:
             uniqueness_violations = []
+            schema = df.collect_schema()
 
             for col_name in unique_columns:
-                if col_name not in df.columns:
+                if col_name not in schema.names():
                     continue
 
                 # Count duplicates

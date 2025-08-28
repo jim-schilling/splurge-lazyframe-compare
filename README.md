@@ -6,7 +6,7 @@ A comprehensive Python framework for comparing two Polars LazyFrames with config
 
 - **Service-oriented architecture** - Modular design with separate services for comparison, validation, reporting, and data preparation
 - **Multi-column primary key support** - Compare datasets using composite keys
-- **Flexible schema definition** - Define friendly names and data types for columns
+- **Flexible schema definition** - Define friendly names and data types for columns using either direct Polars datatypes or human-readable string names
 - **Column-to-column mapping** - Map columns between datasets with different naming conventions
 - **Three core comparison patterns**:
   - Value differences (same keys, different values)
@@ -37,33 +37,33 @@ from splurge_lazyframe_compare import (
     ColumnMapping,
 )
 
-# Define schemas
+# Define schemas (demonstrating mixed datatype usage)
 left_schema = ComparisonSchema(
     columns={
-        "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
-        "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),
-        "amount": ColumnDefinition("amount", "Order Amount", pl.Float64, False),
-        "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),
+        "customer_id": ColumnDefinition("customer_id", "Customer ID", "Int64", False),  # String name
+        "order_date": ColumnDefinition("order_date", "Order Date", pl.Date, False),     # Direct datatype
+        "amount": ColumnDefinition("amount", "Order Amount", "Float64", False),         # String name
+        "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),            # Direct datatype
     },
     primary_key_columns=["customer_id", "order_date"]
 )
 
 right_schema = ComparisonSchema(
     columns={
-        "cust_id": ColumnDefinition("cust_id", "Customer ID", pl.Int64, False),
-        "order_dt": ColumnDefinition("order_dt", "Order Date", pl.Date, False),
-        "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False),
-        "order_status": ColumnDefinition("order_status", "Order Status", pl.Utf8, True),
+        "cust_id": ColumnDefinition("cust_id", "Customer ID", "Int64", False),          # String name
+        "order_dt": ColumnDefinition("order_dt", "Order Date", "Date", False),          # String name
+        "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False), # Direct datatype
+        "order_status": ColumnDefinition("order_status", "Order Status", "String", True), # String name
     },
     primary_key_columns=["cust_id", "order_dt"]
 )
 
 # Define column mappings
 mappings = [
-    ColumnMapping("customer_id", "cust_id", "customer_id"),
-    ColumnMapping("order_date", "order_dt", "order_date"),
-    ColumnMapping("amount", "total_amount", "amount"),
-    ColumnMapping("status", "order_status", "status"),
+    ColumnMapping(left="customer_id", right="cust_id", name="customer_id"),
+    ColumnMapping(left="order_date", right="order_dt", name="order_date"),
+    ColumnMapping(left="amount", right="total_amount", name="amount"),
+    ColumnMapping(left="status", right="order_status", name="status"),
 ]
 
 # Create configuration
@@ -250,12 +250,53 @@ schema = ComparisonSchema(
 #### `ColumnDefinition`
 Defines a column with metadata for comparison.
 
+**Using Direct Polars Datatypes:**
 ```python
 col_def = ColumnDefinition(
-    column_name="customer_id",
-    friendly_name="Customer ID",
-    polars_dtype=pl.Int64,
+    name="customer_id",
+    alias="Customer ID",
+    datatype=pl.Int64,
     nullable=False
+)
+```
+
+**Using String Datatype Names (Recommended):**
+```python
+# More readable and user-friendly
+col_def = ColumnDefinition(
+    name="customer_id",
+    alias="Customer ID",
+    datatype="Int64",  # String name instead of pl.Int64
+    nullable=False
+)
+
+# Supports all Polars datatypes
+complex_col = ColumnDefinition(
+    name="metadata",
+    alias="Metadata",
+    datatype="Struct",  # Complex datatype as string
+    nullable=True
+)
+
+timestamp_col = ColumnDefinition(
+    name="created_at",
+    alias="Created At",
+    datatype="Datetime",  # Automatically configured with defaults
+    nullable=False
+)
+```
+
+**Mixed Usage in Schemas:**
+```python
+schema = ComparisonSchema(
+    columns={
+        # Mix string names and direct datatypes
+        "id": ColumnDefinition("id", "ID", "Int64", False),  # String
+        "name": ColumnDefinition("name", "Name", pl.Utf8, True),  # Direct
+        "created": ColumnDefinition("created", "Created", "Datetime", False),  # String
+        "tags": ColumnDefinition("tags", "Tags", pl.List, True),  # Direct
+    },
+    primary_key_columns=["id"]
 )
 ```
 
@@ -264,9 +305,9 @@ Maps columns between left and right datasets.
 
 ```python
 mapping = ColumnMapping(
-    left_column="customer_id",
-    right_column="cust_id",
-    comparison_name="customer_id"
+    left="customer_id",
+    right="cust_id",
+    name="customer_id"
 )
 ```
 
@@ -440,7 +481,7 @@ See the `examples/` directory for comprehensive working examples demonstrating a
 
 ### Core Usage Examples
 - **`basic_comparison_example.py`** - Basic usage demonstration with schema definition, column mapping, and report generation
-- **`new_service_example.py`** - Service-oriented architecture patterns and dependency injection
+- **`service_example.py`** - Service-oriented architecture patterns and dependency injection
 
 ### Performance Examples
 - **`performance_comparison_example.py`** - Performance benchmarking with large datasets (100K+ records)
@@ -461,7 +502,7 @@ python examples/performance_comparison_example.py
 python examples/detailed_performance_benchmark.py
 
 # Service architecture
-python examples/new_service_example.py
+python examples/service_example.py
 
 # Tabulated reporting
 python examples/tabulated_report_example.py
