@@ -111,6 +111,10 @@ class ComparisonOrchestrator(BaseService):
         try:
             self._validate_inputs(config=config, left=left, right=right)
 
+            # Validate parameters
+            if max_samples < 0:
+                raise ValueError("max_samples must be non-negative")
+
             # Execute comparison
             result = self.compare_dataframes(
                 config=config,
@@ -231,12 +235,204 @@ class ComparisonOrchestrator(BaseService):
             filename: Path to save the HTML file.
         """
         try:
-            from splurge_lazyframe_compare.core.comparator import ComparisonReport
-            report_obj = ComparisonReport(result)
-            report_obj.export_to_html(filename)
+            self._export_result_to_html_file(result, filename)
 
         except Exception as e:
             self._handle_error(e, {"operation": "export_result_to_html", "filename": filename})
+
+    def _export_result_to_html_file(self, result: ComparisonResult, filename: str) -> None:
+        """Export comparison result to HTML file.
+
+        Args:
+            result: ComparisonResult object containing comparison data.
+            filename: Path to save the HTML file.
+        """
+        try:
+            # Generate HTML content
+            html_content = self._generate_html_report(result)
+
+            # Write to file
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+
+        except Exception as e:
+            self._handle_error(e, {"operation": "_export_result_to_html_file", "filename": filename})
+
+    def _generate_html_report(self, result: ComparisonResult) -> str:
+        """Generate HTML report content.
+
+        Args:
+            result: ComparisonResult object containing comparison data.
+
+        Returns:
+            HTML content as string.
+        """
+        try:
+            summary = result.summary
+
+            html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPLURGE LazyFrame Comparison Report</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }}
+        .section {{
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .metric-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }}
+        .metric-item {{
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }}
+        .metric-value {{
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }}
+        .metric-label {{
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }}
+        th, td {{
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }}
+        th {{
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }}
+        .status-good {{ color: #28a745; }}
+        .status-warning {{ color: #ffc107; }}
+        .status-error {{ color: #dc3545; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>SPLURGE LazyFrame Comparison Report</h1>
+        <p>Generated on {summary.comparison_timestamp}</p>
+    </div>
+
+    <div class="section">
+        <h2>📊 Record Counts</h2>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <div class="metric-value">{summary.total_left_records:,}</div>
+                <div class="metric-label">Left DataFrame Records</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value">{summary.total_right_records:,}</div>
+                <div class="metric-label">Right DataFrame Records</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value status-good">{summary.matching_records:,}</div>
+                <div class="metric-label">Matching Records</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔍 Comparison Results</h2>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <div class="metric-value {'status-warning' if summary.value_differences_count > 0 else 'status-good'}">{summary.value_differences_count:,}</div>
+                <div class="metric-label">Value Differences</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value {'status-warning' if summary.left_only_count > 0 else 'status-good'}">{summary.left_only_count:,}</div>
+                <div class="metric-label">Left-Only Records</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value {'status-warning' if summary.right_only_count > 0 else 'status-good'}">{summary.right_only_count:,}</div>
+                <div class="metric-label">Right-Only Records</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📈 Percentages (of Left DataFrame)</h2>
+        <div class="metric-grid">
+            <div class="metric-item">
+                <div class="metric-value status-good">{summary.matching_percentage:.1f}%</div>
+                <div class="metric-label">Matching</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value {'status-warning' if summary.differences_percentage > 0 else 'status-good'}">{summary.differences_percentage:.1f}%</div>
+                <div class="metric-label">Differences</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-value {'status-warning' if summary.left_only_percentage > 0 else 'status-good'}">{summary.left_only_percentage:.1f}%</div>
+                <div class="metric-label">Left-Only</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Summary</h2>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>Total Records Compared</td>
+                <td>{summary.total_left_records + summary.total_right_records:,}</td>
+                <td class="status-good">✓</td>
+            </tr>
+            <tr>
+                <td>Data Quality Score</td>
+                <td>{(summary.matching_records / max(summary.total_left_records, 1) * 100):.1f}%</td>
+                <td class="status-good">✓</td>
+            </tr>
+            <tr>
+                <td>Issues Found</td>
+                <td>{summary.value_differences_count + summary.left_only_count + summary.right_only_count:,}</td>
+                <td class="{'status-error' if (summary.value_differences_count + summary.left_only_count + summary.right_only_count) > 0 else 'status-good'}">{'⚠️' if (summary.value_differences_count + summary.left_only_count + summary.right_only_count) > 0 else '✓'}</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>"""
+
+            return html
+
+        except Exception as e:
+            self._handle_error(e, {"operation": "_generate_html_report"})
 
     def get_comparison_summary(self, *, result: ComparisonResult) -> str:
         """Get a quick summary of comparison results.

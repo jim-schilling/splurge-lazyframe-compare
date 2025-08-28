@@ -76,7 +76,7 @@ def export_lazyframe(
     elif format_name == "csv":
         lazyframe.sink_csv(file_path, **kwargs)
     elif format_name == "json":
-        lazyframe.sink_json(file_path, **kwargs)
+        lazyframe.sink_ndjson(file_path, **kwargs)
     else:
         raise ValueError(f"Unsupported format: {format_name}")
 
@@ -108,7 +108,7 @@ def import_lazyframe(
     elif format_name == "csv":
         return pl.scan_csv(file_path, **kwargs)
     elif format_name == "json":
-        return pl.scan_json(file_path, **kwargs)
+        return pl.scan_ndjson(file_path, **kwargs)
     else:
         raise ValueError(f"Unsupported format: {format_name}")
 

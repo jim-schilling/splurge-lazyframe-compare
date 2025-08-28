@@ -1,5 +1,6 @@
 """Reporting service for the comparison framework."""
 
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -303,7 +304,29 @@ class ReportingService(BaseService):
             Dictionary mapping result type to file path.
         """
         try:
+            # Validate format
+            from splurge_lazyframe_compare.utils.file_operations import FileOperationConstants
+            if format not in FileOperationConstants.SUPPORTED_FORMATS:
+                raise ValueError(f"Unsupported format: {format}. Supported formats are: {', '.join(FileOperationConstants.SUPPORTED_FORMATS)}")
+
             output_path = Path(output_dir)
+
+            # Validate that the output directory path is valid and accessible
+            parent_dir = output_path.parent
+
+            # For absolute paths, check if parent directory exists and is writable
+            if output_path.is_absolute():
+                if not parent_dir.exists():
+                    raise ValueError(f"Parent directory does not exist: {parent_dir}")
+                if not os.access(parent_dir, os.W_OK):
+                    raise ValueError(f"Parent directory is not writable: {parent_dir}")
+            else:
+                # For relative paths, check if parent directory exists and is writable
+                if str(parent_dir) != "." and not parent_dir.exists():
+                    raise ValueError(f"Parent directory does not exist: {parent_dir}")
+                if str(parent_dir) != "." and not os.access(parent_dir, os.W_OK):
+                    raise ValueError(f"Parent directory is not writable: {parent_dir}")
+
             output_path.mkdir(parents=True, exist_ok=True)
 
             timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)

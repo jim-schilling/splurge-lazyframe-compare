@@ -60,6 +60,26 @@ class ComparisonSummary:
     right_only_count: int
     comparison_timestamp: str
 
+    @property
+    def matching_percentage(self) -> float:
+        """Calculate the percentage of matching records."""
+        return (self.matching_records / max(self.total_left_records, 1)) * 100
+
+    @property
+    def differences_percentage(self) -> float:
+        """Calculate the percentage of records with differences."""
+        return (self.value_differences_count / max(self.total_left_records, 1)) * 100
+
+    @property
+    def left_only_percentage(self) -> float:
+        """Calculate the percentage of left-only records."""
+        return (self.left_only_count / max(self.total_left_records, 1)) * 100
+
+    @property
+    def right_only_percentage(self) -> float:
+        """Calculate the percentage of right-only records."""
+        return (self.right_only_count / max(self.total_right_records, 1)) * 100
+
     @classmethod
     def create(
         cls,
