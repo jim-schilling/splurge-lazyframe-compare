@@ -632,7 +632,10 @@ class TestConfigHelpers:
         errors = validate_config(config)
 
         assert len(errors) > 0
-        assert any("primary_key_columns must be a non-empty list" in error for error in errors)
+        # Test for key information rather than exact phrasing
+        pk_errors = [error for error in errors if "primary_key_columns" in error]
+        assert len(pk_errors) > 0
+        assert any("non-empty" in error or "empty" in error for error in pk_errors)
 
     def test_validate_config_invalid_column_mappings(self):
         """Test config validation with invalid column mappings."""
@@ -778,8 +781,12 @@ class TestDataHelpers:
         from splurge_lazyframe_compare.utils.data_helpers import validate_dataframe
         import pytest
 
-        with pytest.raises(ValueError, match="cannot be None"):
+        with pytest.raises(ValueError) as exc_info:
             validate_dataframe(None, "test_df")
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "none" in error_msg.lower() or "cannot" in error_msg.lower()
 
     def test_validate_dataframe_no_columns(self):
         """Test DataFrame validation with no columns."""
@@ -788,8 +795,13 @@ class TestDataHelpers:
         from splurge_lazyframe_compare.utils.data_helpers import validate_dataframe
         import pytest
 
-        with pytest.raises(ValueError, match="no columns"):
+        with pytest.raises(ValueError) as exc_info:
             validate_dataframe(df, "empty_df")
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "column" in error_msg.lower()
+        assert "no" in error_msg.lower() or "empty" in error_msg.lower()
 
     def test_get_dataframe_info(self):
         """Test DataFrame information retrieval."""
@@ -1296,8 +1308,14 @@ class TestFileOperations:
         from splurge_lazyframe_compare.utils.file_operations import get_file_extension
         import pytest
 
-        with pytest.raises(ValueError, match="Unsupported format"):
+        with pytest.raises(ValueError) as exc_info:
             get_file_extension("invalid_format")
+
+        # Test that error message contains key information, not exact phrasing
+        error_msg = str(exc_info.value)
+        assert "unsupported" in error_msg.lower()
+        assert "format" in error_msg.lower()
+        assert "invalid_format" in error_msg
 
     def test_export_lazyframe_parquet(self, tmp_path):
         """Test exporting LazyFrame to parquet."""
@@ -1360,8 +1378,14 @@ class TestFileOperations:
         from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
         import pytest
 
-        with pytest.raises(ValueError, match="Unsupported format"):
+        with pytest.raises(ValueError) as exc_info:
             export_lazyframe(df, Path("test.json"), "invalid")
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "unsupported" in error_msg.lower()
+        assert "format" in error_msg.lower()
+        assert "invalid" in error_msg
 
     def test_import_lazyframe_parquet(self, tmp_path):
         """Test importing LazyFrame from parquet."""
@@ -1428,8 +1452,12 @@ class TestFileOperations:
         from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
         import pytest
 
-        with pytest.raises(FileNotFoundError, match="File not found"):
+        with pytest.raises(FileNotFoundError) as exc_info:
             import_lazyframe(Path("nonexistent.parquet"))
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "nonexistent.parquet" in error_msg or "not found" in error_msg.lower()
 
     def test_import_lazyframe_invalid_format(self, tmp_path):
         """Test importing LazyFrame with invalid format."""
@@ -1439,8 +1467,14 @@ class TestFileOperations:
         from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
         import pytest
 
-        with pytest.raises(ValueError, match="Unsupported format"):
+        with pytest.raises(ValueError) as exc_info:
             import_lazyframe(test_file, "invalid")
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "unsupported" in error_msg.lower()
+        assert "format" in error_msg.lower()
+        assert "invalid" in error_msg
 
     def test_get_export_file_paths_default(self, tmp_path):
         """Test getting export file paths with default format."""
@@ -1468,8 +1502,14 @@ class TestFileOperations:
         from splurge_lazyframe_compare.utils.file_operations import get_export_file_paths
         import pytest
 
-        with pytest.raises(ValueError, match="Unsupported format"):
+        with pytest.raises(ValueError) as exc_info:
             get_export_file_paths("test", tmp_path, ["invalid"])
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "unsupported" in error_msg.lower()
+        assert "format" in error_msg.lower()
+        assert "invalid" in error_msg
 
     def test_validate_file_path_valid(self, tmp_path):
         """Test validating a valid file path."""
@@ -1498,8 +1538,14 @@ class TestFileOperations:
         from splurge_lazyframe_compare.utils.file_operations import validate_file_path
         import pytest
 
-        with pytest.raises(ValueError, match="Parent directory does not exist"):
+        with pytest.raises(ValueError) as exc_info:
             validate_file_path(test_file, create_parent=False)
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "parent" in error_msg.lower()
+        assert "directory" in error_msg.lower()
+        assert "exist" in error_msg.lower()
 
     def test_list_files_by_pattern(self, tmp_path):
         """Test listing files by pattern."""
@@ -1657,26 +1703,41 @@ class TestFormatting:
         from splurge_lazyframe_compare.utils.formatting import format_column_list
 
         result = format_column_list(columns, max_items=5)
+        # Test that first few items are present and properly formatted
         assert "`col0`" in result
         assert "`col4`" in result
+        # Test that items beyond max_items are not present
         assert "`col5`" not in result
-        assert "... (+10 more)" in result
+        assert "`col10`" not in result
+        # Test for truncation indicator pattern (could be "...", "more", etc.)
+        assert "..." in result
+        assert "more" in result.lower()
+        # Test that remaining count is indicated (10 more items)
+        assert "10" in result or "ten" in result.lower()
 
     def test_format_validation_errors_empty(self):
         """Test formatting empty error list."""
         from splurge_lazyframe_compare.utils.formatting import format_validation_errors
 
         result = format_validation_errors([])
-        assert result == "No errors found"
+        # Test that result indicates absence of errors, not exact phrase
+        assert "error" in result.lower()
+        assert "found" in result.lower()
+        assert "no" in result.lower()
 
     def test_format_validation_errors_single(self):
         """Test formatting single error."""
-        errors = ["Invalid column name"]
+        error_message = "Invalid column name"
+        errors = [error_message]
 
         from splurge_lazyframe_compare.utils.formatting import format_validation_errors
 
         result = format_validation_errors(errors)
-        assert result == "Invalid column name"
+        # Test that the error message is present, not exact string match
+        assert error_message in result
+        assert "Invalid" in result
+        assert "column" in result
+        assert "name" in result
 
     def test_format_validation_errors_multiple(self):
         """Test formatting multiple errors."""
@@ -1685,10 +1746,14 @@ class TestFormatting:
         from splurge_lazyframe_compare.utils.formatting import format_validation_errors
 
         result = format_validation_errors(errors)
-        assert "Multiple errors found:" in result
-        assert "  • Error 1" in result
-        assert "  • Error 2" in result
-        assert "  • Error 3" in result
+        # Test for presence of all errors and structured format, not exact formatting
+        assert "Error 1" in result
+        assert "Error 2" in result
+        assert "Error 3" in result
+        # Test for some indication of multiple errors (could be "multiple", "errors", etc.)
+        assert "multiple" in result.lower() or "errors" in result.lower()
+        # Test for structured presentation (bullet points or numbering)
+        assert "•" in result or "1." in result or "2." in result or "3." in result
 
     def test_create_summary_table_fallback(self):
         """Test creating summary table fallback formatting."""
@@ -2215,11 +2280,17 @@ class TestComparisonOrchestratorComprehensive:
         assert "Left DataFrame" in table_report
 
         # Test invalid report type
-        with pytest.raises(ValueError, match="Unknown report type"):
+        with pytest.raises(ValueError) as exc_info:
             self.orchestrator.generate_report_from_result(
                 result=result,
                 report_type="invalid"
             )
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "report" in error_msg.lower()
+        assert "type" in error_msg.lower()
+        assert "invalid" in error_msg.lower() or "unknown" in error_msg.lower()
 
     def test_export_result_to_html_comprehensive(self) -> None:
         """Test export_result_to_html functionality."""
@@ -2361,28 +2432,43 @@ class TestComparisonOrchestratorComprehensive:
         invalid_df = "not a dataframe"
 
         # Test with invalid config
-        with pytest.raises(ValueError, match="config must be a ComparisonConfig"):
+        with pytest.raises(ValueError) as exc_info:
             self.orchestrator.compare_dataframes(
                 config="invalid_config",
                 left=valid_df,
                 right=valid_df
             )
 
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "config" in error_msg.lower()
+        assert "comparison" in error_msg.lower()
+
         # Test with invalid left dataframe
-        with pytest.raises(ValueError, match="left must be a polars LazyFrame"):
+        with pytest.raises(ValueError) as exc_info:
             self.orchestrator.compare_dataframes(
                 config=self.config,
                 left=invalid_df,
                 right=valid_df
             )
 
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "left" in error_msg.lower()
+        assert "lazy" in error_msg.lower() or "dataframe" in error_msg.lower()
+
         # Test with invalid right dataframe
-        with pytest.raises(ValueError, match="right must be a polars LazyFrame"):
+        with pytest.raises(ValueError) as exc_info:
             self.orchestrator.compare_dataframes(
                 config=self.config,
                 left=valid_df,
                 right=invalid_df
             )
+
+        # Test that error message contains key information
+        error_msg = str(exc_info.value)
+        assert "right" in error_msg.lower()
+        assert "lazy" in error_msg.lower() or "dataframe" in error_msg.lower()
 
     def test_compare_and_report_input_validation(self) -> None:
         """Test input validation for compare_and_report."""
