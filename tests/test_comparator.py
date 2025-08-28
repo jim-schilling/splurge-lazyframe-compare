@@ -4,15 +4,15 @@ import polars as pl
 import pytest
 
 from splurge_lazyframe_compare.core.comparator import LazyFrameComparator
+from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
+    PrimaryKeyViolationError,
+    SchemaValidationError,
+)
 from splurge_lazyframe_compare.models.schema import (
     ColumnDefinition,
     ColumnMapping,
     ComparisonConfig,
     ComparisonSchema,
-)
-from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
-    PrimaryKeyViolationError,
-    SchemaValidationError,
 )
 
 
@@ -126,14 +126,14 @@ class TestLazyFrameComparator:
 
         # Get the value differences DataFrame
         value_diff_df = results.value_differences.collect()
-        
+
         # Check that columns are in the correct alternating order
         expected_columns = [
             "PK_customer_id", "PK_order_date",  # Primary key columns first
             "L_amount", "R_amount",             # Then alternating Left/Right
             "L_status", "R_status"
         ]
-        
+
         assert list(value_diff_df.columns) == expected_columns
 
     def test_left_only_records_clean_columns(self) -> None:
@@ -164,13 +164,13 @@ class TestLazyFrameComparator:
 
         # Get the left-only records DataFrame
         left_only_df = results.left_only_records.collect()
-        
+
         # Check that columns are clean (no right columns)
         expected_columns = [
             "PK_customer_id", "PK_order_date",  # Primary key columns first
             "L_amount", "L_status"              # Then left columns only
         ]
-        
+
         assert list(left_only_df.columns) == expected_columns
 
     def test_right_only_records_clean_columns(self) -> None:
@@ -201,13 +201,13 @@ class TestLazyFrameComparator:
 
         # Get the right-only records DataFrame
         right_only_df = results.right_only_records.collect()
-        
+
         # Check that columns are clean (no left columns)
         expected_columns = [
             "PK_customer_id", "PK_order_date",  # Primary key columns first
             "R_amount", "R_status"              # Then right columns only
         ]
-        
+
         assert list(right_only_df.columns) == expected_columns
 
     def test_compare_with_value_differences(self) -> None:

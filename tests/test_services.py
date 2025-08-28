@@ -1,15 +1,16 @@
 """Unit tests for service classes."""
 
-import pytest
 import polars as pl
+import pytest
 
+from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
 from splurge_lazyframe_compare.models.schema import ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema
 from splurge_lazyframe_compare.services import (
-    ValidationService,
+    ComparisonOrchestrator,
+    ComparisonService,
     DataPreparationService,
     ReportingService,
-    ComparisonService,
-    ComparisonOrchestrator,
+    ValidationService,
 )
 
 
@@ -99,7 +100,7 @@ class TestValidationService:
 
         service = ValidationService()
 
-        with pytest.raises(Exception):  # Should raise SchemaValidationError
+        with pytest.raises(SchemaValidationError):
             service.validate_dataframe_schema(df=df, schema=schema, df_name="Test")
 
     def test_validate_completeness(self, sample_dataframes):

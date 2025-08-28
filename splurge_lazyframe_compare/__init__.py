@@ -5,7 +5,7 @@ configurable schemas, primary keys, and column mappings.
 """
 
 # Service-based architecture
-from .core.comparator import LazyFrameComparator, ComparisonReport
+from .core.comparator import ComparisonReport, LazyFrameComparator
 from .models.comparison import ComparisonResult, ComparisonSummary
 from .models.schema import (
     ColumnDefinition,
@@ -14,13 +14,13 @@ from .models.schema import (
     ComparisonSchema,
 )
 from .models.validation import ValidationResult
-from .services.orchestrator import ComparisonOrchestrator
 from .services import (
     ComparisonService,
     DataPreparationService,
     ReportingService,
     ValidationService,
 )
+from .services.orchestrator import ComparisonOrchestrator
 
 __version__ = "2025.1.0"
 

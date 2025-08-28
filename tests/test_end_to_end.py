@@ -1,10 +1,18 @@
 """End-to-end tests for complete user workflows."""
 
-import pytest
-import polars as pl
-from pathlib import Path
 import tempfile
-import json
+from pathlib import Path
+
+import polars as pl
+import pytest
+
+from splurge_lazyframe_compare import (
+    ColumnDefinition,
+    ColumnMapping,
+    ComparisonConfig,
+    ComparisonSchema,
+    LazyFrameComparator,
+)
 
 
 class TestEndToEndScenarios:
@@ -32,11 +40,6 @@ class TestEndToEndScenarios:
         right_df = pl.LazyFrame(right_data)
 
         # Step 1: Set up configuration
-        from splurge_lazyframe_compare import (
-            ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema,
-            LazyFrameComparator
-        )
-
         # Define schemas
         left_columns = {
             "customer_id": ColumnDefinition("customer_id", "Customer ID", pl.Int64, False),
@@ -98,7 +101,7 @@ class TestEndToEndScenarios:
             assert len(exported_files) == 4  # value_differences, left_only, right_only, summary
 
             # Verify files exist and have content
-            for file_type, file_path in exported_files.items():
+            for _, file_path in exported_files.items():
                 assert Path(file_path).exists()
                 assert Path(file_path).stat().st_size > 0
 
@@ -137,8 +140,11 @@ class TestEndToEndScenarios:
 
         # Create configuration
         from splurge_lazyframe_compare import (
-            ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema,
-            ComparisonOrchestrator
+            ColumnDefinition,
+            ColumnMapping,
+            ComparisonConfig,
+            ComparisonOrchestrator,
+            ComparisonSchema,
         )
 
         left_columns = {
@@ -214,8 +220,11 @@ class TestEndToEndScenarios:
 
         # Create configuration
         from splurge_lazyframe_compare import (
-            ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema,
-            ComparisonOrchestrator
+            ColumnDefinition,
+            ColumnMapping,
+            ComparisonConfig,
+            ComparisonOrchestrator,
+            ComparisonSchema,
         )
 
         left_columns = {
@@ -262,8 +271,14 @@ class TestEndToEndScenarios:
     def test_configuration_management_scenario(self):
         """Test complete configuration management workflow."""
         # Step 1: Create configuration manually
-        from splurge_lazyframe_compare.models.schema import ComparisonSchema, ColumnMapping, ComparisonConfig, ColumnDefinition
         import polars as pl
+
+        from splurge_lazyframe_compare.models.schema import (
+            ColumnDefinition,
+            ColumnMapping,
+            ComparisonConfig,
+            ComparisonSchema,
+        )
 
         # Create test DataFrames
         left_df = pl.LazyFrame({
@@ -346,7 +361,7 @@ class TestEndToEndScenarios:
             print("Loaded config:", loaded_config)
 
             # Step 5: Convert loaded config back to ComparisonConfig and use it
-            from splurge_lazyframe_compare import ComparisonOrchestrator, ComparisonConfig
+            from splurge_lazyframe_compare import ComparisonConfig, ComparisonOrchestrator
 
             # The loaded config is already in the right format, just use it directly
             # But ComparisonConfig expects schema objects, not dictionaries
@@ -417,8 +432,11 @@ class TestEndToEndScenarios:
 
         # Create configuration
         from splurge_lazyframe_compare import (
-            ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema,
-            ComparisonOrchestrator
+            ColumnDefinition,
+            ColumnMapping,
+            ComparisonConfig,
+            ComparisonOrchestrator,
+            ComparisonSchema,
         )
 
         left_columns = {
@@ -449,7 +467,8 @@ class TestEndToEndScenarios:
         orchestrator = ComparisonOrchestrator()
 
         # Should raise validation error due to NULL values
-        with pytest.raises(Exception):
+        from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
+        with pytest.raises(SchemaValidationError):
             orchestrator.compare_dataframes(
                 config=config,
                 left=bad_df,
@@ -479,9 +498,7 @@ class TestEndToEndScenarios:
         })
 
         # Create configuration
-        from splurge_lazyframe_compare import (
-            ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema
-        )
+        from splurge_lazyframe_compare import ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema
 
         left_columns = {
             "id": ColumnDefinition("id", "ID", pl.Int64, False),
@@ -510,9 +527,9 @@ class TestEndToEndScenarios:
         # Create custom services
         from splurge_lazyframe_compare.services import (
             ComparisonService,
-            ValidationService,
             DataPreparationService,
             ReportingService,
+            ValidationService,
         )
 
         # Custom validation service with special logic

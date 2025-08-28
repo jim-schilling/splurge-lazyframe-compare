@@ -1,19 +1,34 @@
 """Integration tests for complete comparison workflows."""
 
-import pytest
-import polars as pl
-from pathlib import Path
-import tempfile
 import os
+import tempfile
+
+import polars as pl
+import pytest
 
 from splurge_lazyframe_compare import (
-    LazyFrameComparator,
-    ComparisonResult,
-    ComparisonConfig,
-    ComparisonSchema,
     ColumnDefinition,
     ColumnMapping,
+    ComparisonConfig,
     ComparisonOrchestrator,
+    ComparisonResult,
+    ComparisonSchema,
+    ComparisonSummary,
+    LazyFrameComparator,
+)
+from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
+from splurge_lazyframe_compare.services import (
+    ComparisonService,
+    DataPreparationService,
+    ValidationService,
+)
+from splurge_lazyframe_compare.utils import (
+    compare_dataframe_shapes,
+    create_config_from_dataframes,
+    create_default_config,
+    estimate_dataframe_memory,
+    get_dataframe_info,
+    validate_config,
 )
 
 
@@ -197,12 +212,6 @@ class TestCompleteWorkflow:
         """Test configuration creation and validation workflow."""
         left_df, right_df = complex_dataframes
 
-        from splurge_lazyframe_compare.utils import (
-            create_config_from_dataframes,
-            validate_config,
-            create_default_config
-        )
-
         # Create config from DataFrames
         config = create_config_from_dataframes(
             left_df=left_df,
@@ -228,7 +237,7 @@ class TestCompleteWorkflow:
         orchestrator = ComparisonOrchestrator()
 
         # Should handle errors gracefully
-        with pytest.raises(Exception):  # Should raise validation error
+        with pytest.raises(SchemaValidationError):  # Should raise validation error
             orchestrator.compare_dataframes(
                 config=complex_config,
                 left=invalid_df,
@@ -238,13 +247,6 @@ class TestCompleteWorkflow:
     def test_service_customization_workflow(self, complex_dataframes, complex_config):
         """Test workflow with customized services."""
         left_df, right_df = complex_dataframes
-
-        from splurge_lazyframe_compare.services import (
-            ComparisonService,
-            ValidationService,
-            DataPreparationService,
-            ReportingService,
-        )
 
         # Create customized services
         validation_service = ValidationService()
@@ -295,8 +297,6 @@ class TestDataQualityWorkflow:
         """Test data quality validation in complete workflow."""
         left_df, right_df = complex_dataframes
 
-        from splurge_lazyframe_compare.services import ValidationService
-
         service = ValidationService()
 
         # Test completeness validation
@@ -321,8 +321,6 @@ class TestDataQualityWorkflow:
     def test_comprehensive_validation_workflow(self, complex_dataframes):
         """Test comprehensive validation workflow."""
         df, _ = complex_dataframes
-
-        from splurge_lazyframe_compare.services import ValidationService
 
         service = ValidationService()
 
@@ -349,12 +347,6 @@ class TestUtilityIntegrationWorkflow:
         """Test DataFrame analysis utilities."""
         df, _ = complex_dataframes
 
-        from splurge_lazyframe_compare.utils import (
-            get_dataframe_info,
-            compare_dataframe_shapes,
-            estimate_dataframe_memory,
-        )
-
         # Get DataFrame info
         info = get_dataframe_info(df)
         assert info["row_count"] == 6
@@ -375,8 +367,6 @@ class TestUtilityIntegrationWorkflow:
         """Test formatting utilities in complete workflow."""
         left_df, right_df = complex_dataframes
 
-        from splurge_lazyframe_compare.services import ComparisonOrchestrator
-
         orchestrator = ComparisonOrchestrator()
 
         # Generate report (uses formatting utilities internally)
@@ -393,8 +383,6 @@ class TestUtilityIntegrationWorkflow:
         assert "5" in report  # Formatted record count
 
         # Generate table (uses formatting utilities)
-        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
-
         summary = ComparisonSummary(
             total_left_records=6,
             total_right_records=5,

@@ -1,7 +1,6 @@
 """Schema definition models for the comparison framework."""
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 import polars as pl
 
@@ -94,10 +93,10 @@ class ComparisonSchema:
         primary_key_columns: List of column names that form the primary key.
     """
 
-    columns: Dict[str, ColumnDefinition]
-    primary_key_columns: List[str]
+    columns: dict[str, ColumnDefinition]
+    primary_key_columns: list[str]
 
-    def validate_schema(self, df: pl.LazyFrame) -> List[str]:
+    def validate_schema(self, df: pl.LazyFrame) -> list[str]:
         """Validate DataFrame against schema, return validation errors.
 
         Args:
@@ -144,7 +143,7 @@ class ComparisonSchema:
 
         return errors
 
-    def get_primary_key_definition(self) -> List[ColumnDefinition]:
+    def get_primary_key_definition(self) -> list[ColumnDefinition]:
         """Get column definitions for primary key columns.
 
         Returns:
@@ -152,7 +151,7 @@ class ComparisonSchema:
         """
         return [self.columns[col] for col in self.primary_key_columns]
 
-    def get_compare_columns(self) -> List[str]:
+    def get_compare_columns(self) -> list[str]:
         """Get non-primary-key columns for comparison.
 
         Returns:
@@ -177,11 +176,11 @@ class ComparisonConfig:
 
     left_schema: ComparisonSchema
     right_schema: ComparisonSchema
-    column_mappings: List[ColumnMapping]
-    primary_key_columns: List[str]
+    column_mappings: list[ColumnMapping]
+    primary_key_columns: list[str]
     ignore_case: bool = SchemaConstants.DEFAULT_IGNORE_CASE
     null_equals_null: bool = True
-    tolerance: Optional[Dict[str, float]] = None
+    tolerance: dict[str, float] | None = None
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""

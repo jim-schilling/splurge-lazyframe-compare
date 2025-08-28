@@ -1,6 +1,6 @@
 """Formatting utilities for the comparison framework."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import polars as pl
 
@@ -82,7 +82,7 @@ def truncate_string(text: str, max_length: int = FormattingConstants.MAX_COLUMN_
 def format_dataframe_sample(
     df: pl.LazyFrame,
     max_rows: int = 10,
-    max_cols: Optional[int] = None,
+    max_cols: int | None = None,
     truncate_values: bool = True
 ) -> str:
     """Format a DataFrame sample for display.
@@ -111,7 +111,7 @@ def format_dataframe_sample(
     return str(sample_df)
 
 
-def format_column_list(columns: List[str], max_items: int = 10) -> str:
+def format_column_list(columns: list[str], max_items: int = 10) -> str:
     """Format a list of column names for display.
 
     Args:
@@ -130,7 +130,7 @@ def format_column_list(columns: List[str], max_items: int = 10) -> str:
     return ", ".join(f"`{col}`" for col in visible_cols) + f" ... (+{remaining_count} more)"
 
 
-def format_validation_errors(errors: List[str]) -> str:
+def format_validation_errors(errors: list[str]) -> str:
     """Format a list of validation errors for display.
 
     Args:
@@ -150,8 +150,8 @@ def format_validation_errors(errors: List[str]) -> str:
 
 
 def create_summary_table(
-    data: Dict[str, Any],
-    headers: Optional[List[str]] = None,
+    data: dict[str, Any],
+    headers: list[str] | None = None,
     table_format: str = FormattingConstants.DEFAULT_TABLE_FORMAT
 ) -> str:
     """Create a formatted table from dictionary data.

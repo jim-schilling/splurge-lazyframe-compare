@@ -1,13 +1,11 @@
 """Data preparation service for the comparison framework."""
 
-from typing import List, Tuple
 
 import polars as pl
 
 from splurge_lazyframe_compare.models.schema import ComparisonConfig
 from splurge_lazyframe_compare.services.base_service import BaseService
 from splurge_lazyframe_compare.utils.constants import (
-    JOIN_INNER,
     LEFT_PREFIX,
     PRIMARY_KEY_PREFIX,
     RIGHT_PREFIX,
@@ -37,7 +35,7 @@ class DataPreparationService(BaseService):
         left: pl.LazyFrame,
         right: pl.LazyFrame,
         config: ComparisonConfig
-    ) -> Tuple[pl.LazyFrame, pl.LazyFrame]:
+    ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
         """Prepare and validate DataFrames for comparison.
 
         Args:
@@ -70,7 +68,7 @@ class DataPreparationService(BaseService):
         left: pl.LazyFrame,
         right: pl.LazyFrame,
         config: ComparisonConfig
-    ) -> Tuple[pl.LazyFrame, pl.LazyFrame]:
+    ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
         """Apply column mappings and create standardized column names.
 
         Args:
@@ -147,7 +145,7 @@ class DataPreparationService(BaseService):
         except Exception as e:
             self._handle_error(e, {"operation": "case_insensitive_transformation"})
 
-    def get_alternating_column_order(self, *, config: ComparisonConfig) -> List[str]:
+    def get_alternating_column_order(self, *, config: ComparisonConfig) -> list[str]:
         """Get column order with alternating Left/Right columns for non-primary key columns.
 
         Args:
@@ -172,7 +170,7 @@ class DataPreparationService(BaseService):
 
         return column_order
 
-    def get_left_only_column_order(self, *, config: ComparisonConfig) -> List[str]:
+    def get_left_only_column_order(self, *, config: ComparisonConfig) -> list[str]:
         """Get column order for left-only records (primary keys + left columns only).
 
         Args:
@@ -196,7 +194,7 @@ class DataPreparationService(BaseService):
 
         return column_order
 
-    def get_right_only_column_order(self, *, config: ComparisonConfig) -> List[str]:
+    def get_right_only_column_order(self, *, config: ComparisonConfig) -> list[str]:
         """Get column order for right-only records (primary keys + right columns only).
 
         Args:

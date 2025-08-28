@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import polars as pl
 from tabulate import tabulate
@@ -10,38 +9,31 @@ from tabulate import tabulate
 from splurge_lazyframe_compare.models.comparison import ComparisonResult
 from splurge_lazyframe_compare.services.base_service import BaseService
 from splurge_lazyframe_compare.utils.constants import (
+    COMPARISON_RESULTS_SECTION,
     DEFAULT_FORMAT,
     DEFAULT_MAX_SAMPLES,
     DEFAULT_OUTPUT_DIR,
-    FORMAT_CSV,
-    FORMAT_JSON,
-    FORMAT_PARQUET,
     JSON_INDENT,
+    LEFT_ONLY_FILENAME,
     LEFT_ONLY_SECTION,
-
+    PERCENTAGES_SECTION,
+    RECORD_COUNTS_SECTION,
     REPORT_HEADER,
     REPORT_HEADER_LENGTH,
     REPORT_TITLE,
+    RIGHT_ONLY_FILENAME,
     RIGHT_ONLY_SECTION,
     SECTION_SEPARATOR,
-    SECTION_SEPARATOR_LENGTH,
+    SUMMARY_FILENAME,
     TIMESTAMP_FORMAT,
+    VALUE_DIFFERENCES_FILENAME,
     VALUE_DIFFERENCES_SECTION,
     ZERO_THRESHOLD,
-    COMPARISON_RESULTS_SECTION,
-    RECORD_COUNTS_SECTION,
-    PERCENTAGES_SECTION,
-    VALUE_DIFFERENCES_FILENAME,
-    LEFT_ONLY_FILENAME,
-    RIGHT_ONLY_FILENAME,
-    SUMMARY_FILENAME,
 )
 from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
 from splurge_lazyframe_compare.utils.formatting import (
-    format_dataframe_sample,
     format_large_number,
     format_percentage,
-    format_validation_errors,
 )
 
 
@@ -299,7 +291,7 @@ class ReportingService(BaseService):
         results: ComparisonResult,
         format: str = DEFAULT_FORMAT,
         output_dir: str = DEFAULT_OUTPUT_DIR
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Export results to files.
 
         Args:

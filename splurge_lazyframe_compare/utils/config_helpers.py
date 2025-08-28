@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import polars as pl
 
@@ -29,7 +29,7 @@ class ConfigConstants:
     VALID_CASE_POLICIES: list = ["sensitive", "insensitive", "preserve"]
 
 
-def load_config_from_file(config_path: Union[str, Path]) -> Dict[str, Any]:
+def load_config_from_file(config_path: str | Path) -> dict[str, Any]:
     """Load configuration from a JSON file.
 
     Args:
@@ -49,14 +49,14 @@ def load_config_from_file(config_path: Union[str, Path]) -> Dict[str, Any]:
 
     try:
         import json
-        with open(config_path, 'r') as f:
+        with open(config_path) as f:
             config = json.load(f)
         return config
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in configuration file: {e}") from e
 
 
-def save_config_to_file(config: Dict[str, Any], config_path: Union[str, Path]) -> None:
+def save_config_to_file(config: dict[str, Any], config_path: str | Path) -> None:
     """Save configuration to a JSON file.
 
     Args:
@@ -74,7 +74,7 @@ def save_config_to_file(config: Dict[str, Any], config_path: Union[str, Path]) -
         raise ValueError(f"Failed to save configuration: {e}") from e
 
 
-def merge_configs(base_config: Dict[str, Any], override_config: Dict[str, Any]) -> Dict[str, Any]:
+def merge_configs(base_config: dict[str, Any], override_config: dict[str, Any]) -> dict[str, Any]:
     """Merge two configuration dictionaries.
 
     Args:
@@ -97,7 +97,7 @@ def merge_configs(base_config: Dict[str, Any], override_config: Dict[str, Any]) 
     return merged
 
 
-def get_env_config(prefix: str = ConfigConstants.ENV_PREFIX) -> Dict[str, Any]:
+def get_env_config(prefix: str = ConfigConstants.ENV_PREFIX) -> dict[str, Any]:
     """Load configuration from environment variables.
 
     Args:
@@ -134,7 +134,7 @@ def get_env_config(prefix: str = ConfigConstants.ENV_PREFIX) -> Dict[str, Any]:
     return config
 
 
-def set_nested_config_value(config: Dict[str, Any], key_path: str, value: Any) -> None:
+def set_nested_config_value(config: dict[str, Any], key_path: str, value: Any) -> None:
     """Set a value in a nested configuration dictionary using dot notation.
 
     Args:
@@ -155,7 +155,7 @@ def set_nested_config_value(config: Dict[str, Any], key_path: str, value: Any) -
     current[keys[-1]] = value
 
 
-def validate_config(config: Dict[str, Any]) -> list[str]:
+def validate_config(config: dict[str, Any]) -> list[str]:
     """Validate a configuration dictionary.
 
     Args:
@@ -210,13 +210,13 @@ def validate_config(config: Dict[str, Any]) -> list[str]:
             errors.append("tolerance must be a dictionary")
         else:
             for col, tol in tolerance.items():
-                if not isinstance(tol, (int, float)) or tol <= 0:
+                if not isinstance(tol, int | float) or tol <= 0:
                     errors.append(f"tolerance for column '{col}' must be a positive number")
 
     return errors
 
 
-def create_default_config() -> Dict[str, Any]:
+def create_default_config() -> dict[str, Any]:
     """Create a default configuration template.
 
     Returns:
@@ -248,7 +248,7 @@ def create_default_config() -> Dict[str, Any]:
     }
 
 
-def apply_environment_overrides(config: Dict[str, Any]) -> Dict[str, Any]:
+def apply_environment_overrides(config: dict[str, Any]) -> dict[str, Any]:
     """Apply environment variable overrides to configuration.
 
     Args:
@@ -264,7 +264,7 @@ def apply_environment_overrides(config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def get_config_value(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     key_path: str,
     default_value: Any = None
 ) -> Any:
@@ -294,7 +294,7 @@ def create_config_from_dataframes(
     right_df: pl.LazyFrame,
     primary_keys: list[str],
     auto_map_columns: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a configuration from DataFrame schemas.
 
     Args:

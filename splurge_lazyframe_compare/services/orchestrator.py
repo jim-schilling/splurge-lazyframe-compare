@@ -1,6 +1,5 @@
 """Main orchestrator service for the comparison framework."""
 
-from typing import Optional
 
 import polars as pl
 
@@ -23,8 +22,8 @@ class ComparisonOrchestrator(BaseService):
     def __init__(
         self,
         *,
-        comparison_service: Optional[ComparisonService] = None,
-        reporting_service: Optional[ReportingService] = None
+        comparison_service: ComparisonService | None = None,
+        reporting_service: ReportingService | None = None
     ) -> None:
         """Initialize the comparison orchestrator.
 
@@ -211,10 +210,7 @@ class ComparisonOrchestrator(BaseService):
                     table_format=table_format
                 )
             elif report_type == "html":
-                from splurge_lazyframe_compare.services.reporting_service import ComparisonReport
-                report_obj = ComparisonReport(result)
-                # This would need to be implemented in ComparisonReport
-                # For now, return summary report
+                # HTML reporting not yet implemented, return summary report
                 return self.reporting_service.generate_summary_report(results=result)
             else:
                 raise ValueError(f"Unknown report type: {report_type}")
@@ -235,7 +231,7 @@ class ComparisonOrchestrator(BaseService):
             filename: Path to save the HTML file.
         """
         try:
-            from splurge_lazyframe_compare.services.reporting_service import ComparisonReport
+            from splurge_lazyframe_compare.core.comparator import ComparisonReport
             report_obj = ComparisonReport(result)
             report_obj.export_to_html(filename)
 

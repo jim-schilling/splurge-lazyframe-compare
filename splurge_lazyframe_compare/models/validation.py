@@ -1,7 +1,7 @@
 """Validation result models for the comparison framework."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -38,4 +38,4 @@ class ValidationResult:
 
     is_valid: bool
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None

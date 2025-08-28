@@ -1,10 +1,7 @@
 """Core comparison service for the comparison framework."""
 
-from typing import Optional
 
 import polars as pl
-
-from splurge_lazyframe_compare.utils.logging_helpers import performance_monitor
 
 from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
 from splurge_lazyframe_compare.models.schema import ComparisonConfig
@@ -13,12 +10,12 @@ from splurge_lazyframe_compare.services.preparation_service import DataPreparati
 from splurge_lazyframe_compare.services.validation_service import ValidationService
 from splurge_lazyframe_compare.utils.constants import (
     JOIN_INNER,
-    JOIN_LEFT,
     LEFT_PREFIX,
     PRIMARY_KEY_PREFIX,
     RIGHT_PREFIX,
     ZERO_THRESHOLD,
 )
+from splurge_lazyframe_compare.utils.logging_helpers import performance_monitor
 
 
 class ComparisonService(BaseService):
@@ -31,8 +28,8 @@ class ComparisonService(BaseService):
 
     def __init__(
         self,
-        validation_service: Optional[ValidationService] = None,
-        preparation_service: Optional[DataPreparationService] = None
+        validation_service: ValidationService | None = None,
+        preparation_service: DataPreparationService | None = None
     ) -> None:
         """Initialize the comparison service.
 

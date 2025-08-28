@@ -1,18 +1,32 @@
 """Data validation service for the comparison framework."""
 
-from typing import Dict, List, Optional
 
 import polars as pl
 
-from splurge_lazyframe_compare.models.schema import ComparisonConfig
+from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
+    PrimaryKeyViolationError,
+    SchemaValidationError,
+)
+from splurge_lazyframe_compare.models.schema import ComparisonConfig, ComparisonSchema
 from splurge_lazyframe_compare.models.validation import ValidationResult
 from splurge_lazyframe_compare.services.base_service import BaseService
 from splurge_lazyframe_compare.utils.constants import (
+    ALL_COLUMNS_PRESENT_MSG,
+    ALL_DTYPES_CORRECT_MSG,
+    ALL_PATTERNS_CORRECT_MSG,
+    ALL_RANGES_CORRECT_MSG,
+    ALL_UNIQUE_MSG,
+    COMPLETENESS_FAILED_MSG,
+    DTYPE_FAILED_MSG,
+    DUPLICATE_PK_MSG,
     DUPLICATE_THRESHOLD,
     FIRST_COLUMN_INDEX,
-    LEN_COLUMN,
     LEFT_DF_NAME,
-    RIGHT_DF_NAME,
+    LEN_COLUMN,
+    PATTERN_FAILED_MSG,
+    RANGE_FAILED_MSG,
+    UNIQUENESS_FAILED_MSG,
+    ZERO_THRESHOLD,
 )
 from splurge_lazyframe_compare.utils.type_helpers import is_numeric_dtype
 
@@ -38,7 +52,7 @@ class ValidationService(BaseService):
         self,
         *,
         df: pl.LazyFrame,
-        schema: "ComparisonSchema",
+        schema: ComparisonSchema,
         df_name: str
     ) -> None:
         """Validate DataFrame against schema.
@@ -54,7 +68,6 @@ class ValidationService(BaseService):
         try:
             errors = schema.validate_schema(df)
             if errors:
-                from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
                 raise SchemaValidationError(
                     f"{df_name} validation failed", validation_errors=errors
                 )
@@ -103,8 +116,6 @@ class ValidationService(BaseService):
             duplicate_count = duplicates.select(pl.len()).collect().item()
 
             if duplicate_count > 0:
-                from splurge_lazyframe_compare.exceptions.comparison_exceptions import PrimaryKeyViolationError
-                from splurge_lazyframe_compare.utils.constants import DUPLICATE_PK_MSG
                 raise PrimaryKeyViolationError(
                     DUPLICATE_PK_MSG.format(df_name, duplicate_count)
                 )
@@ -116,7 +127,7 @@ class ValidationService(BaseService):
         self,
         *,
         df: pl.LazyFrame,
-        required_columns: List[str]
+        required_columns: list[str]
     ) -> ValidationResult:
         """Validate that required columns are present and not entirely null.
 
@@ -128,12 +139,6 @@ class ValidationService(BaseService):
             ValidationResult indicating whether validation passed.
         """
         try:
-            from splurge_lazyframe_compare.utils.constants import (
-                ALL_COLUMNS_PRESENT_MSG,
-                COMPLETENESS_FAILED_MSG,
-                ZERO_THRESHOLD,
-            )
-
             missing_columns = []
             null_columns = []
 
@@ -174,7 +179,7 @@ class ValidationService(BaseService):
         self,
         *,
         df: pl.LazyFrame,
-        expected_types: Dict[str, pl.DataType]
+        expected_types: dict[str, pl.DataType]
     ) -> ValidationResult:
         """Validate that columns have expected data types.
 
@@ -186,11 +191,6 @@ class ValidationService(BaseService):
             ValidationResult indicating whether validation passed.
         """
         try:
-            from splurge_lazyframe_compare.utils.constants import (
-                ALL_DTYPES_CORRECT_MSG,
-                DTYPE_FAILED_MSG,
-            )
-
             type_mismatches = []
 
             schema = df.collect_schema()
@@ -225,7 +225,7 @@ class ValidationService(BaseService):
         self,
         *,
         df: pl.LazyFrame,
-        column_ranges: Dict[str, Dict[str, float]]
+        column_ranges: dict[str, dict[str, float]]
     ) -> ValidationResult:
         """Validate that numeric columns fall within expected ranges.
 
@@ -238,12 +238,6 @@ class ValidationService(BaseService):
             ValidationResult indicating whether validation passed.
         """
         try:
-            from splurge_lazyframe_compare.utils.constants import (
-                ALL_RANGES_CORRECT_MSG,
-                RANGE_FAILED_MSG,
-                ZERO_THRESHOLD,
-            )
-
             range_violations = []
 
             for col_name, range_constraints in column_ranges.items():
@@ -293,7 +287,7 @@ class ValidationService(BaseService):
         self,
         *,
         df: pl.LazyFrame,
-        column_patterns: Dict[str, str]
+        column_patterns: dict[str, str]
     ) -> ValidationResult:
         """Validate that string columns match expected patterns.
 
@@ -305,12 +299,6 @@ class ValidationService(BaseService):
             ValidationResult indicating whether validation passed.
         """
         try:
-            from splurge_lazyframe_compare.utils.constants import (
-                ALL_PATTERNS_CORRECT_MSG,
-                PATTERN_FAILED_MSG,
-                ZERO_THRESHOLD,
-            )
-
             pattern_violations = []
 
             for col_name, pattern in column_patterns.items():
@@ -353,7 +341,7 @@ class ValidationService(BaseService):
         self,
         *,
         df: pl.LazyFrame,
-        unique_columns: List[str]
+        unique_columns: list[str]
     ) -> ValidationResult:
         """Validate that specified columns contain unique values.
 
@@ -365,12 +353,6 @@ class ValidationService(BaseService):
             ValidationResult indicating whether validation passed.
         """
         try:
-            from splurge_lazyframe_compare.utils.constants import (
-                ALL_UNIQUE_MSG,
-                UNIQUENESS_FAILED_MSG,
-                ZERO_THRESHOLD,
-            )
-
             uniqueness_violations = []
 
             for col_name in unique_columns:
@@ -410,12 +392,12 @@ class ValidationService(BaseService):
         self,
         *,
         df: pl.LazyFrame,
-        required_columns: Optional[List[str]] = None,
-        expected_types: Optional[Dict[str, pl.DataType]] = None,
-        column_ranges: Optional[Dict[str, Dict[str, float]]] = None,
-        column_patterns: Optional[Dict[str, str]] = None,
-        unique_columns: Optional[List[str]] = None,
-    ) -> List[ValidationResult]:
+        required_columns: list[str] | None = None,
+        expected_types: dict[str, pl.DataType] | None = None,
+        column_ranges: dict[str, dict[str, float]] | None = None,
+        column_patterns: dict[str, str] | None = None,
+        unique_columns: list[str] | None = None,
+    ) -> list[ValidationResult]:
         """Run a comprehensive set of data quality validations.
 
         Args:

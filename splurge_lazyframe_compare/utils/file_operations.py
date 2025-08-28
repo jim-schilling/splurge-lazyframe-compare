@@ -1,7 +1,6 @@
 """File operation utilities for the comparison framework."""
 
 from pathlib import Path
-from typing import Dict, Optional
 
 import polars as pl
 
@@ -84,7 +83,7 @@ def export_lazyframe(
 
 def import_lazyframe(
     file_path: Path,
-    format_name: Optional[str] = None,
+    format_name: str | None = None,
     **kwargs
 ) -> pl.LazyFrame:
     """Import a LazyFrame from a file.
@@ -117,8 +116,8 @@ def import_lazyframe(
 def get_export_file_paths(
     base_name: str,
     output_dir: Path,
-    formats: Optional[list] = None
-) -> Dict[str, Path]:
+    formats: list | None = None
+) -> dict[str, Path]:
     """Generate file paths for multiple export formats.
 
     Args:
@@ -164,8 +163,8 @@ def validate_file_path(file_path: Path, create_parent: bool = True) -> None:
         # Try to create the parent directory to test permissions
         if create_parent:
             file_path.parent.mkdir(parents=True, exist_ok=True)
-    except PermissionError:
-        raise ValueError(f"No write permission for directory: {file_path.parent}")
+    except PermissionError as e:
+        raise ValueError(f"No write permission for directory: {file_path.parent}") from e
 
 
 def list_files_by_pattern(directory: Path, pattern: str) -> list[Path]:

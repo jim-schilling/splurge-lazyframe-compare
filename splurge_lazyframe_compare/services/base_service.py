@@ -1,16 +1,11 @@
 """Base service class for the comparison framework."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
-
-import polars as pl
+from typing import Any
 
 from splurge_lazyframe_compare.utils.logging_helpers import (
-    create_operation_context,
     log_service_initialization,
     log_service_operation,
-    performance_monitor,
-    update_operation_context,
 )
 
 
@@ -64,7 +59,7 @@ class BaseService(ABC):
         """
         pass
 
-    def _handle_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
+    def _handle_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """Handle errors with context information.
 
         Args:

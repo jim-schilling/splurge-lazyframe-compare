@@ -2,7 +2,7 @@
 
 import time
 from contextlib import contextmanager
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from splurge_lazyframe_compare.utils.constants import TIMESTAMP_FORMAT
 
@@ -30,8 +30,8 @@ def create_log_message(
     service_name: str,
     operation: str,
     message: str,
-    details: Optional[Dict[str, Any]] = None,
-    duration_ms: Optional[float] = None
+    details: dict[str, Any] | None = None,
+    duration_ms: float | None = None
 ) -> str:
     """Create a standardized log message.
 
@@ -70,7 +70,7 @@ def log_performance(
     service_name: str,
     operation: str,
     duration_ms: float,
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 ) -> None:
     """Log performance information for an operation.
 
@@ -143,7 +143,7 @@ def performance_monitor(service_name: str, operation: str):
         )
 
 
-def log_service_initialization(service_name: str, config: Optional[Dict[str, Any]] = None) -> None:
+def log_service_initialization(service_name: str, config: dict[str, Any] | None = None) -> None:
     """Log service initialization.
 
     Args:
@@ -168,8 +168,8 @@ def log_service_operation(
     service_name: str,
     operation: str,
     status: str,
-    message: Optional[str] = None,
-    details: Optional[Dict[str, Any]] = None
+    message: str | None = None,
+    details: dict[str, Any] | None = None
 ) -> None:
     """Log a service operation with status.
 
@@ -203,9 +203,9 @@ def log_service_operation(
 
 def create_operation_context(
     operation_name: str,
-    input_params: Optional[Dict[str, Any]] = None,
-    expected_output: Optional[str] = None
-) -> Dict[str, Any]:
+    input_params: dict[str, Any] | None = None,
+    expected_output: str | None = None
+) -> dict[str, Any]:
     """Create a context dictionary for operation tracking.
 
     Args:
@@ -226,11 +226,11 @@ def create_operation_context(
 
 
 def update_operation_context(
-    context: Dict[str, Any],
+    context: dict[str, Any],
     status: str,
-    result: Optional[Any] = None,
-    error: Optional[str] = None,
-    additional_info: Optional[Dict[str, Any]] = None
+    result: Any | None = None,
+    error: str | None = None,
+    additional_info: dict[str, Any] | None = None
 ) -> None:
     """Update operation context with results.
 
@@ -259,7 +259,7 @@ def update_operation_context(
 def log_dataframe_stats(
     service_name: str,
     operation: str,
-    df_info: Dict[str, Any],
+    df_info: dict[str, Any],
     stage: str = "input"
 ) -> None:
     """Log DataFrame statistics for monitoring.
@@ -293,7 +293,7 @@ def log_dataframe_stats(
     print(log_message)
 
 
-def create_service_health_check(service_name: str) -> Dict[str, Any]:
+def create_service_health_check(service_name: str) -> dict[str, Any]:
     """Create a health check dictionary for service monitoring.
 
     Args:
@@ -312,7 +312,7 @@ def create_service_health_check(service_name: str) -> Dict[str, Any]:
     }
 
 
-def log_service_health(service_name: str, health_data: Dict[str, Any]) -> None:
+def log_service_health(service_name: str, health_data: dict[str, Any]) -> None:
     """Log service health information.
 
     Args:

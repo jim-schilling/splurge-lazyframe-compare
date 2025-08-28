@@ -1,6 +1,5 @@
 """New service-based comparator interface for the comparison framework."""
 
-from typing import Optional
 
 import polars as pl
 
@@ -134,7 +133,7 @@ class ComparisonReport:
         """
         self.orchestrator = orchestrator
         self.config = config
-        self._last_result: Optional[ComparisonResult] = None
+        self._last_result: ComparisonResult | None = None
 
     def generate_from_result(self, result: ComparisonResult) -> str:
         """Generate report from a comparison result.
@@ -151,7 +150,7 @@ class ComparisonReport:
             report_type="detailed"
         )
 
-    def generate_summary_report(self, result: Optional[ComparisonResult] = None) -> str:
+    def generate_summary_report(self, result: ComparisonResult | None = None) -> str:
         """Generate summary report.
 
         Args:
@@ -172,7 +171,7 @@ class ComparisonReport:
     def generate_detailed_report(
         self,
         *,
-        result: Optional[ComparisonResult] = None,
+        result: ComparisonResult | None = None,
         max_samples: int = 10,
         table_format: str = "grid"
     ) -> str:
@@ -200,7 +199,7 @@ class ComparisonReport:
     def generate_summary_table(
         self,
         *,
-        result: Optional[ComparisonResult] = None,
+        result: ComparisonResult | None = None,
         table_format: str = "grid"
     ) -> str:
         """Generate summary statistics as a table.
@@ -224,7 +223,7 @@ class ComparisonReport:
     def export_to_html(
         self,
         *,
-        result: Optional[ComparisonResult] = None,
+        result: ComparisonResult | None = None,
         filename: str
     ) -> None:
         """Export comparison result to HTML file.

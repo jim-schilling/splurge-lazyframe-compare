@@ -2,9 +2,12 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 import polars as pl
+
+if TYPE_CHECKING:
+    from splurge_lazyframe_compare.models.schema import ComparisonConfig
 
 
 @dataclass
@@ -109,7 +112,7 @@ class ValueDifference:
         friendly_column_name: Human-readable column name.
     """
 
-    primary_key_values: Dict[str, Any]
+    primary_key_values: dict[str, Any]
     column_name: str
     left_value: Any
     right_value: Any

@@ -1,6 +1,6 @@
 """Data manipulation helpers for the comparison framework."""
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import polars as pl
 
@@ -43,7 +43,7 @@ def validate_dataframe(df: pl.LazyFrame, name: str = "DataFrame") -> None:
         raise ValueError(f"Invalid {name}: {e}") from e
 
 
-def get_dataframe_info(df: pl.LazyFrame) -> Dict[str, Any]:
+def get_dataframe_info(df: pl.LazyFrame) -> dict[str, Any]:
     """Get comprehensive information about a DataFrame.
 
     Args:
@@ -112,7 +112,7 @@ def estimate_dataframe_memory(df: pl.LazyFrame) -> float:
         return 0
 
 
-def has_null_values(df: pl.LazyFrame, columns: Optional[List[str]] = None) -> bool:
+def has_null_values(df: pl.LazyFrame, columns: list[str] | None = None) -> bool:
     """Check if DataFrame has null values in specified columns.
 
     Args:
@@ -141,7 +141,7 @@ def has_null_values(df: pl.LazyFrame, columns: Optional[List[str]] = None) -> bo
         return False
 
 
-def get_null_summary(df: pl.LazyFrame) -> Dict[str, Dict[str, Union[int, float]]]:
+def get_null_summary(df: pl.LazyFrame) -> dict[str, dict[str, int | float]]:
     """Get summary of null values in DataFrame.
 
     Args:
@@ -193,7 +193,7 @@ def optimize_dataframe(df: pl.LazyFrame) -> pl.LazyFrame:
         return df
 
 
-def safe_collect(df: pl.LazyFrame, timeout_seconds: int = 30) -> Optional[pl.DataFrame]:
+def safe_collect(df: pl.LazyFrame, timeout_seconds: int = 30) -> pl.DataFrame | None:
     """Safely collect a LazyFrame with timeout protection.
 
     Args:
@@ -211,7 +211,7 @@ def safe_collect(df: pl.LazyFrame, timeout_seconds: int = 30) -> Optional[pl.Dat
         return None
 
 
-def compare_dataframe_shapes(df1: pl.LazyFrame, df2: pl.LazyFrame) -> Dict[str, Any]:
+def compare_dataframe_shapes(df1: pl.LazyFrame, df2: pl.LazyFrame) -> dict[str, Any]:
     """Compare shapes and basic properties of two DataFrames.
 
     Args:
@@ -253,8 +253,8 @@ def compare_dataframe_shapes(df1: pl.LazyFrame, df2: pl.LazyFrame) -> Dict[str, 
 def validate_column_compatibility(
     df1: pl.LazyFrame,
     df2: pl.LazyFrame,
-    column_mapping: Dict[str, str]
-) -> Dict[str, Any]:
+    column_mapping: dict[str, str]
+) -> dict[str, Any]:
     """Validate column compatibility for comparison.
 
     Args:
