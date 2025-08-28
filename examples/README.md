@@ -19,7 +19,23 @@ A simple example demonstrating the basic usage of the comparison framework with 
 python examples/basic_comparison_example.py
 ```
 
-### 2. Performance Comparison Example (`performance_comparison_example.py`)
+### 2. Service Architecture Example (`new_service_example.py`)
+
+A comprehensive demonstration of the framework's service-oriented architecture, showcasing modularity and dependency injection.
+
+**Features:**
+- ComparisonOrchestrator usage patterns
+- LazyFrameComparator direct usage
+- Service dependency injection
+- Custom service implementation examples
+- Multiple usage patterns for different scenarios
+
+**Usage:**
+```bash
+python examples/new_service_example.py
+```
+
+### 4. Performance Comparison Example (`performance_comparison_example.py`)
 
 A comprehensive performance test with the exact specifications requested:
 - 75 columns of mixed data types (primarily string, integer, float; few date/datetime)
@@ -46,7 +62,7 @@ python examples/performance_comparison_example.py
 - Time per record: ~0.0004 ms/record
 - Total comparison time: ~0.08 seconds
 
-### 3. Detailed Performance Benchmark (`detailed_performance_benchmark.py`)
+### 5. Detailed Performance Benchmark (`detailed_performance_benchmark.py`)
 
 A comprehensive benchmarking suite that tests multiple dataset sizes and provides statistical analysis.
 
@@ -69,6 +85,22 @@ python examples/detailed_performance_benchmark.py
 - 25,000 vs 25,250 records (3 iterations)
 - 50,000 vs 50,250 records (2 iterations)
 - 100,000 vs 101,000 records (1 iteration)
+
+### 6. Tabulated Report Example (`tabulated_report_example.py`)
+
+A demonstration of the framework's reporting capabilities with multiple table formats and export options.
+
+**Features:**
+- Multiple table formats (grid, simple, pipe, orgtbl)
+- Detailed and summary report generation
+- CSV export functionality
+- Formatted output with proper alignment
+- Sample data limitation and truncation
+
+**Usage:**
+```bash
+python examples/tabulated_report_example.py
+```
 
 ## Performance Characteristics
 
@@ -127,11 +159,17 @@ All examples can be run directly:
 # Basic example
 python examples/basic_comparison_example.py
 
+# Service architecture
+python examples/new_service_example.py
+
 # Performance example
 python examples/performance_comparison_example.py
 
 # Detailed benchmark
 python examples/detailed_performance_benchmark.py
+
+# Tabulated reporting
+python examples/tabulated_report_example.py
 ```
 
 ### Output

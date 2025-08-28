@@ -15,6 +15,7 @@ from splurge_lazyframe_compare import (
     ComparisonConfig,
     ComparisonSchema,
     LazyFrameComparator,
+    ReportingService,
 )
 
 
@@ -155,43 +156,67 @@ def main() -> None:
     comparator = LazyFrameComparator(config)
     results = comparator.compare(left=left_df, right=right_df)
 
-    # Generate reports with different table formats
+    # Generate reports with different table formats using ReportingService
     print("\n6. Generating tabulated reports...")
-    report = results.to_report()
+    reporter = ReportingService()
 
     # Show summary table with different formats
     print("\n" + "=" * 60)
     print("SUMMARY TABLE - GRID FORMAT")
     print("=" * 60)
-    print(report.generate_summary_table(table_format="grid"))
+    summary_table_grid = reporter.generate_summary_table(
+        results=results,
+        table_format="grid"
+    )
+    print(summary_table_grid)
 
     print("\n" + "=" * 60)
     print("SUMMARY TABLE - SIMPLE FORMAT")
     print("=" * 60)
-    print(report.generate_summary_table(table_format="simple"))
+    summary_table_simple = reporter.generate_summary_table(
+        results=results,
+        table_format="simple"
+    )
+    print(summary_table_simple)
 
     print("\n" + "=" * 60)
     print("SUMMARY TABLE - PIPE FORMAT")
     print("=" * 60)
-    print(report.generate_summary_table(table_format="pipe"))
+    summary_table_pipe = reporter.generate_summary_table(
+        results=results,
+        table_format="pipe"
+    )
+    print(summary_table_pipe)
 
     # Show detailed report with grid format
     print("\n" + "=" * 60)
     print("DETAILED REPORT - GRID FORMAT")
     print("=" * 60)
-    print(report.generate_detailed_report(max_samples=5, table_format="grid"))
+    detailed_report_grid = reporter.generate_detailed_report(
+        results=results,
+        max_samples=5
+    )
+    print(detailed_report_grid)
 
-    # Show complete tabulated report
+    # Show summary table in orgtbl format
     print("\n" + "=" * 60)
-    print("COMPLETE TABULATED REPORT - ORGTBL FORMAT")
+    print("SUMMARY TABLE - ORGTBL FORMAT")
     print("=" * 60)
-    print(report.generate_tabulated_report(max_samples=3, table_format="orgtbl"))
+    summary_table_orgtbl = reporter.generate_summary_table(
+        results=results,
+        table_format="orgtbl"
+    )
+    print(summary_table_orgtbl)
 
-    # Show original format for comparison
+    # Show original detailed report for comparison
     print("\n" + "=" * 60)
-    print("ORIGINAL FORMAT (for comparison)")
+    print("ORIGINAL DETAILED REPORT (for comparison)")
     print("=" * 60)
-    print(report.generate_detailed_report(max_samples=3))
+    detailed_report_original = reporter.generate_detailed_report(
+        results=results,
+        max_samples=3
+    )
+    print(detailed_report_original)
 
     print("\n" + "=" * 80)
     print("TABULATED REPORT EXAMPLE COMPLETED!")

@@ -18,6 +18,7 @@ from splurge_lazyframe_compare import (
     ComparisonConfig,
     ComparisonSchema,
     LazyFrameComparator,
+    ReportingService,
 )
 
 
@@ -147,26 +148,32 @@ def main() -> None:
     comparator = LazyFrameComparator(config)
     results = comparator.compare(left=left_df, right=right_df)
 
-    # Display results
+    # Display results using ReportingService
     print("\n6. Comparison Results:")
     print("-" * 40)
-    report = results.to_report()
-    print(report.generate_summary_report())
+    reporter = ReportingService()
+    summary_report = reporter.generate_summary_report(results=results)
+    print(summary_report)
 
     # Display detailed results
     print("\n7. Detailed Results:")
     print("-" * 40)
-    print(report.generate_detailed_report(max_samples=5))
+    detailed_report = reporter.generate_detailed_report(
+        results=results,
+        max_samples=5
+    )
+    print(detailed_report)
 
     # Export results (optional)
     print("\n8. Exporting results...")
-    exported_files = results.export_results(format="csv", output_dir="./comparison_results")
+    exported_files = reporter.export_results(
+        results=results,
+        format="csv",
+        output_dir="./comparison_results"
+    )
     print(f"   Exported files: {list(exported_files.keys())}")
 
-    # Generate HTML report
-    print("\n9. Generating HTML report...")
-    report.export_to_html("./comparison_results/comparison_report.html")
-    print("   HTML report saved to: ./comparison_results/comparison_report.html")
+    print("\n9. Example completed successfully!")
 
     print("\n" + "=" * 60)
     print("EXAMPLE COMPLETED SUCCESSFULLY!")

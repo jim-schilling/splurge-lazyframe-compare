@@ -21,6 +21,7 @@ from splurge_lazyframe_compare import (
     ComparisonConfig,
     ComparisonSchema,
     LazyFrameComparator,
+    ReportingService,
 )
 
 
@@ -480,10 +481,11 @@ def benchmark_comparison(
         "value_differences_count": value_differences_count,
         "left_only_count": left_only_count,
         "right_only_count": right_only_count,
+        "results": results,  # Include the ComparisonResult object for export
     }
 
 
-def print_performance_results(results: dict[str, float]) -> None:
+def print_performance_results(results: dict[str, Any]) -> None:
     """Print formatted performance results.
 
     Args:
@@ -574,9 +576,12 @@ def main() -> None:
     # Optional: Export results
     print(f"\n6. Exporting results...")
     try:
-        comparator = LazyFrameComparator(config)
-        results = comparator.compare(left=left_df, right=right_df)
-        exported_files = results.export_results(format="csv", output_dir="./comparison_results")
+        reporter = ReportingService()
+        exported_files = reporter.export_results(
+            results=benchmark_results["results"],
+            format="csv",
+            output_dir="./comparison_results"
+        )
         print(f"   Exported files: {list(exported_files.keys())}")
     except Exception as e:
         print(f"   Export skipped: {e}")
