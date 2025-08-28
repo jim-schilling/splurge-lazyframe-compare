@@ -102,6 +102,54 @@ A demonstration of the framework's reporting capabilities with multiple table fo
 python examples/tabulated_report_example.py
 ```
 
+### 7. Auto-Configuration Example (`auto_config_example.py`)
+
+A demonstration of automatic ComparisonConfig generation from LazyFrames with identical column names.
+
+**Features:**
+- Automatic schema inference from LazyFrame schemas
+- Auto-generation of ColumnDefinitions and ColumnMappings
+- Primary key validation and error handling
+- Ready-to-use ComparisonConfig for immediate comparison
+
+**Usage:**
+```bash
+python examples/auto_config_example.py
+```
+
+**Key Benefits:**
+- **No Manual Configuration**: Eliminates need for manual schema and mapping definition
+- **Type Safety**: Automatically infers Polars data types
+- **Error Prevention**: Validates PK columns exist before comparison
+- **Keyword-Only API**: Explicit parameter names prevent argument order errors
+- **Flexibility**: Still allows customization of comparison settings
+
+**Example:**
+```python
+from splurge_lazyframe_compare.utils import create_comparison_config_from_lazyframes
+
+# Your LazyFrames with identical column names
+left_lf = pl.LazyFrame(left_data)
+right_lf = pl.LazyFrame(right_data)
+
+# Specify primary key columns
+pk_columns = ["customer_id"]
+
+# Generate ComparisonConfig automatically (keyword-only parameters)
+config = create_comparison_config_from_lazyframes(
+    left_df=left_lf,
+    right_df=right_lf,
+    pk_columns=pk_columns
+)
+
+# Use immediately for comparison
+results = comparison_service.execute_comparison(
+    left=left_lf,
+    right=right_lf,
+    config=config
+)
+```
+
 ## Performance Characteristics
 
 Based on the benchmarks, the framework demonstrates excellent performance:
@@ -170,6 +218,9 @@ python examples/detailed_performance_benchmark.py
 
 # Tabulated reporting
 python examples/tabulated_report_example.py
+
+# Auto-configuration example
+python examples/auto_config_example.py
 ```
 
 ### Output

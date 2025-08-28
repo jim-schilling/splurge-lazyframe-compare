@@ -347,3 +347,106 @@ def create_config_from_dataframes(
         "null_equals_null": True,
         "tolerance": {},
     }
+
+
+def create_comparison_config_from_lazyframes(
+    *,
+    left_df: pl.LazyFrame,
+    right_df: pl.LazyFrame,
+    pk_columns: list[str],
+):
+    """Create a ComparisonConfig from two LazyFrames with specified primary key columns.
+
+    This function automatically generates ColumnDefinitions, ColumnMappings, and ComparisonSchemas
+    based on the LazyFrame schemas. Assumes both LazyFrames have the same column names.
+
+    Note: All parameters are keyword-only to prevent argument order errors.
+
+    Args:
+        left_df: Left LazyFrame to compare.
+        right_df: Right LazyFrame to compare.
+        pk_columns: List of column names to use as primary keys.
+
+    Returns:
+        ComparisonConfig object ready for comparison.
+
+    Raises:
+        ValueError: If primary key columns are missing from either LazyFrame.
+    """
+    # Import here to avoid circular imports
+    from splurge_lazyframe_compare.models.schema import (
+        ColumnDefinition,
+        ColumnMapping,
+        ComparisonConfig,
+        ComparisonSchema,
+    )
+    # Validate that primary key columns exist in both LazyFrames
+    left_schema = left_df.collect_schema()
+    right_schema = right_df.collect_schema()
+    left_columns = set(left_schema.names())
+    right_columns = set(right_schema.names())
+
+    missing_left_pk = set(pk_columns) - left_columns
+    missing_right_pk = set(pk_columns) - right_columns
+
+    if missing_left_pk:
+        raise ValueError(f"Primary key columns missing from left LazyFrame: {missing_left_pk}")
+    if missing_right_pk:
+        raise ValueError(f"Primary key columns missing from right LazyFrame: {missing_right_pk}")
+
+    # Create ColumnDefinitions for both schemas
+    left_column_definitions = _create_column_definitions_from_schema(left_schema)
+    right_column_definitions = _create_column_definitions_from_schema(right_schema)
+
+    # Create ComparisonSchemas
+    left_comparison_schema = ComparisonSchema(
+        columns=left_column_definitions,
+        pk_columns=pk_columns
+    )
+    right_comparison_schema = ComparisonSchema(
+        columns=right_column_definitions,
+        pk_columns=pk_columns
+    )
+
+    # Create ColumnMappings (only for common columns to ensure validity)
+    column_mappings = []
+    common_columns = left_columns & right_columns  # Intersection for valid mappings
+
+    for col_name in common_columns:
+        column_mappings.append(ColumnMapping(
+            name=col_name,
+            left=col_name,
+            right=col_name
+        ))
+
+    # Create and return ComparisonConfig
+    return ComparisonConfig(
+        left_schema=left_comparison_schema,
+        right_schema=right_comparison_schema,
+        column_mappings=column_mappings,
+        primary_key_columns=pk_columns,
+    )
+
+
+def _create_column_definitions_from_schema(schema: pl.Schema):
+    """Create ColumnDefinition objects from a Polars Schema.
+
+    Args:
+        schema: Polars Schema object.
+
+    Returns:
+        Dictionary mapping column names to ColumnDefinition objects.
+    """
+    # Import here to avoid circular imports
+    from splurge_lazyframe_compare.models.schema import ColumnDefinition
+    column_definitions = {}
+
+    for col_name, dtype in zip(schema.names(), schema.dtypes()):
+        column_definitions[col_name] = ColumnDefinition(
+            name=col_name,
+            alias=col_name,  # Use column name as alias for simplicity
+            datatype=dtype,
+            nullable=True  # Default to nullable for safety
+        )
+
+    return column_definitions

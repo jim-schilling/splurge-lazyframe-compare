@@ -2,6 +2,7 @@
 
 from .config_helpers import (
     apply_environment_overrides,
+    create_comparison_config_from_lazyframes,
     create_config_from_dataframes,
     create_default_config,
     get_config_value,
@@ -204,6 +205,7 @@ __all__ = [
     "truncate_string",
     # Configuration helpers
     "apply_environment_overrides",
+    "create_comparison_config_from_lazyframes",
     "create_config_from_dataframes",
     "create_default_config",
     "get_config_value",

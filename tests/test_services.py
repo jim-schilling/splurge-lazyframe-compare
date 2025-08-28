@@ -764,6 +764,282 @@ class TestConfigHelpers:
         assert "id" in mapping_names
         assert "name" in mapping_names
 
+    def test_create_comparison_config_from_lazyframes_success(self):
+        """Test successful creation of ComparisonConfig from LazyFrames."""
+        left_df = pl.LazyFrame({
+            "customer_id": [1, 2, 3],
+            "name": ["Alice", "Bob", "Charlie"],
+            "balance": [100.5, 200.0, 300.25],
+            "active": [True, False, True]
+        })
+
+        right_df = pl.LazyFrame({
+            "customer_id": [1, 2, 4],
+            "name": ["Alice", "Bob", "David"],
+            "balance": [100.5, 200.0, 400.0],
+            "active": [True, False, False]
+        })
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        config = create_comparison_config_from_lazyframes(
+            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+        )
+
+        # Verify config structure
+        assert isinstance(config, ComparisonConfig)
+        assert len(config.primary_key_columns) == 1
+        assert config.primary_key_columns == ["customer_id"]
+
+        # Verify schemas
+        assert len(config.left_schema.columns) == 4
+        assert len(config.right_schema.columns) == 4
+        assert config.left_schema.pk_columns == ["customer_id"]
+        assert config.right_schema.pk_columns == ["customer_id"]
+
+        # Verify column mappings
+        assert len(config.column_mappings) == 4
+        mapping_names = [m.name for m in config.column_mappings]
+        assert "customer_id" in mapping_names
+        assert "name" in mapping_names
+        assert "balance" in mapping_names
+        assert "active" in mapping_names
+
+        # Verify column definitions
+        for col_name in ["customer_id", "name", "balance", "active"]:
+            left_col_def = config.left_schema.columns[col_name]
+            right_col_def = config.right_schema.columns[col_name]
+
+            assert left_col_def.name == col_name
+            assert right_col_def.name == col_name
+            assert left_col_def.alias == col_name  # Uses column name as alias
+            assert right_col_def.alias == col_name
+            assert left_col_def.nullable is True  # Default to nullable
+            assert right_col_def.nullable is True
+
+        # Verify data types are correctly inferred
+        assert config.left_schema.columns["customer_id"].datatype == pl.Int64
+        assert config.right_schema.columns["customer_id"].datatype == pl.Int64
+        assert config.left_schema.columns["name"].datatype == pl.Utf8
+        assert config.right_schema.columns["name"].datatype == pl.Utf8
+        assert config.left_schema.columns["balance"].datatype == pl.Float64
+        assert config.right_schema.columns["balance"].datatype == pl.Float64
+        assert config.left_schema.columns["active"].datatype == pl.Boolean
+        assert config.right_schema.columns["active"].datatype == pl.Boolean
+
+    def test_create_comparison_config_from_lazyframes_multiple_pk(self):
+        """Test with multiple primary key columns."""
+        left_df = pl.LazyFrame({
+            "store_id": [1, 1, 2],
+            "product_id": [100, 101, 100],
+            "name": ["Widget A", "Widget B", "Widget C"],
+            "price": [10.99, 15.50, 12.25]
+        })
+
+        right_df = pl.LazyFrame({
+            "store_id": [1, 1, 2],
+            "product_id": [100, 101, 102],
+            "name": ["Widget A", "Widget B", "Widget D"],
+            "price": [10.99, 16.00, 13.00]
+        })
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        config = create_comparison_config_from_lazyframes(
+            left_df=left_df, right_df=right_df, pk_columns=["store_id", "product_id"]
+        )
+
+        assert len(config.primary_key_columns) == 2
+        assert set(config.primary_key_columns) == {"store_id", "product_id"}
+        assert config.left_schema.pk_columns == ["store_id", "product_id"]
+        assert config.right_schema.pk_columns == ["store_id", "product_id"]
+
+    def test_create_comparison_config_from_lazyframes_missing_pk_left(self):
+        """Test error when primary key column is missing from left DataFrame."""
+        left_df = pl.LazyFrame({
+            "name": ["Alice", "Bob"],
+            "balance": [100.5, 200.0]
+        })
+
+        right_df = pl.LazyFrame({
+            "customer_id": [1, 2],
+            "name": ["Alice", "Bob"],
+            "balance": [100.5, 200.0]
+        })
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        with pytest.raises(ValueError) as exc_info:
+            create_comparison_config_from_lazyframes(left_df=left_df, right_df=right_df, pk_columns=["customer_id"])
+
+        assert "missing from left LazyFrame" in str(exc_info.value)
+        assert "customer_id" in str(exc_info.value)
+
+    def test_create_comparison_config_from_lazyframes_missing_pk_right(self):
+        """Test error when primary key column is missing from right DataFrame."""
+        left_df = pl.LazyFrame({
+            "customer_id": [1, 2],
+            "name": ["Alice", "Bob"],
+            "balance": [100.5, 200.0]
+        })
+
+        right_df = pl.LazyFrame({
+            "name": ["Alice", "Bob"],
+            "balance": [100.5, 200.0]
+        })
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        with pytest.raises(ValueError) as exc_info:
+            create_comparison_config_from_lazyframes(left_df=left_df, right_df=right_df, pk_columns=["customer_id"])
+
+        assert "missing from right LazyFrame" in str(exc_info.value)
+        assert "customer_id" in str(exc_info.value)
+
+    def test_create_comparison_config_from_lazyframes_empty_pk(self):
+        """Test error when empty primary key list is provided."""
+        left_df = pl.LazyFrame({
+            "customer_id": [1, 2],
+            "name": ["Alice", "Bob"]
+        })
+
+        right_df = pl.LazyFrame({
+            "customer_id": [1, 2],
+            "name": ["Alice", "Bob"]
+        })
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
+
+        # Empty PK list is caught by ComparisonConfig validation
+        with pytest.raises(SchemaValidationError) as exc_info:
+            create_comparison_config_from_lazyframes(left_df=left_df, right_df=right_df, pk_columns=[])
+
+        assert "No primary key columns defined" in str(exc_info.value)
+
+    def test_create_comparison_config_from_lazyframes_different_schemas(self):
+        """Test with DataFrames having different column sets."""
+        left_df = pl.LazyFrame({
+            "customer_id": [1, 2],
+            "name": ["Alice", "Bob"],
+            "balance": [100.5, 200.0],
+            "left_only_col": ["A", "B"]
+        })
+
+        right_df = pl.LazyFrame({
+            "customer_id": [1, 2],
+            "name": ["Alice", "Bob"],
+            "balance": [100.5, 200.0],
+            "right_only_col": ["X", "Y"]
+        })
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+
+        # This should work for common columns only
+        config = create_comparison_config_from_lazyframes(
+            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+        )
+
+        # Should include only common columns in mappings
+        common_columns = {"customer_id", "name", "balance"}
+        mapping_names = [m.name for m in config.column_mappings]
+        assert set(mapping_names) == common_columns
+
+        # Verify all common columns are mapped
+        for col in common_columns:
+            assert col in mapping_names
+
+        # Left schema should have all left columns
+        assert set(config.left_schema.columns.keys()) == {"customer_id", "name", "balance", "left_only_col"}
+
+        # Right schema should have all right columns
+        assert set(config.right_schema.columns.keys()) == {"customer_id", "name", "balance", "right_only_col"}
+
+    def test_create_comparison_config_from_lazyframes_various_data_types(self):
+        """Test with various Polars data types."""
+        left_df = pl.LazyFrame({
+            "id": [1, 2, 3],
+            "text_col": ["a", "b", "c"],
+            "int_col": [10, 20, 30],
+            "float_col": [1.1, 2.2, 3.3],
+            "bool_col": [True, False, True],
+            "date_col": pl.date_range(pl.date(2023, 1, 1), pl.date(2023, 1, 3), eager=True),
+            "datetime_col": pl.datetime_range(
+                pl.datetime(2023, 1, 1), pl.datetime(2023, 1, 3), interval="1d", eager=True
+            )
+        })
+
+        right_df = left_df.clone()  # Same schema for simplicity
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        config = create_comparison_config_from_lazyframes(
+            left_df=left_df, right_df=right_df, pk_columns=["id"]
+        )
+
+        # Verify data types are correctly inferred
+        left_cols = config.left_schema.columns
+        right_cols = config.right_schema.columns
+
+        assert left_cols["id"].datatype == pl.Int64
+        assert left_cols["text_col"].datatype == pl.Utf8
+        assert left_cols["int_col"].datatype == pl.Int64
+        assert left_cols["float_col"].datatype == pl.Float64
+        assert left_cols["bool_col"].datatype == pl.Boolean
+        assert left_cols["date_col"].datatype == pl.Date
+        assert left_cols["datetime_col"].datatype == pl.Datetime
+
+        # Right should match left
+        for col_name in left_cols:
+            assert right_cols[col_name].datatype == left_cols[col_name].datatype
+
+    def test_create_comparison_config_from_lazyframes_empty_dataframes(self):
+        """Test with empty DataFrames."""
+        left_df = pl.LazyFrame(schema={"customer_id": pl.Int64, "name": pl.Utf8})
+        right_df = pl.LazyFrame(schema={"customer_id": pl.Int64, "name": pl.Utf8})
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        config = create_comparison_config_from_lazyframes(
+            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+        )
+
+        # Should still create config even with empty DataFrames
+        assert len(config.primary_key_columns) == 1
+        assert len(config.column_mappings) == 2  # customer_id and name
+        assert len(config.left_schema.columns) == 2
+        assert len(config.right_schema.columns) == 2
+
+    def test_create_comparison_config_from_lazyframes_integration_with_service(self):
+        """Test integration with ComparisonService."""
+        left_df = pl.LazyFrame({
+            "customer_id": [1, 2, 3],
+            "name": ["Alice", "Bob", "Charlie"],
+            "balance": [100.5, 200.0, 300.25]
+        })
+
+        right_df = pl.LazyFrame({
+            "customer_id": [1, 2, 4],  # ID 3 missing, ID 4 added
+            "name": ["Alice", "Bob", "David"],  # Charlie -> David (but Charlie is in left-only)
+            "balance": [150.5, 250.0, 400.0]  # Balance differences for matching records
+        })
+
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+        from splurge_lazyframe_compare.services.comparison_service import ComparisonService
+
+        # Create config automatically
+        config = create_comparison_config_from_lazyframes(
+            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+        )
+
+        # Use with comparison service
+        comparison_service = ComparisonService()
+        results = comparison_service.execute_comparison(
+            left=left_df,
+            right=right_df,
+            config=config
+        )
+
+        # Verify results
+        assert results.summary.left_only_count == 1  # customer_id=3
+        assert results.summary.right_only_count == 1  # customer_id=4
+        assert results.summary.value_differences_count == 2  # balance differences for customer_id=1 and 2
+        assert results.summary.matching_records == 0  # No exact matches due to balance differences
+
 
 class TestDataHelpers:
     """Test data manipulation helper functions."""
