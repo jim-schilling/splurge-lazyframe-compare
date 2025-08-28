@@ -6,18 +6,24 @@ from pathlib import Path
 from typing import Any
 
 import polars as pl
+from tabulate import tabulate
 
 from splurge_lazyframe_compare.core.schema import ComparisonConfig
 
 # Private constants
 _DEFAULT_OUTPUT_DIR = "."
 _DEFAULT_FORMAT = "parquet"
+_FORMAT_PARQUET = "parquet"
+_FORMAT_CSV = "csv"
+_FORMAT_JSON = "json"
 _VALUE_DIFFERENCES_FILENAME = "value_differences_{}.{}"
 _LEFT_ONLY_FILENAME = "left_only_records_{}.{}"
 _RIGHT_ONLY_FILENAME = "right_only_records_{}.{}"
 _SUMMARY_FILENAME = "comparison_summary_{}.json"
 _TIMESTAMP_FORMAT = "%Y%m%d_%H%M%S"
-_REPORT_HEADER = "=" * 60
+_REPORT_HEADER_LENGTH = 60
+_SECTION_SEPARATOR_LENGTH = 40
+_REPORT_HEADER = "=" * _REPORT_HEADER_LENGTH
 _REPORT_TITLE = "SPLURGE LAZYFRAME COMPARISON SUMMARY"
 _RECORD_COUNTS_SECTION = "RECORD COUNTS:"
 _COMPARISON_RESULTS_SECTION = "COMPARISON RESULTS:"
@@ -25,7 +31,12 @@ _PERCENTAGES_SECTION = "PERCENTAGES (of Left DataFrame):"
 _VALUE_DIFFERENCES_SECTION = "VALUE DIFFERENCES SAMPLES:"
 _LEFT_ONLY_SECTION = "LEFT-ONLY RECORDS SAMPLES:"
 _RIGHT_ONLY_SECTION = "RIGHT-ONLY RECORDS SAMPLES:"
-_SECTION_SEPARATOR = "-" * 40
+_SECTION_SEPARATOR = "-" * _SECTION_SEPARATOR_LENGTH
+_ZERO_THRESHOLD = 0
+_DEFAULT_MAX_SAMPLES = 10
+_JSON_INDENT = 2
+_PERCENTAGE_MULTIPLIER = 100
+_PERCENTAGE_FORMAT = ".1f"
 
 
 @dataclass
@@ -159,19 +170,19 @@ class ComparisonResults:
         results = {}
 
         # Export value differences
-        if self.value_differences.select(pl.len()).collect().item() > 0:
+        if self.value_differences.select(pl.len()).collect().item() > _ZERO_THRESHOLD:
             value_diff_path = output_path / _VALUE_DIFFERENCES_FILENAME.format(timestamp, format)
             self._export_lazyframe(lazyframe=self.value_differences, file_path=value_diff_path, format=format)
             results["value_differences"] = str(value_diff_path)
 
         # Export left-only records
-        if self.left_only_records.select(pl.len()).collect().item() > 0:
+        if self.left_only_records.select(pl.len()).collect().item() > _ZERO_THRESHOLD:
             left_only_path = output_path / _LEFT_ONLY_FILENAME.format(timestamp, format)
             self._export_lazyframe(lazyframe=self.left_only_records, file_path=left_only_path, format=format)
             results["left_only_records"] = str(left_only_path)
 
         # Export right-only records
-        if self.right_only_records.select(pl.len()).collect().item() > 0:
+        if self.right_only_records.select(pl.len()).collect().item() > _ZERO_THRESHOLD:
             right_only_path = output_path / _RIGHT_ONLY_FILENAME.format(timestamp, format)
             self._export_lazyframe(lazyframe=self.right_only_records, file_path=right_only_path, format=format)
             results["right_only_records"] = str(right_only_path)
@@ -197,11 +208,11 @@ class ComparisonResults:
             file_path: Path to save the file.
             format: Output format.
         """
-        if format.lower() == "parquet":
+        if format.lower() == _FORMAT_PARQUET:
             lazyframe.sink_parquet(file_path)
-        elif format.lower() == "csv":
+        elif format.lower() == _FORMAT_CSV:
             lazyframe.sink_csv(file_path)
-        elif format.lower() == "json":
+        elif format.lower() == _FORMAT_JSON:
             lazyframe.sink_json(file_path)
         else:
             raise ValueError(f"Unsupported format: {format}")
@@ -225,7 +236,7 @@ class ComparisonResults:
         }
 
         with open(file_path, "w") as f:
-            json.dump(summary_dict, f, indent=2)
+            json.dump(summary_dict, f, indent=_JSON_INDENT)
 
 
 class ComparisonReport:
@@ -270,32 +281,38 @@ class ComparisonReport:
         ]
 
         # Calculate percentages
-        if summary.total_left_records > 0:
-            match_pct = (summary.matching_records / summary.total_left_records) * 100
-            diff_pct = (summary.value_differences_count / summary.total_left_records) * 100
-            left_only_pct = (summary.left_only_count / summary.total_left_records) * 100
+        if summary.total_left_records > _ZERO_THRESHOLD:
+            match_pct = (summary.matching_records / summary.total_left_records) * _PERCENTAGE_MULTIPLIER
+            diff_pct = (summary.value_differences_count / summary.total_left_records) * _PERCENTAGE_MULTIPLIER
+            left_only_pct = (summary.left_only_count / summary.total_left_records) * _PERCENTAGE_MULTIPLIER
 
             report_lines.extend([
                 _PERCENTAGES_SECTION,
-                f"  Matching:      {match_pct:.1f}%",
-                f"  Differences:   {diff_pct:.1f}%",
-                f"  Left-Only:     {left_only_pct:.1f}%",
+                f"  Matching:      {match_pct:{_PERCENTAGE_FORMAT}}%",
+                f"  Differences:   {diff_pct:{_PERCENTAGE_FORMAT}}%",
+                f"  Left-Only:     {left_only_pct:{_PERCENTAGE_FORMAT}}%",
                 "",
             ])
 
-        if summary.total_right_records > 0:
-            right_only_pct = (summary.right_only_count / summary.total_right_records) * 100
-            report_lines.append(f"  Right-Only:    {right_only_pct:.1f}% (of Right DataFrame)")
+        if summary.total_right_records > _ZERO_THRESHOLD:
+            right_only_pct = (summary.right_only_count / summary.total_right_records) * _PERCENTAGE_MULTIPLIER
+            report_lines.append(f"  Right-Only:    {right_only_pct:{_PERCENTAGE_FORMAT}}% (of Right DataFrame)")
 
-        report_lines.append("=" * 60)
+        report_lines.append("=" * _REPORT_HEADER_LENGTH)
 
         return "\n".join(report_lines)
 
-    def generate_detailed_report(self, *, max_samples: int = 10) -> str:
+    def generate_detailed_report(
+        self,
+        *,
+        max_samples: int = _DEFAULT_MAX_SAMPLES,
+        table_format: str = "grid"
+    ) -> str:
         """Generate detailed report with sample differences.
 
         Args:
             max_samples: Maximum number of sample records to include.
+            table_format: Table format for tabulate (grid, simple, pipe, orgtbl, etc.).
 
         Returns:
             Formatted detailed report string.
@@ -303,7 +320,7 @@ class ComparisonReport:
         report_lines = [self.generate_summary_report(), ""]
 
         # Add value differences samples
-        if self.results.summary.value_differences_count > 0:
+        if self.results.summary.value_differences_count > _ZERO_THRESHOLD:
             report_lines.extend([
                 _VALUE_DIFFERENCES_SECTION,
                 _SECTION_SEPARATOR,
@@ -312,14 +329,31 @@ class ComparisonReport:
             # Get sample of value differences
             sample_diff = self.results.value_differences.limit(max_samples).collect()
             if not sample_diff.is_empty():
-                report_lines.append(str(sample_diff))
+                try:
+                    # Convert Polars DataFrame to list of lists for tabulate
+                    headers = sample_diff.columns
+                    data = sample_diff.to_dicts()
+                    table_data = [[row[col] for col in headers] for row in data]
+
+                    table = tabulate(
+                        table_data,
+                        headers=headers,
+                        tablefmt=table_format,
+                        showindex=False,
+                        numalign='right',
+                        stralign='left'
+                    )
+                    report_lines.append(table)
+                except Exception:
+                    # Fallback to original format if tabulate fails
+                    report_lines.append(str(sample_diff))
             else:
                 report_lines.append("No value differences found.")
 
             report_lines.append("")
 
         # Add left-only samples
-        if self.results.summary.left_only_count > 0:
+        if self.results.summary.left_only_count > _ZERO_THRESHOLD:
             report_lines.extend([
                 _LEFT_ONLY_SECTION,
                 _SECTION_SEPARATOR,
@@ -327,14 +361,31 @@ class ComparisonReport:
 
             sample_left = self.results.left_only_records.limit(max_samples).collect()
             if not sample_left.is_empty():
-                report_lines.append(str(sample_left))
+                try:
+                    # Convert Polars DataFrame to list of lists for tabulate
+                    headers = sample_left.columns
+                    data = sample_left.to_dicts()
+                    table_data = [[row[col] for col in headers] for row in data]
+
+                    table = tabulate(
+                        table_data,
+                        headers=headers,
+                        tablefmt=table_format,
+                        showindex=False,
+                        numalign='right',
+                        stralign='left'
+                    )
+                    report_lines.append(table)
+                except Exception:
+                    # Fallback to original format if tabulate fails
+                    report_lines.append(str(sample_left))
             else:
                 report_lines.append("No left-only records found.")
 
             report_lines.append("")
 
         # Add right-only samples
-        if self.results.summary.right_only_count > 0:
+        if self.results.summary.right_only_count > _ZERO_THRESHOLD:
             report_lines.extend([
                 _RIGHT_ONLY_SECTION,
                 _SECTION_SEPARATOR,
@@ -342,10 +393,210 @@ class ComparisonReport:
 
             sample_right = self.results.right_only_records.limit(max_samples).collect()
             if not sample_right.is_empty():
-                report_lines.append(str(sample_right))
+                try:
+                    # Convert Polars DataFrame to list of lists for tabulate
+                    headers = sample_right.columns
+                    data = sample_right.to_dicts()
+                    table_data = [[row[col] for col in headers] for row in data]
+
+                    table = tabulate(
+                        table_data,
+                        headers=headers,
+                        tablefmt=table_format,
+                        showindex=False,
+                        numalign='right',
+                        stralign='left'
+                    )
+                    report_lines.append(table)
+                except Exception:
+                    # Fallback to original format if tabulate fails
+                    report_lines.append(str(sample_right))
             else:
                 report_lines.append("No right-only records found.")
 
+        return "\n".join(report_lines)
+
+    def generate_summary_table(self, *, table_format: str = "grid") -> str:
+        """Generate summary statistics as a formatted table.
+
+        Args:
+            table_format: Table format for tabulate (grid, simple, pipe, orgtbl, etc.).
+
+        Returns:
+            Formatted summary table string.
+        """
+        summary = self.results.summary
+
+        # Prepare table data
+        table_data = [
+            ["Left DataFrame", summary.total_left_records, "records"],
+            ["Right DataFrame", summary.total_right_records, "records"],
+            ["Matching Records", summary.matching_records, "records"],
+            ["Value Differences", summary.value_differences_count, "records"],
+            ["Left-Only Records", summary.left_only_count, "records"],
+            ["Right-Only Records", summary.right_only_count, "records"],
+        ]
+
+        # Calculate percentages if applicable
+        if summary.total_left_records > _ZERO_THRESHOLD:
+            match_pct = (summary.matching_records / summary.total_left_records) * _PERCENTAGE_MULTIPLIER
+            diff_pct = (summary.value_differences_count / summary.total_left_records) * _PERCENTAGE_MULTIPLIER
+            left_only_pct = (summary.left_only_count / summary.total_left_records) * _PERCENTAGE_MULTIPLIER
+
+            table_data.extend([
+                ["Matching %", f"{match_pct:{_PERCENTAGE_FORMAT}}%", "of left records"],
+                ["Differences %", f"{diff_pct:{_PERCENTAGE_FORMAT}}%", "of left records"],
+                ["Left-Only %", f"{left_only_pct:{_PERCENTAGE_FORMAT}}%", "of left records"],
+            ])
+
+        if summary.total_right_records > _ZERO_THRESHOLD:
+            right_only_pct = (summary.right_only_count / summary.total_right_records) * _PERCENTAGE_MULTIPLIER
+            table_data.append(["Right-Only %", f"{right_only_pct:{_PERCENTAGE_FORMAT}}%", "of right records"])
+
+        # Format with tabulate
+        try:
+            table = tabulate(
+                table_data,
+                headers=["Metric", "Value", "Unit"],
+                tablefmt=table_format,
+                numalign='right',
+                stralign='left'
+            )
+            return table
+        except Exception:
+            # Fallback to simple format
+            return tabulate(table_data, headers=["Metric", "Value", "Unit"], tablefmt="simple")
+
+    def generate_tabulated_report(
+        self,
+        *,
+        max_samples: int = _DEFAULT_MAX_SAMPLES,
+        table_format: str = "grid"
+    ) -> str:
+        """Generate a complete report with tabulated formatting.
+
+        Args:
+            max_samples: Maximum number of sample records to include.
+            table_format: Table format for tabulate (grid, simple, pipe, orgtbl, etc.).
+
+        Returns:
+            Formatted tabulated report string.
+        """
+        report_lines = [
+            _REPORT_HEADER,
+            _REPORT_TITLE,
+            _REPORT_HEADER,
+            f"Comparison Timestamp: {self.results.summary.comparison_timestamp}",
+            "",
+            "SUMMARY STATISTICS:",
+            _SECTION_SEPARATOR,
+            "",
+            self.generate_summary_table(table_format=table_format),
+            "",
+        ]
+
+        # Add value differences samples
+        if self.results.summary.value_differences_count > _ZERO_THRESHOLD:
+            report_lines.extend([
+                _VALUE_DIFFERENCES_SECTION,
+                _SECTION_SEPARATOR,
+                f"Showing up to {max_samples} sample records:",
+                "",
+            ])
+
+            # Get sample of value differences
+            sample_diff = self.results.value_differences.limit(max_samples).collect()
+            if not sample_diff.is_empty():
+                try:
+                    # Convert Polars DataFrame to list of lists for tabulate
+                    headers = sample_diff.columns
+                    data = sample_diff.to_dicts()
+                    table_data = [[row[col] for col in headers] for row in data]
+
+                    table = tabulate(
+                        table_data,
+                        headers=headers,
+                        tablefmt=table_format,
+                        showindex=False,
+                        numalign='right',
+                        stralign='left'
+                    )
+                    report_lines.append(table)
+                except Exception:
+                    # Fallback to original format if tabulate fails
+                    report_lines.append(str(sample_diff))
+            else:
+                report_lines.append("No value differences found.")
+
+            report_lines.append("")
+
+        # Add left-only samples
+        if self.results.summary.left_only_count > _ZERO_THRESHOLD:
+            report_lines.extend([
+                _LEFT_ONLY_SECTION,
+                _SECTION_SEPARATOR,
+                f"Showing up to {max_samples} sample records:",
+                "",
+            ])
+
+            sample_left = self.results.left_only_records.limit(max_samples).collect()
+            if not sample_left.is_empty():
+                try:
+                    # Convert Polars DataFrame to list of lists for tabulate
+                    headers = sample_left.columns
+                    data = sample_left.to_dicts()
+                    table_data = [[row[col] for col in headers] for row in data]
+
+                    table = tabulate(
+                        table_data,
+                        headers=headers,
+                        tablefmt=table_format,
+                        showindex=False,
+                        numalign='right',
+                        stralign='left'
+                    )
+                    report_lines.append(table)
+                except Exception:
+                    # Fallback to original format if tabulate fails
+                    report_lines.append(str(sample_left))
+            else:
+                report_lines.append("No left-only records found.")
+
+            report_lines.append("")
+
+        # Add right-only samples
+        if self.results.summary.right_only_count > _ZERO_THRESHOLD:
+            report_lines.extend([
+                _RIGHT_ONLY_SECTION,
+                _SECTION_SEPARATOR,
+                f"Showing up to {max_samples} sample records:",
+                "",
+            ])
+
+            sample_right = self.results.right_only_records.limit(max_samples).collect()
+            if not sample_right.is_empty():
+                try:
+                    # Convert Polars DataFrame to list of lists for tabulate
+                    headers = sample_right.columns
+                    data = sample_right.to_dicts()
+                    table_data = [[row[col] for col in headers] for row in data]
+
+                    table = tabulate(
+                        table_data,
+                        headers=headers,
+                        tablefmt=table_format,
+                        showindex=False,
+                        numalign='right',
+                        stralign='left'
+                    )
+                    report_lines.append(table)
+                except Exception:
+                    # Fallback to original format if tabulate fails
+                    report_lines.append(str(sample_right))
+            else:
+                report_lines.append("No right-only records found.")
+
+        report_lines.append("=" * _REPORT_HEADER_LENGTH)
         return "\n".join(report_lines)
 
     def export_to_html(self, filename: str) -> None:

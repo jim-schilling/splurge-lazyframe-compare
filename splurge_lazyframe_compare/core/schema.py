@@ -17,6 +17,7 @@ _NO_PK_MSG = "No primary key columns defined"
 _MISSING_LEFT_MAPPED_MSG = "Left schema missing mapped columns: {}"
 _MISSING_RIGHT_MAPPED_MSG = "Right schema missing mapped columns: {}"
 _PK_NOT_MAPPED_MSG = "Primary key column '{}' not found in column mappings"
+_ZERO_THRESHOLD = 0
 
 
 @dataclass
@@ -44,7 +45,7 @@ class ColumnDefinition:
         Returns:
             True if column exists, False otherwise.
         """
-        return self.column_name in df.columns
+        return self.column_name in df.collect_schema().names()
 
     def validate_data_type(self, df: pl.LazyFrame) -> bool:
         """Validate column data type matches definition.
@@ -58,7 +59,9 @@ class ColumnDefinition:
         if not self.validate_column_exists(df):
             return False
 
-        actual_dtype = df.select(pl.col(self.column_name)).dtypes[0]
+        schema = df.collect_schema()
+        col_index = schema.names().index(self.column_name)
+        actual_dtype = schema.dtypes()[col_index]
         return actual_dtype == self.polars_dtype
 
 
@@ -126,7 +129,7 @@ class ComparisonSchema:
         for col_name, col_def in self.columns.items():
             if col_name in df_columns and not col_def.nullable:
                 null_count = df.select(pl.col(col_name).is_null().sum()).collect().item()
-                if null_count > 0:
+                if null_count > _ZERO_THRESHOLD:
                     errors.append(_NULL_VIOLATION_MSG.format(col_name, null_count))
 
         # Validate primary key columns exist

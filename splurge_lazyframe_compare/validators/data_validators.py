@@ -17,6 +17,10 @@ _PATTERN_FAILED_MSG = "Pattern validation failed: {} violations found"
 _ALL_PATTERNS_CORRECT_MSG = "All string columns match expected patterns"
 _UNIQUENESS_FAILED_MSG = "Uniqueness validation failed: {} violations found"
 _ALL_UNIQUE_MSG = "All specified columns contain unique values"
+_LEN_COLUMN = "len"
+_FIRST_COLUMN_INDEX = 0
+_ZERO_THRESHOLD = 0
+_DUPLICATE_THRESHOLD = 1
 
 
 @dataclass
@@ -109,7 +113,7 @@ class DataQualityValidator:
 
         for col_name, expected_type in expected_types.items():
             if col_name in df.columns:
-                actual_type = df.select(pl.col(col_name)).dtypes[0]
+                actual_type = df.select(pl.col(col_name)).dtypes[_FIRST_COLUMN_INDEX]
                 if actual_type != expected_type:
                     type_mismatches.append({
                         "column": col_name,
@@ -149,7 +153,7 @@ class DataQualityValidator:
             if col_name not in df.columns:
                 continue
 
-            col_type = df.select(pl.col(col_name)).dtypes[0]
+            col_type = df.select(pl.col(col_name)).dtypes[_FIRST_COLUMN_INDEX]
             if not is_numeric_dtype(col_type):
                 continue
 
@@ -157,7 +161,7 @@ class DataQualityValidator:
             if "min" in range_constraints:
                 min_value = range_constraints["min"]
                 below_min = df.filter(pl.col(col_name) < min_value).select(pl.len()).collect().item()
-                if below_min > 0:
+                if below_min > _ZERO_THRESHOLD:
                     range_violations.append({
                         "column": col_name,
                         "constraint": f"min >= {min_value}",
@@ -168,7 +172,7 @@ class DataQualityValidator:
             if "max" in range_constraints:
                 max_value = range_constraints["max"]
                 above_max = df.filter(pl.col(col_name) > max_value).select(pl.len()).collect().item()
-                if above_max > 0:
+                if above_max > _ZERO_THRESHOLD:
                     range_violations.append({
                         "column": col_name,
                         "constraint": f"max <= {max_value}",
@@ -206,7 +210,7 @@ class DataQualityValidator:
             if col_name not in df.columns:
                 continue
 
-            col_type = df.select(pl.col(col_name)).dtypes[0]
+            col_type = df.select(pl.col(col_name)).dtypes[_FIRST_COLUMN_INDEX]
             if col_type != pl.Utf8:
                 continue
 
@@ -218,7 +222,7 @@ class DataQualityValidator:
                 .item()
             )
 
-            if non_matching > 0:
+            if non_matching > _ZERO_THRESHOLD:
                 pattern_violations.append({
                     "column": col_name,
                     "pattern": pattern,
@@ -260,13 +264,13 @@ class DataQualityValidator:
             duplicates = (
                 df.group_by(col_name)
                 .len()
-                .filter(pl.col("len") > 1)
+                .filter(pl.col(_LEN_COLUMN) > _DUPLICATE_THRESHOLD)
                 .select(pl.len())
                 .collect()
                 .item()
             )
 
-            if duplicates > 0:
+            if duplicates > _ZERO_THRESHOLD:
                 uniqueness_violations.append({
                     "column": col_name,
                     "duplicate_groups": duplicates,

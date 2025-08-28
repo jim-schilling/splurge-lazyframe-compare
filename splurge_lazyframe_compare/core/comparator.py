@@ -16,6 +16,11 @@ _RIGHT_PREFIX = "R_"
 _LEFT_DF_NAME = "left DataFrame"
 _RIGHT_DF_NAME = "right DataFrame"
 _DUPLICATE_PK_MSG = "Duplicate primary keys found in {}: {} duplicates"
+_JOIN_INNER = "inner"
+_JOIN_LEFT = "left"
+_LEN_COLUMN = "len"
+_DUPLICATE_THRESHOLD = 1
+_ZERO_THRESHOLD = 0
 
 
 class LazyFrameComparator:
@@ -109,7 +114,7 @@ class LazyFrameComparator:
 
         # Join on primary key columns
         joined = left.join(
-            right, on=pk_columns, how="inner"
+            right, on=pk_columns, how=_JOIN_INNER
         )
 
         # Create difference conditions for each mapped column
@@ -143,14 +148,14 @@ class LazyFrameComparator:
         # Filter rows with any differences
         if diff_conditions:
             filtered_joined = joined.filter(pl.any_horizontal(diff_conditions))
-            
+
             # Reorder columns to show alternating Left/Right for non-primary key columns
             reordered_columns = self._get_alternating_column_order()
-            
+
             return filtered_joined.select(reordered_columns)
         else:
             # No columns to compare, return empty result
-            return joined.limit(0)
+            return joined.limit(_ZERO_THRESHOLD)
 
     def _find_left_only_records(
         self,
@@ -173,15 +178,15 @@ class LazyFrameComparator:
         # For left-only records, we need to check if any non-primary key column from right is null
         # This indicates no match was found in the right DataFrame
         non_pk_columns = [f"{_RIGHT_PREFIX}{mapping.comparison_name}" for mapping in self.config.column_mappings if mapping.comparison_name not in self.config.primary_key_columns]
-        
+
         # Join and filter for left-only records
         left_only_joined = left.join(
-            right, on=pk_columns, how="left"
+            right, on=pk_columns, how=_JOIN_LEFT
         ).filter(pl.all_horizontal([pl.col(col).is_null() for col in non_pk_columns]))
-        
+
         # Select only primary key columns and left columns (drop right columns which are null)
         left_only_columns = self._get_left_only_column_order()
-        
+
         return left_only_joined.select(left_only_columns)
 
     def _find_right_only_records(
@@ -205,15 +210,15 @@ class LazyFrameComparator:
         # For right-only records, we need to check if any non-primary key column from left is null
         # This indicates no match was found in the left DataFrame
         non_pk_columns = [f"{_LEFT_PREFIX}{mapping.comparison_name}" for mapping in self.config.column_mappings if mapping.comparison_name not in self.config.primary_key_columns]
-        
+
         # Join and filter for right-only records
         right_only_joined = right.join(
-            left, on=pk_columns, how="left"
+            left, on=pk_columns, how=_JOIN_LEFT
         ).filter(pl.all_horizontal([pl.col(col).is_null() for col in non_pk_columns]))
-        
+
         # Select only primary key columns and right columns (drop left columns which are null)
         right_only_columns = self._get_right_only_column_order()
-        
+
         return right_only_joined.select(right_only_columns)
 
     def _prepare_dataframes(
@@ -302,8 +307,9 @@ class LazyFrameComparator:
         """
         # Get string columns
         string_columns = []
-        for col in df.columns:
-            if df.select(pl.col(col)).dtypes[0] == pl.Utf8:
+        schema = df.collect_schema()
+        for col in schema.names():
+            if schema.dtypes()[schema.names().index(col)] == pl.Utf8:
                 string_columns.append(col)
 
         # Apply lowercase transformation to string columns
@@ -375,12 +381,12 @@ class LazyFrameComparator:
         duplicates = (
             df.group_by(pk_columns)
             .len()
-            .filter(pl.col("len") > 1)
+            .filter(pl.col(_LEN_COLUMN) > _DUPLICATE_THRESHOLD)
         )
 
         duplicate_count = duplicates.select(pl.len()).collect().item()
 
-        if duplicate_count > 0:
+        if duplicate_count > _ZERO_THRESHOLD:
             raise PrimaryKeyViolationError(
                 _DUPLICATE_PK_MSG.format(schema_name, duplicate_count)
             )
@@ -393,18 +399,18 @@ class LazyFrameComparator:
         """
         # Start with primary key columns
         column_order = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
-        
+
         # Add non-primary key columns in alternating Left/Right order
         non_pk_mappings = [
-            mapping for mapping in self.config.column_mappings 
+            mapping for mapping in self.config.column_mappings
             if mapping.comparison_name not in self.config.primary_key_columns
         ]
-        
+
         for mapping in non_pk_mappings:
             left_col = f"{_LEFT_PREFIX}{mapping.comparison_name}"
             right_col = f"{_RIGHT_PREFIX}{mapping.comparison_name}"
             column_order.extend([left_col, right_col])
-        
+
         return column_order
 
     def _get_left_only_column_order(self) -> list[str]:
@@ -415,17 +421,17 @@ class LazyFrameComparator:
         """
         # Start with primary key columns
         column_order = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
-        
+
         # Add only left columns for non-primary key columns
         non_pk_mappings = [
-            mapping for mapping in self.config.column_mappings 
+            mapping for mapping in self.config.column_mappings
             if mapping.comparison_name not in self.config.primary_key_columns
         ]
-        
+
         for mapping in non_pk_mappings:
             left_col = f"{_LEFT_PREFIX}{mapping.comparison_name}"
             column_order.append(left_col)
-        
+
         return column_order
 
     def _get_right_only_column_order(self) -> list[str]:
@@ -436,17 +442,17 @@ class LazyFrameComparator:
         """
         # Start with primary key columns
         column_order = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
-        
+
         # Add only right columns for non-primary key columns
         non_pk_mappings = [
-            mapping for mapping in self.config.column_mappings 
+            mapping for mapping in self.config.column_mappings
             if mapping.comparison_name not in self.config.primary_key_columns
         ]
-        
+
         for mapping in non_pk_mappings:
             right_col = f"{_RIGHT_PREFIX}{mapping.comparison_name}"
             column_order.append(right_col)
-        
+
         return column_order
 
     def _validate_config(self) -> None:
