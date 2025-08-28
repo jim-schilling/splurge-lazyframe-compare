@@ -1,20 +1,12 @@
-"""Core components of the Polars LazyFrame comparison framework."""
+"""Core components of the Polars LazyFrame comparison framework.
 
-from .comparator import LazyFrameComparator
-from .results import ComparisonReport, ComparisonResults
-from .schema import (
-    ColumnDefinition,
-    ColumnMapping,
-    ComparisonConfig,
-    ComparisonSchema,
-)
+Note: Core functionality has been moved to the service-based architecture.
+This module now only contains the main LazyFrameComparator interface.
+"""
+
+from .comparator import LazyFrameComparator, ComparisonReport
 
 __all__ = [
     "LazyFrameComparator",
-    "ComparisonConfig",
-    "ComparisonSchema",
-    "ColumnDefinition",
-    "ColumnMapping",
-    "ComparisonResults",
     "ComparisonReport",
 ]

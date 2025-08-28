@@ -1,7 +1,10 @@
-"""Data validation components for the comparison framework."""
+"""Data validation components for the comparison framework.
 
-from .data_validators import DataQualityValidator
+Note: Validation functionality has been moved to services.ValidationService
+for better modularity and service-oriented architecture.
+"""
 
-__all__ = [
-    "DataQualityValidator",
-]
+# This package is kept for potential future validation extensions
+# Main validation functionality is now in services.ValidationService
+
+__all__ = []

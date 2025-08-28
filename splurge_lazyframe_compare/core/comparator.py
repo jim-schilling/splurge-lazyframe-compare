@@ -1,33 +1,21 @@
-"""Main comparison engine for Polars LazyFrames."""
+"""New service-based comparator interface for the comparison framework."""
+
+from typing import Optional
 
 import polars as pl
 
-from splurge_lazyframe_compare.core.results import ComparisonResults, ComparisonSummary
-from splurge_lazyframe_compare.core.schema import ComparisonConfig
-from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
-    PrimaryKeyViolationError,
-    SchemaValidationError,
-)
-
-# Private constants
-_PK_PREFIX = "PK_"
-_LEFT_PREFIX = "L_"
-_RIGHT_PREFIX = "R_"
-_LEFT_DF_NAME = "left DataFrame"
-_RIGHT_DF_NAME = "right DataFrame"
-_DUPLICATE_PK_MSG = "Duplicate primary keys found in {}: {} duplicates"
-_JOIN_INNER = "inner"
-_JOIN_LEFT = "left"
-_LEN_COLUMN = "len"
-_DUPLICATE_THRESHOLD = 1
-_ZERO_THRESHOLD = 0
+from splurge_lazyframe_compare.models.comparison import ComparisonResult
+from splurge_lazyframe_compare.models.schema import ComparisonConfig
+from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
 
 
 class LazyFrameComparator:
-    """Main comparison engine for Polars LazyFrames.
+    """Service-based LazyFrame comparator.
 
-    This class provides the core functionality for comparing two Polars LazyFrames
-    with configurable schemas, primary keys, and column mappings.
+    This is the new primary interface for the comparison framework,
+    built on the service architecture. It provides the same API as the
+    original comparator but uses the new modular service architecture
+    internally.
     """
 
     def __init__(self, config: ComparisonConfig) -> None:
@@ -37,14 +25,14 @@ class LazyFrameComparator:
             config: Comparison configuration defining schemas and mappings.
         """
         self.config = config
-        self._validate_config()
+        self.orchestrator = ComparisonOrchestrator()
 
     def compare(
         self,
         *,
         left: pl.LazyFrame,
         right: pl.LazyFrame
-    ) -> ComparisonResults:
+    ) -> ComparisonResult:
         """Execute complete comparison between two LazyFrames.
 
         Args:
@@ -58,409 +46,198 @@ class LazyFrameComparator:
             SchemaValidationError: If DataFrames don't match their schemas.
             PrimaryKeyViolationError: If primary key constraints are violated.
         """
-        # Validate DataFrames against schemas
-        self._validate_dataframes(left=left, right=right)
-
-        # Validate primary key uniqueness
-        self._validate_primary_key_uniqueness(df=left, schema_name=_LEFT_DF_NAME)
-        self._validate_primary_key_uniqueness(df=right, schema_name=_RIGHT_DF_NAME)
-
-        # Prepare DataFrames for comparison
-        prepared_left, prepared_right = self._prepare_dataframes(left=left, right=right)
-
-        # Get record counts
-        total_left_records = prepared_left.select(pl.len()).collect().item()
-        total_right_records = prepared_right.select(pl.len()).collect().item()
-
-        # Execute comparison patterns
-        value_differences = self._find_value_differences(left=prepared_left, right=prepared_right)
-        left_only_records = self._find_left_only_records(left=prepared_left, right=prepared_right)
-        right_only_records = self._find_right_only_records(left=prepared_left, right=prepared_right)
-
-        # Create summary
-        summary = ComparisonSummary.create(
-            total_left_records=total_left_records,
-            total_right_records=total_right_records,
-            value_differences=value_differences,
-            left_only_records=left_only_records,
-            right_only_records=right_only_records,
-        )
-
-        return ComparisonResults(
-            summary=summary,
-            value_differences=value_differences,
-            left_only_records=left_only_records,
-            right_only_records=right_only_records,
+        return self.orchestrator.compare_dataframes(
             config=self.config,
+            left=left,
+            right=right
         )
 
-    def _find_value_differences(
+    def compare_and_report(
         self,
         *,
         left: pl.LazyFrame,
-        right: pl.LazyFrame
-    ) -> pl.LazyFrame:
-        """Find records with same keys but different values.
+        right: pl.LazyFrame,
+        include_samples: bool = True,
+        max_samples: int = 10,
+        table_format: str = "grid"
+    ) -> str:
+        """Compare DataFrames and generate a complete report.
 
         Args:
-            left: Prepared left LazyFrame.
-            right: Prepared right LazyFrame.
+            left: Left LazyFrame to compare.
+            right: Right LazyFrame to compare.
+            include_samples: Whether to include sample records in the report.
+            max_samples: Maximum number of sample records to include.
+            table_format: Table format for sample data.
 
         Returns:
-            LazyFrame containing records with value differences with alternating Left/Right columns.
+            Complete formatted comparison report.
         """
-        # Get primary key columns with PK_ prefix
-        pk_columns = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
-
-        # Join on primary key columns
-        joined = left.join(
-            right, on=pk_columns, how=_JOIN_INNER
+        return self.orchestrator.compare_and_report(
+            config=self.config,
+            left=left,
+            right=right,
+            include_samples=include_samples,
+            max_samples=max_samples,
+            table_format=table_format
         )
 
-        # Create difference conditions for each mapped column
-        diff_conditions = []
-        for mapping in self.config.column_mappings:
-            if mapping.comparison_name in self.config.primary_key_columns:
-                # Primary key columns use PK_ prefix
-                left_col = f"{_PK_PREFIX}{mapping.comparison_name}"
-                right_col = left_col  # Same column since they're joined on PK
-            else:
-                # Non-primary key columns use L_ and R_ prefixes
-                left_col = f"{_LEFT_PREFIX}{mapping.comparison_name}"
-                right_col = f"{_RIGHT_PREFIX}{mapping.comparison_name}"
-
-            # Handle null comparisons based on config
-            if self.config.null_equals_null:
-                condition = ~pl.col(left_col).eq_missing(pl.col(right_col))
-            else:
-                condition = pl.col(left_col) != pl.col(right_col)
-
-            # Apply tolerance for numeric columns if specified
-            if (
-                self.config.tolerance
-                and mapping.comparison_name in self.config.tolerance
-            ):
-                tolerance = self.config.tolerance[mapping.comparison_name]
-                condition = (pl.col(left_col) - pl.col(right_col)).abs() > tolerance
-
-            diff_conditions.append(condition)
-
-        # Filter rows with any differences
-        if diff_conditions:
-            filtered_joined = joined.filter(pl.any_horizontal(diff_conditions))
-
-            # Reorder columns to show alternating Left/Right for non-primary key columns
-            reordered_columns = self._get_alternating_column_order()
-
-            return filtered_joined.select(reordered_columns)
-        else:
-            # No columns to compare, return empty result
-            return joined.limit(_ZERO_THRESHOLD)
-
-    def _find_left_only_records(
+    def compare_and_export(
         self,
         *,
         left: pl.LazyFrame,
-        right: pl.LazyFrame
-    ) -> pl.LazyFrame:
-        """Find records that exist only in left DataFrame.
+        right: pl.LazyFrame,
+        output_dir: str = ".",
+        format: str = "parquet"
+    ) -> dict[str, str]:
+        """Compare DataFrames and export results to files.
 
         Args:
-            left: Prepared left LazyFrame.
-            right: Prepared right LazyFrame.
+            left: Left LazyFrame to compare.
+            right: Right LazyFrame to compare.
+            output_dir: Directory to save output files.
+            format: Output format for files (parquet, csv, json).
 
         Returns:
-            LazyFrame containing left-only records with right columns dropped.
+            Dictionary mapping result type to file path.
         """
-        # Get primary key columns with PK_ prefix
-        pk_columns = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
+        return self.orchestrator.compare_and_export(
+            config=self.config,
+            left=left,
+            right=right,
+            output_dir=output_dir,
+            format=format
+        )
 
-        # For left-only records, we need to check if any non-primary key column from right is null
-        # This indicates no match was found in the right DataFrame
-        non_pk_columns = [f"{_RIGHT_PREFIX}{mapping.comparison_name}" for mapping in self.config.column_mappings if mapping.comparison_name not in self.config.primary_key_columns]
+    def to_report(self) -> "ComparisonReport":
+        """Create a report generator for the current configuration.
 
-        # Join and filter for left-only records
-        left_only_joined = left.join(
-            right, on=pk_columns, how=_JOIN_LEFT
-        ).filter(pl.all_horizontal([pl.col(col).is_null() for col in non_pk_columns]))
+        Returns:
+            ComparisonReport object for generating reports.
+        """
+        return ComparisonReport(self.orchestrator, self.config)
 
-        # Select only primary key columns and left columns (drop right columns which are null)
-        left_only_columns = self._get_left_only_column_order()
 
-        return left_only_joined.select(left_only_columns)
+class ComparisonReport:
+    """New report generator using the service architecture."""
 
-    def _find_right_only_records(
+    def __init__(
         self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame
-    ) -> pl.LazyFrame:
-        """Find records that exist only in right DataFrame.
-
-        Args:
-            left: Prepared left LazyFrame.
-            right: Prepared right LazyFrame.
-
-        Returns:
-            LazyFrame containing right-only records with left columns dropped.
-        """
-        # Get primary key columns with PK_ prefix
-        pk_columns = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
-
-        # For right-only records, we need to check if any non-primary key column from left is null
-        # This indicates no match was found in the left DataFrame
-        non_pk_columns = [f"{_LEFT_PREFIX}{mapping.comparison_name}" for mapping in self.config.column_mappings if mapping.comparison_name not in self.config.primary_key_columns]
-
-        # Join and filter for right-only records
-        right_only_joined = right.join(
-            left, on=pk_columns, how=_JOIN_LEFT
-        ).filter(pl.all_horizontal([pl.col(col).is_null() for col in non_pk_columns]))
-
-        # Select only primary key columns and right columns (drop left columns which are null)
-        right_only_columns = self._get_right_only_column_order()
-
-        return right_only_joined.select(right_only_columns)
-
-    def _prepare_dataframes(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame
-    ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
-        """Prepare and validate DataFrames for comparison.
-
-        Args:
-            left: Original left LazyFrame.
-            right: Original right LazyFrame.
-
-        Returns:
-            Tuple of (prepared_left, prepared_right) LazyFrames.
-        """
-        # Apply column mappings and create standardized column names
-        prepared_left, prepared_right = self._apply_column_mappings(left=left, right=right)
-
-        # Apply case sensitivity settings
-        if self.config.ignore_case:
-            prepared_left = self._apply_case_insensitive(prepared_left)
-            prepared_right = self._apply_case_insensitive(prepared_right)
-
-        return prepared_left, prepared_right
-
-    def _apply_column_mappings(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame
-    ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
-        """Apply column mappings and create standardized column names.
-
-        Args:
-            left: Original left LazyFrame.
-            right: Original right LazyFrame.
-
-        Returns:
-            Tuple of (mapped_left, mapped_right) LazyFrames with standardized column names.
-        """
-        # Create mapping dictionaries with appropriate prefixes
-        left_mapping = {}
-        right_mapping = {}
-
-        for mapping in self.config.column_mappings:
-            if mapping.comparison_name in self.config.primary_key_columns:
-                # Primary key columns get PK_ prefix
-                left_mapping[mapping.left_column] = f"{_PK_PREFIX}{mapping.comparison_name}"
-                right_mapping[mapping.right_column] = f"{_PK_PREFIX}{mapping.comparison_name}"
-            else:
-                # Non-primary key columns get L_ and R_ prefixes
-                left_mapping[mapping.left_column] = f"{_LEFT_PREFIX}{mapping.comparison_name}"
-                right_mapping[mapping.right_column] = f"{_RIGHT_PREFIX}{mapping.comparison_name}"
-
-        # Apply mappings
-        mapped_left = left.rename(left_mapping)
-        mapped_right = right.rename(right_mapping)
-
-        # Select only the mapped columns
-        left_columns = []
-        right_columns = []
-
-        for mapping in self.config.column_mappings:
-            if mapping.comparison_name in self.config.primary_key_columns:
-                left_columns.append(f"{_PK_PREFIX}{mapping.comparison_name}")
-                right_columns.append(f"{_PK_PREFIX}{mapping.comparison_name}")
-            else:
-                left_columns.append(f"{_LEFT_PREFIX}{mapping.comparison_name}")
-                right_columns.append(f"{_RIGHT_PREFIX}{mapping.comparison_name}")
-
-        mapped_left = mapped_left.select(left_columns)
-        mapped_right = mapped_right.select(right_columns)
-
-        return mapped_left, mapped_right
-
-    def _apply_case_insensitive(self, df: pl.LazyFrame) -> pl.LazyFrame:
-        """Apply case-insensitive transformations to string columns.
-
-        Args:
-            df: LazyFrame to transform.
-
-        Returns:
-            LazyFrame with case-insensitive transformations applied.
-        """
-        # Get string columns
-        string_columns = []
-        schema = df.collect_schema()
-        for col in schema.names():
-            if schema.dtypes()[schema.names().index(col)] == pl.Utf8:
-                string_columns.append(col)
-
-        # Apply lowercase transformation to string columns
-        if string_columns:
-            transformations = [pl.col(col).str.to_lowercase().alias(col) for col in string_columns]
-            return df.with_columns(transformations)
-
-        return df
-
-    def _validate_dataframes(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame
+        orchestrator: ComparisonOrchestrator,
+        config: ComparisonConfig
     ) -> None:
-        """Validate DataFrames against their schemas.
+        """Initialize the report generator.
 
         Args:
-            left: Left LazyFrame to validate.
-            right: Right LazyFrame to validate.
-
-        Raises:
-            SchemaValidationError: If validation fails.
+            orchestrator: ComparisonOrchestrator instance.
+            config: Comparison configuration.
         """
-        # Validate left DataFrame
-        left_errors = self.config.left_schema.validate_schema(left)
-        if left_errors:
-            raise SchemaValidationError(
-                "Left DataFrame validation failed", validation_errors=left_errors
-            )
+        self.orchestrator = orchestrator
+        self.config = config
+        self._last_result: Optional[ComparisonResult] = None
 
-        # Validate right DataFrame
-        right_errors = self.config.right_schema.validate_schema(right)
-        if right_errors:
-            raise SchemaValidationError(
-                "Right DataFrame validation failed", validation_errors=right_errors
-            )
-
-    def _validate_primary_key_uniqueness(
-        self,
-        *,
-        df: pl.LazyFrame,
-        schema_name: str
-    ) -> None:
-        """Validate that primary key columns are unique.
+    def generate_from_result(self, result: ComparisonResult) -> str:
+        """Generate report from a comparison result.
 
         Args:
-            df: LazyFrame to validate.
-            schema_name: Name of the schema for error reporting.
+            result: ComparisonResult to generate report from.
 
-        Raises:
-            PrimaryKeyViolationError: If primary key constraints are violated.
+        Returns:
+            Formatted report string.
         """
-        # Get the actual primary key columns for this DataFrame
-        if schema_name == _LEFT_DF_NAME:
-            pk_columns = [
-                mapping.left_column
-                for mapping in self.config.column_mappings
-                if mapping.comparison_name in self.config.primary_key_columns
-            ]
-        else:
-            pk_columns = [
-                mapping.right_column
-                for mapping in self.config.column_mappings
-                if mapping.comparison_name in self.config.primary_key_columns
-            ]
-
-        # Check for duplicates
-        duplicates = (
-            df.group_by(pk_columns)
-            .len()
-            .filter(pl.col(_LEN_COLUMN) > _DUPLICATE_THRESHOLD)
+        self._last_result = result
+        return self.orchestrator.generate_report_from_result(
+            result=result,
+            report_type="detailed"
         )
 
-        duplicate_count = duplicates.select(pl.len()).collect().item()
+    def generate_summary_report(self, result: Optional[ComparisonResult] = None) -> str:
+        """Generate summary report.
 
-        if duplicate_count > _ZERO_THRESHOLD:
-            raise PrimaryKeyViolationError(
-                _DUPLICATE_PK_MSG.format(schema_name, duplicate_count)
-            )
-
-    def _get_alternating_column_order(self) -> list[str]:
-        """Get column order with alternating Left/Right columns for non-primary key columns.
+        Args:
+            result: Optional comparison result. If not provided, uses last result.
 
         Returns:
-            List of column names in the desired order: primary keys first, then alternating Left/Right.
+            Formatted summary report string.
         """
-        # Start with primary key columns
-        column_order = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
+        if result is None and self._last_result is None:
+            raise ValueError("No comparison result available. Call generate_from_result first.")
 
-        # Add non-primary key columns in alternating Left/Right order
-        non_pk_mappings = [
-            mapping for mapping in self.config.column_mappings
-            if mapping.comparison_name not in self.config.primary_key_columns
-        ]
+        target_result = result or self._last_result
+        return self.orchestrator.generate_report_from_result(
+            result=target_result,
+            report_type="summary"
+        )
 
-        for mapping in non_pk_mappings:
-            left_col = f"{_LEFT_PREFIX}{mapping.comparison_name}"
-            right_col = f"{_RIGHT_PREFIX}{mapping.comparison_name}"
-            column_order.extend([left_col, right_col])
+    def generate_detailed_report(
+        self,
+        *,
+        result: Optional[ComparisonResult] = None,
+        max_samples: int = 10,
+        table_format: str = "grid"
+    ) -> str:
+        """Generate detailed report with samples.
 
-        return column_order
-
-    def _get_left_only_column_order(self) -> list[str]:
-        """Get column order for left-only records (primary keys + left columns only).
+        Args:
+            result: Optional comparison result. If not provided, uses last result.
+            max_samples: Maximum number of sample records to include.
+            table_format: Table format for sample data.
 
         Returns:
-            List of column names in the desired order: primary keys first, then left columns.
+            Formatted detailed report string.
         """
-        # Start with primary key columns
-        column_order = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
+        if result is None and self._last_result is None:
+            raise ValueError("No comparison result available. Call generate_from_result first.")
 
-        # Add only left columns for non-primary key columns
-        non_pk_mappings = [
-            mapping for mapping in self.config.column_mappings
-            if mapping.comparison_name not in self.config.primary_key_columns
-        ]
+        target_result = result or self._last_result
+        return self.orchestrator.generate_report_from_result(
+            result=target_result,
+            report_type="detailed",
+            max_samples=max_samples,
+            table_format=table_format
+        )
 
-        for mapping in non_pk_mappings:
-            left_col = f"{_LEFT_PREFIX}{mapping.comparison_name}"
-            column_order.append(left_col)
+    def generate_summary_table(
+        self,
+        *,
+        result: Optional[ComparisonResult] = None,
+        table_format: str = "grid"
+    ) -> str:
+        """Generate summary statistics as a table.
 
-        return column_order
-
-    def _get_right_only_column_order(self) -> list[str]:
-        """Get column order for right-only records (primary keys + right columns only).
+        Args:
+            result: Optional comparison result. If not provided, uses last result.
+            table_format: Table format for display.
 
         Returns:
-            List of column names in the desired order: primary keys first, then right columns.
+            Formatted summary table string.
         """
-        # Start with primary key columns
-        column_order = [f"{_PK_PREFIX}{pk}" for pk in self.config.primary_key_columns]
+        if result is None and self._last_result is None:
+            raise ValueError("No comparison result available. Call generate_from_result first.")
 
-        # Add only right columns for non-primary key columns
-        non_pk_mappings = [
-            mapping for mapping in self.config.column_mappings
-            if mapping.comparison_name not in self.config.primary_key_columns
-        ]
+        target_result = result or self._last_result
+        return self.orchestrator.generate_report_from_result(
+            result=target_result,
+            report_type="table"
+        )
 
-        for mapping in non_pk_mappings:
-            right_col = f"{_RIGHT_PREFIX}{mapping.comparison_name}"
-            column_order.append(right_col)
+    def export_to_html(
+        self,
+        *,
+        result: Optional[ComparisonResult] = None,
+        filename: str
+    ) -> None:
+        """Export comparison result to HTML file.
 
-        return column_order
-
-    def _validate_config(self) -> None:
-        """Validate comparison configuration.
-
-        This method is called during initialization to ensure the configuration
-        is valid before any comparisons are performed.
+        Args:
+            result: Optional comparison result. If not provided, uses last result.
+            filename: Path to save the HTML file.
         """
-        # Configuration validation is handled in ComparisonConfig.__post_init__
-        # This method is kept for potential future validation logic
-        pass
+        if result is None and self._last_result is None:
+            raise ValueError("No comparison result available. Call generate_from_result first.")
+
+        target_result = result or self._last_result
+        self.orchestrator.export_result_to_html(
+            result=target_result,
+            filename=filename
+        )

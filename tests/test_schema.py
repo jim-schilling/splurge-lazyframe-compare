@@ -4,7 +4,7 @@
 import polars as pl
 import pytest
 
-from splurge_lazyframe_compare.core.schema import (
+from splurge_lazyframe_compare.models.schema import (
     ColumnDefinition,
     ColumnMapping,
     ComparisonConfig,

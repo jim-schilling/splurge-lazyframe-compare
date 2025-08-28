@@ -12,12 +12,11 @@ def is_numeric_dtype(dtype: pl.DataType) -> bool:
     Returns:
         True if the data type is numeric, False otherwise.
     """
-    numeric_types = {
-        pl.Int8, pl.Int16, pl.Int32, pl.Int64,
-        pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
-        pl.Float32, pl.Float64,
-    }
-    return type(dtype) in numeric_types
+    try:
+        return dtype.is_numeric()
+    except AttributeError:
+        # Fallback for older Polars versions or different data types
+        return False
 
 
 def get_friendly_dtype_name(dtype: pl.DataType) -> str:
