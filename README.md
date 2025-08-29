@@ -660,6 +660,8 @@ mypy splurge_lazyframe_compare
 - **Structured logging**: Consistent log format with timestamps, service names, and operation context
 - **Performance monitoring**: Built-in performance tracking and slow operation detection
 - **Error handling**: Robust exception handling with custom exceptions and graceful recovery
+- **Polars version compatibility**: Backward compatibility for complex data types across different Polars versions
+- **Improved error messages**: Clear guidance for proper usage of complex data types
 
 ## Contributing
 
@@ -681,6 +683,14 @@ MIT License - see LICENSE file for details.
 - **tabulate**: >= 0.9.0 (table formatting for reports)
 - **logging**: Built-in (structured logging and monitoring)
 - **typing**: Built-in (for type annotations)
+
+### Polars Version Compatibility
+
+The framework includes backward compatibility for different Polars versions:
+- **Categorical types**: Gracefully handles versions with/without `ordering` parameter
+- **Datetime types**: Supports versions with varying `time_unit` and `time_zone` parameter support
+- **Duration types**: Compatible with versions that may not support `time_unit` parameter
+- **Decimal types**: Handles versions with/without `precision` and `scale` parameters
 
 ### Optional Dependencies
 - Additional packages may be required for specific export formats or advanced features

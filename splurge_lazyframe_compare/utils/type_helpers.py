@@ -82,11 +82,23 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
     if hasattr(datatype_attr, '__call__'):
         # These are classes that need to be instantiated
         if datatype_name == "Datetime":
-            # Default to microsecond precision with no timezone
-            return datatype_attr(time_unit="us", time_zone=None)
+            # Default to microsecond precision with no timezone; handle Polars version compatibility
+            try:
+                return datatype_attr(time_unit="us", time_zone=None)
+            except TypeError:
+                # Older Polars versions may not support all parameters
+                try:
+                    return datatype_attr(time_unit="us")
+                except TypeError:
+                    # Even older versions may not support time_unit
+                    return datatype_attr()
         elif datatype_name == "Categorical":
-            # Default categorical with no ordering
-            return datatype_attr(ordering="physical")
+            # Default categorical with no ordering; handle Polars version compatibility
+            try:
+                return datatype_attr(ordering="physical")
+            except TypeError:
+                # Older Polars versions do not support 'ordering' parameter
+                return datatype_attr()
         elif datatype_name == "List":
             # List needs an inner type - default to Int64
             return datatype_attr(pl.Int64)
@@ -94,11 +106,19 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
             # Struct needs fields - default to empty struct
             return datatype_attr([])
         elif datatype_name == "Duration":
-            # Duration needs time unit
-            return datatype_attr(time_unit="us")
+            # Duration needs time unit; handle Polars version compatibility
+            try:
+                return datatype_attr(time_unit="us")
+            except TypeError:
+                # Older Polars versions may not support time_unit parameter
+                return datatype_attr()
         elif datatype_name == "Decimal":
-            # Decimal needs precision and scale
-            return datatype_attr(precision=None, scale=None)
+            # Decimal needs precision and scale; handle Polars version compatibility
+            try:
+                return datatype_attr(precision=None, scale=None)
+            except TypeError:
+                # Older Polars versions may not support these parameters
+                return datatype_attr()
         else:
             # Try to instantiate with no arguments as fallback
             try:
