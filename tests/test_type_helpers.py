@@ -162,7 +162,6 @@ class TestGetPolarsDatatypeType:
 
     def test_exact_case_conversion(self) -> None:
         """Test that the function handles exact case input correctly."""
-        # Since we removed .title(), we need exact case matching
         assert get_polars_datatype_type("Int8") == pl.Int8
         assert get_polars_datatype_type("String") == pl.Utf8
         assert get_polars_datatype_type("Boolean") == pl.Boolean
