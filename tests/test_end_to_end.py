@@ -356,9 +356,10 @@ class TestEndToEndScenarios:
             from splurge_lazyframe_compare.utils import load_config_from_file
             loaded_config = load_config_from_file(config_file)
 
-            # Debug: print loaded config
-            print("Loaded config keys:", list(loaded_config.keys()))
-            print("Loaded config:", loaded_config)
+            # Verify config was loaded correctly
+            assert loaded_config is not None
+            assert isinstance(loaded_config, dict)
+            assert len(loaded_config) > 0
 
             # Step 5: Convert loaded config back to ComparisonConfig and use it
             from splurge_lazyframe_compare import ComparisonConfig, ComparisonOrchestrator
@@ -539,7 +540,6 @@ class TestEndToEndScenarios:
         class CustomValidationService(ValidationService):
             def validate_dataframe_schema(self, *, df, schema, df_name):
                 # Custom validation logic
-                print(f"Custom validation for {df_name}")
                 return super().validate_dataframe_schema(df=df, schema=schema, df_name=df_name)
 
         # Custom reporting service

@@ -64,6 +64,7 @@ class ReportingService(BaseService):
         Returns:
             Formatted summary report string.
         """
+        self._validate_inputs(results=results)
         try:
             summary = results.summary
 
@@ -127,6 +128,7 @@ class ReportingService(BaseService):
         Returns:
             Formatted detailed report string.
         """
+        self._validate_inputs(results=results)
         try:
             report_lines = [self.generate_summary_report(results=results), ""]
 
@@ -240,6 +242,7 @@ class ReportingService(BaseService):
         Returns:
             Formatted summary table string.
         """
+        self._validate_inputs(results=results)
         try:
             summary = results.summary
 
@@ -303,6 +306,7 @@ class ReportingService(BaseService):
         Returns:
             Dictionary mapping result type to file path.
         """
+        self._validate_inputs(results=results)
         try:
             # Validate format
             from splurge_lazyframe_compare.utils.file_operations import FileOperationConstants

@@ -2149,6 +2149,68 @@ class TestReportingService:
         assert "4" in report  # Should contain record counts
         assert "50.0%" in report  # Should contain percentages
 
+    def test_generate_summary_report_zero_records(self, sample_config):
+        """Test summary report generation with zero records."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create a result with zero records
+        summary = ComparisonSummary(
+            total_left_records=0,
+            total_right_records=0,
+            matching_records=0,
+            value_differences_count=0,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+        report = service.generate_summary_report(results=result)
+
+        assert "0" in report
+        assert "Left DataFrame:  0 records" in report
+        assert "Right DataFrame: 0 records" in report
+        # Should not contain percentages when records are zero
+        assert "PERCENTAGES" not in report
+
+    def test_generate_summary_report_large_numbers(self, sample_config):
+        """Test summary report generation with large numbers."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create a result with large numbers
+        summary = ComparisonSummary(
+            total_left_records=1000000,
+            total_right_records=2000000,
+            matching_records=500000,
+            value_differences_count=300000,
+            left_only_count=200000,
+            right_only_count=1200000,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+        report = service.generate_summary_report(results=result)
+
+        assert "1,000,000" in report  # Should format large numbers
+        assert "2,000,000" in report
+        assert "50.0%" in report  # Should calculate percentages correctly
+
     def test_generate_summary_table(self, sample_dataframes, sample_config):
         """Test summary table generation."""
         from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
@@ -2177,6 +2239,650 @@ class TestReportingService:
         assert "Left DataFrame" in table
         assert "Right DataFrame" in table
         assert "4" in table
+
+    def test_generate_summary_table_different_formats(self, sample_config):
+        """Test summary table generation with different table formats."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        summary = ComparisonSummary(
+            total_left_records=100,
+            total_right_records=100,
+            matching_records=50,
+            value_differences_count=25,
+            left_only_count=15,
+            right_only_count=10,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Test different table formats
+        formats = ["grid", "simple", "pipe", "orgtbl"]
+        for fmt in formats:
+            table = service.generate_summary_table(results=result, table_format=fmt)
+            assert "100" in table
+            assert "50.0%" in table
+
+    def test_generate_detailed_report_with_data(self, sample_config):
+        """Test detailed report generation with actual data."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create sample data for value differences
+        diff_data = {
+            "id": [1, 2],
+            "name": ["Alice", "Bob"],
+            "amount": [100.0, 200.0]
+        }
+
+        left_only_data = {
+            "id": [3],
+            "name": ["Charlie"],
+            "amount": [300.0]
+        }
+
+        right_only_data = {
+            "customer_id": [5],
+            "customer_name": ["Eve"],
+            "total_amount": [500.0]
+        }
+
+        summary = ComparisonSummary(
+            total_left_records=4,
+            total_right_records=4,
+            matching_records=1,
+            value_differences_count=2,
+            left_only_count=1,
+            right_only_count=1,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame(left_only_data),
+            right_only_records=pl.LazyFrame(right_only_data),
+            config=sample_config
+        )
+
+        service = ReportingService()
+        report = service.generate_detailed_report(results=result)
+
+        # Check summary section
+        assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report
+        assert "VALUE DIFFERENCES" in report
+        assert "LEFT-ONLY" in report
+        assert "RIGHT-ONLY" in report
+
+        # Check data is included
+        assert "Alice" in report
+        assert "Bob" in report
+        assert "Charlie" in report
+        assert "Eve" in report
+
+    def test_generate_detailed_report_empty_sections(self, sample_config):
+        """Test detailed report generation with empty data sections."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        summary = ComparisonSummary(
+            total_left_records=4,
+            total_right_records=4,
+            matching_records=4,
+            value_differences_count=0,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+        report = service.generate_detailed_report(results=result)
+
+        # Should not include empty sections
+        assert "VALUE DIFFERENCES" not in report
+        assert "LEFT-ONLY" not in report
+        assert "RIGHT-ONLY" not in report
+        assert "No value differences found." not in report  # Because section isn't included
+
+    def test_generate_detailed_report_max_samples(self, sample_config):
+        """Test detailed report generation with max_samples parameter."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create data with more records than max_samples
+        diff_data = {
+            "id": list(range(1, 6)),  # 5 records
+            "name": [f"Person{i}" for i in range(1, 6)],
+            "amount": [i * 100.0 for i in range(1, 6)]
+        }
+
+        summary = ComparisonSummary(
+            total_left_records=10,
+            total_right_records=10,
+            matching_records=5,
+            value_differences_count=5,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Test with max_samples=3
+        report = service.generate_detailed_report(results=result, max_samples=3)
+
+        # Should contain only first 3 records
+        assert "Person1" in report
+        assert "Person2" in report
+        assert "Person3" in report
+        # Should not contain records beyond max_samples
+        assert "Person4" not in report
+        assert "Person5" not in report
+
+    def test_generate_detailed_report_table_formats(self, sample_config):
+        """Test detailed report generation with different table formats."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        diff_data = {
+            "id": [1, 2],
+            "name": ["Alice", "Bob"],
+            "amount": [100.0, 200.0]
+        }
+
+        summary = ComparisonSummary(
+            total_left_records=4,
+            total_right_records=4,
+            matching_records=2,
+            value_differences_count=2,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Test different table formats
+        formats = ["grid", "simple", "pipe", "orgtbl"]
+        for fmt in formats:
+            report = service.generate_detailed_report(results=result, table_format=fmt)
+            assert "Alice" in report
+            assert "Bob" in report
+            assert "VALUE DIFFERENCES" in report
+
+    def test_export_results_all_formats(self, sample_config, tmp_path):
+        """Test export_results with different formats."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create sample data
+        diff_data = {"id": [1, 2], "name": ["Alice", "Bob"]}
+        left_data = {"id": [3], "name": ["Charlie"]}
+        right_data = {"customer_id": [5], "customer_name": ["Eve"]}
+
+        summary = ComparisonSummary(
+            total_left_records=4,
+            total_right_records=4,
+            matching_records=1,
+            value_differences_count=2,
+            left_only_count=1,
+            right_only_count=1,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame(left_data),
+            right_only_records=pl.LazyFrame(right_data),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Test different formats
+        formats = ["parquet", "csv", "json"]
+        for fmt in formats:
+            exported_files = service.export_results(
+                results=result,
+                format=fmt,
+                output_dir=str(tmp_path)
+            )
+
+            # Should export all files when data is present
+            assert "value_differences" in exported_files
+            assert "left_only_records" in exported_files
+            assert "right_only_records" in exported_files
+            assert "summary" in exported_files
+
+            # Check files exist
+            for file_path in exported_files.values():
+                assert Path(file_path).exists()
+
+    def test_export_results_empty_dataframes(self, sample_config, tmp_path):
+        """Test export_results with empty dataframes."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        summary = ComparisonSummary(
+            total_left_records=4,
+            total_right_records=4,
+            matching_records=4,
+            value_differences_count=0,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+        exported_files = service.export_results(
+            results=result,
+            format="csv",
+            output_dir=str(tmp_path)
+        )
+
+        # Should only export summary when data is empty
+        assert "summary" in exported_files
+        assert "value_differences" not in exported_files
+        assert "left_only_records" not in exported_files
+        assert "right_only_records" not in exported_files
+
+        # Check summary file exists
+        assert Path(exported_files["summary"]).exists()
+
+    def test_export_results_invalid_format(self, sample_config, tmp_path):
+        """Test export_results with invalid format."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        summary = ComparisonSummary(
+            total_left_records=1,
+            total_right_records=1,
+            matching_records=1,
+            value_differences_count=0,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        with pytest.raises(ValueError, match="Unsupported format"):
+            service.export_results(
+                results=result,
+                format="invalid_format",
+                output_dir=str(tmp_path)
+            )
+
+    def test_export_results_invalid_directory(self, sample_config):
+        """Test export_results with invalid directory."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        summary = ComparisonSummary(
+            total_left_records=1,
+            total_right_records=1,
+            matching_records=1,
+            value_differences_count=0,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Test with non-existent absolute path
+        with pytest.raises(ValueError, match="Parent directory does not exist"):
+            service.export_results(
+                results=result,
+                format="csv",
+                output_dir="C:/definitely/does/not/exist"
+            )
+
+        # Test with non-existent relative path
+        with pytest.raises(ValueError, match="Parent directory does not exist"):
+            service.export_results(
+                results=result,
+                format="csv",
+                output_dir="non/existent/directory"
+            )
+
+    def test_export_results_non_writable_directory(self, sample_config, tmp_path, monkeypatch):
+        """Test export_results with non-writable directory."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        summary = ComparisonSummary(
+            total_left_records=1,
+            total_right_records=1,
+            matching_records=1,
+            value_differences_count=0,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Mock os.access to return False (not writable)
+        def mock_access(path, mode):
+            return False
+
+        monkeypatch.setattr("os.access", mock_access)
+
+        with pytest.raises(ValueError, match="Parent directory is not writable"):
+            service.export_results(
+                results=result,
+                format="csv",
+                output_dir=str(tmp_path)
+            )
+
+    def test_input_validation_invalid_results(self):
+        """Test input validation for invalid results parameter."""
+        service = ReportingService()
+
+        with pytest.raises(ValueError, match="results must be a ComparisonResult"):
+            service.generate_summary_report(results="invalid")
+
+        with pytest.raises(ValueError, match="results must be a ComparisonResult"):
+            service.generate_detailed_report(results="invalid")
+
+        with pytest.raises(ValueError, match="results must be a ComparisonResult"):
+            service.generate_summary_table(results="invalid")
+
+        with pytest.raises(ValueError, match="results must be a ComparisonResult"):
+            service.export_results(results="invalid")
+
+
+
+
+
+
+
+    def test_edge_case_special_characters_in_data(self, sample_config):
+        """Test handling of special characters in data."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create data with special characters
+        diff_data = {
+            "name": ["José", "Müller", "O'Connor", "测试"],
+            "description": ["Line 1\nLine 2", "Tab\there", "Quote\"here", "Unicode: 🎉"]
+        }
+
+        summary = ComparisonSummary(
+            total_left_records=4,
+            total_right_records=4,
+            matching_records=0,
+            value_differences_count=4,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+        report = service.generate_detailed_report(results=result)
+
+        # Should handle special characters gracefully
+        assert "VALUE DIFFERENCES" in report
+        assert "José" in report or "Unicode" in report  # At least some data should be present
+
+    def test_edge_case_null_values_in_data(self, sample_config):
+        """Test handling of null values in data."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create data with null values
+        diff_data = {
+            "id": [1, 2, None],
+            "name": ["Alice", None, "Charlie"],
+            "amount": [100.0, None, None]
+        }
+
+        summary = ComparisonSummary(
+            total_left_records=3,
+            total_right_records=3,
+            matching_records=0,
+            value_differences_count=3,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+        report = service.generate_detailed_report(results=result)
+
+        # Should handle null values gracefully
+        assert "VALUE DIFFERENCES" in report
+        assert "Alice" in report
+        assert "Charlie" in report
+
+    def test_edge_case_very_large_max_samples(self, sample_config):
+        """Test detailed report with very large max_samples parameter."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create small dataset
+        diff_data = {"id": [1, 2], "name": ["Alice", "Bob"]}
+
+        summary = ComparisonSummary(
+            total_left_records=10,
+            total_right_records=10,
+            matching_records=8,
+            value_differences_count=2,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Test with max_samples larger than available data
+        report = service.generate_detailed_report(results=result, max_samples=1000)
+
+        # Should include all available data
+        assert "VALUE DIFFERENCES" in report
+        assert "Alice" in report
+        assert "Bob" in report
+
+    def test_edge_case_zero_max_samples(self, sample_config):
+        """Test detailed report with zero max_samples parameter."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Create dataset
+        diff_data = {"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]}
+
+        summary = ComparisonSummary(
+            total_left_records=5,
+            total_right_records=5,
+            matching_records=2,
+            value_differences_count=3,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame(diff_data),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Test with max_samples=0
+        report = service.generate_detailed_report(results=result, max_samples=0)
+
+        # Should include section header but no data rows
+        assert "VALUE DIFFERENCES" in report
+        # Should not contain actual data
+        assert "Alice" not in report
+        assert "Bob" not in report
+        assert "Charlie" not in report
+
+    def test_edge_case_different_timestamp_formats(self, sample_config):
+        """Test summary report with different timestamp formats."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        # Test different timestamp formats
+        timestamps = [
+            "2025-01-01T00:00:00",
+            "2025-01-01 00:00:00",
+            "2025-01-01T00:00:00.123456",
+            "2025-01-01"
+        ]
+
+        service = ReportingService()
+
+        for timestamp in timestamps:
+            summary = ComparisonSummary(
+                total_left_records=1,
+                total_right_records=1,
+                matching_records=1,
+                value_differences_count=0,
+                left_only_count=0,
+                right_only_count=0,
+                comparison_timestamp=timestamp
+            )
+
+            result = ComparisonResult(
+                summary=summary,
+                value_differences=pl.LazyFrame({}).limit(0),
+                left_only_records=pl.LazyFrame({}).limit(0),
+                right_only_records=pl.LazyFrame({}).limit(0),
+                config=sample_config
+            )
+
+            report = service.generate_summary_report(results=result)
+
+            # Should contain the timestamp in some form
+            assert timestamp.split('T')[0] in report  # At least the date should be present
+
+    def test_export_results_relative_path(self, sample_config, tmp_path):
+        """Test export_results with relative paths."""
+        from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+
+        summary = ComparisonSummary(
+            total_left_records=1,
+            total_right_records=1,
+            matching_records=1,
+            value_differences_count=0,
+            left_only_count=0,
+            right_only_count=0,
+            comparison_timestamp="2025-01-01T00:00:00"
+        )
+
+        result = ComparisonResult(
+            summary=summary,
+            value_differences=pl.LazyFrame({}).limit(0),
+            left_only_records=pl.LazyFrame({}).limit(0),
+            right_only_records=pl.LazyFrame({}).limit(0),
+            config=sample_config
+        )
+
+        service = ReportingService()
+
+        # Change to tmp_path directory and use relative path
+        original_cwd = tmp_path.cwd()
+        try:
+            import os
+            os.chdir(tmp_path)
+
+            # Test with relative path
+            exported_files = service.export_results(
+                results=result,
+                format="csv",
+                output_dir="relative_output"
+            )
+
+            # Should create the relative directory and export files
+            assert "summary" in exported_files
+            assert Path("relative_output").exists()
+
+            # Check that files exist in the relative directory
+            for file_path in exported_files.values():
+                assert Path(file_path).exists()
+
+        finally:
+            os.chdir(original_cwd)
 
 
 class TestComparisonService:

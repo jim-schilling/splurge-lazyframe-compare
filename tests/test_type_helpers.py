@@ -298,3 +298,135 @@ class TestTypeHelpersIntegration:
             name = get_polars_datatype_name(dtype)
             converted_type = get_polars_datatype_type(name)
             assert converted_type == dtype
+
+    def test_complex_type_defaults(self) -> None:
+        """Test that complex types are created with sensible defaults."""
+        # Test List defaults to Int64
+        list_type = get_polars_datatype_type("List")
+        assert str(list_type) == "List(Int64)"
+
+        # Test Struct defaults to empty
+        struct_type = get_polars_datatype_type("Struct")
+        assert str(struct_type) == "Struct({})"
+
+        # Test Decimal defaults to precision=38, scale=9
+        decimal_type = get_polars_datatype_type("Decimal")
+        assert "precision=38" in str(decimal_type)
+        assert "scale=9" in str(decimal_type)
+
+    def test_parameterized_type_behavior(self) -> None:
+        """Test behavior with parameterized type instances."""
+        # Test that parameterized instances work correctly
+        datetime_param = pl.Datetime(time_unit="ms", time_zone="UTC")
+        name = get_polars_datatype_name(datetime_param)
+        assert name == "Datetime"
+
+        # Test that we can recreate the base type
+        recreated = get_polars_datatype_type(name)
+        assert str(recreated) == "Datetime(time_unit='us', time_zone=None)"
+
+    def test_numeric_detection_edge_cases(self) -> None:
+        """Test numeric detection with various edge cases."""
+        # Test with custom objects that might have is_numeric
+        class CustomNumericType:
+            def is_numeric(self):
+                return True
+
+        class CustomNonNumericType:
+            def is_numeric(self):
+                return False
+
+        # These should use the is_numeric method when available
+        assert is_numeric_datatype(CustomNumericType()) is True
+        assert is_numeric_datatype(CustomNonNumericType()) is False
+
+    def test_error_handling_comprehensive(self) -> None:
+        """Test comprehensive error handling scenarios."""
+        # Test None inputs
+        with pytest.raises(TypeError):
+            get_polars_datatype_name(None)
+
+        with pytest.raises(TypeError):
+            get_polars_datatype_type(None)
+
+        with pytest.raises(TypeError):
+            is_numeric_datatype(None)
+
+        # Test invalid type names
+        with pytest.raises(AttributeError):
+            get_polars_datatype_type("InvalidType123")
+
+        with pytest.raises(AttributeError):
+            get_polars_datatype_type("")
+
+        with pytest.raises(AttributeError):
+            get_polars_datatype_type("   ")
+
+    def test_type_conversion_consistency(self) -> None:
+        """Test that type conversions are consistent across different scenarios."""
+        # Test that string names map to the same types as direct access
+        string_to_direct_mapping = {
+            "Int64": pl.Int64,
+            "String": pl.Utf8,
+            "Boolean": pl.Boolean,
+            "Float32": pl.Float32,
+            "Date": pl.Date,
+            "List": pl.List,  # Note: this will be List(Int64) when instantiated
+        }
+
+        for string_name, direct_type in string_to_direct_mapping.items():
+            # Get type from string
+            from_string = get_polars_datatype_type(string_name)
+
+            # For simple types, they should be equal
+            if string_name != "List":
+                assert from_string == direct_type
+            else:
+                # List should be List(Int64)
+                assert str(from_string) == "List(Int64)"
+
+    def test_performance_behavior(self) -> None:
+        """Test that functions perform correctly under various conditions."""
+        import time
+
+        # Test that functions don't take excessive time
+        start_time = time.time()
+
+        # Perform multiple operations
+        for i in range(100):
+            name = get_polars_datatype_name(pl.Int64)
+            assert name == "Int64"
+
+            converted = get_polars_datatype_type("Int64")
+            assert converted == pl.Int64
+
+            assert is_numeric_datatype(pl.Int64) is True
+
+        end_time = time.time()
+        duration = end_time - start_time
+
+        # Should complete in reasonable time (less than 1 second for 300 operations)
+        assert duration < 1.0, f"Operations took too long: {duration:.3f} seconds"
+
+    def test_memory_behavior(self) -> None:
+        """Test that functions don't leak memory or create excessive objects."""
+        import gc
+
+        # Get initial object count
+        initial_objects = len(gc.get_objects())
+
+        # Perform operations that might create objects
+        for i in range(1000):
+            name = get_polars_datatype_name(pl.Int64)
+            converted = get_polars_datatype_type("Int64")
+            is_numeric = is_numeric_datatype(pl.Int64)
+
+        # Force garbage collection
+        gc.collect()
+
+        # Check that we haven't created excessive objects
+        final_objects = len(gc.get_objects())
+        object_growth = final_objects - initial_objects
+
+        # Allow some growth but not excessive (should be much less than 1000)
+        assert object_growth < 100, f"Excessive object creation: {object_growth} objects"
