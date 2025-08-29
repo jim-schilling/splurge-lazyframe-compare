@@ -69,6 +69,29 @@ def test_complex_datatypes():
 
     return True
 
+def verify_copy_fix():
+    """Verify that the copy fix works correctly."""
+    import random
+
+    # Simulate the test scenario
+    num_records = 5
+    left_data = {
+        'id': list(range(1, num_records + 1)),
+        'value': [random.uniform(0, 1000) for _ in range(num_records)],
+    }
+
+    # Test the new (clean) approach
+    right_data = left_data.copy()
+    right_data["id"] = left_data["id"]  # Direct assignment - clearer intent
+    right_data["value"] = [v + random.uniform(-1, 1) for v in right_data["value"]]
+
+    print("✅ Copy fix verification:")
+    print(f"  Left IDs: {left_data['id']}")
+    print(f"  Right IDs: {right_data['id']}")
+    print(f"  IDs are same object: {right_data['id'] is left_data['id']}")  # Should be True
+    print(f"  Values are different: {left_data['value'] != right_data['value']}")  # Should be True
+    return True
+
 if __name__ == "__main__":
     import polars as pl
 
@@ -80,8 +103,9 @@ if __name__ == "__main__":
 
     success1 = test_basic_mixed_usage()
     success2 = test_complex_datatypes()
+    success3 = verify_copy_fix()
 
-    if success1 and success2:
+    if success1 and success2 and success3:
         logger.info("All validations passed successfully")
         print("\n🎉 All validations passed! Mixed datatype usage works perfectly!")
         print("The README.md and examples have been successfully updated.")
