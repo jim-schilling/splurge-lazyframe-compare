@@ -32,7 +32,7 @@ def get_polars_datatype_name(datatype: pl.DataType) -> str:
         datatype: Polars data type.
 
     Returns:
-        Human-readable classname for the data type.
+        Human-readable name for the data type (class name without parameters).
 
     Raises:
         TypeError: If datatype is None.
@@ -40,7 +40,12 @@ def get_polars_datatype_name(datatype: pl.DataType) -> str:
     if datatype is None:
         raise TypeError("datatype cannot be None")
 
-    return repr(datatype)
+    # Try __name__ first (works for class constants like pl.Int64)
+    if hasattr(datatype, '__name__'):
+        return datatype.__name__
+
+    # Fall back to __class__.__name__ (works for instances)
+    return datatype.__class__.__name__
 
 
 def get_polars_datatype_type(datatype_name: str) -> pl.DataType:

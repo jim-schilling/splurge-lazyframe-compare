@@ -17,6 +17,8 @@ A comprehensive Python framework for comparing two Polars LazyFrames with config
 - **Type-safe implementation** - Full type annotations and validation
 - **Performance optimized** - Leverages Polars' lazy evaluation for memory efficiency
 - **Export capabilities** - Export results to CSV, Parquet, and JSON formats
+- **Production-ready logging** - Structured logging with Python's logging module, configurable log levels, and performance monitoring
+- **Error handling** - Robust exception handling with custom exceptions and graceful error recovery
 
 ## Installation
 
@@ -198,6 +200,23 @@ Generates human-readable reports in multiple formats and handles data export fun
 #### `DataPreparationService`
 Manages data preprocessing, column mapping, and schema transformations.
 
+### Logging Utilities
+
+#### `get_logger(name: str)`
+Factory function to create configured loggers with proper naming hierarchy.
+
+#### `performance_monitor(service_name: str, operation: str)`
+Context manager for automatic performance monitoring and logging.
+
+#### `log_service_initialization(service_name: str, config: dict = None)`
+Logs service initialization with optional configuration details.
+
+#### `log_service_operation(service_name: str, operation: str, status: str, message: str = None)`
+Logs service operations with status and optional details.
+
+#### `log_performance(service_name: str, operation: str, duration_ms: float, details: dict = None)`
+Logs performance metrics with automatic slow operation detection.
+
 ### Service Usage Pattern
 ```python
 from splurge_lazyframe_compare import ComparisonOrchestrator
@@ -229,6 +248,67 @@ validation_result = validator.validate_dataframe_schema(
 reporter = ReportingService()
 summary_report = reporter.generate_summary_report(results=results)
 ```
+
+## Logging and Monitoring
+
+The framework includes comprehensive logging and monitoring capabilities using Python's standard logging module:
+
+### Logger Configuration
+
+```python
+import logging
+from splurge_lazyframe_compare.utils.logging_helpers import get_logger
+
+# Configure logging (typically done once at application startup)
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s'
+)
+
+# Get a logger for your module
+logger = get_logger(__name__)
+```
+
+### Performance Monitoring
+
+```python
+from splurge_lazyframe_compare.utils.logging_helpers import performance_monitor
+
+# Automatically log performance metrics
+with performance_monitor("ComparisonService", "find_differences") as ctx:
+    result = perform_comparison()
+    ctx["records_processed"] = len(result)
+```
+
+### Service Logging
+
+```python
+from splurge_lazyframe_compare.utils.logging_helpers import (
+    log_service_initialization,
+    log_service_operation
+)
+
+# Log service initialization
+log_service_initialization("ComparisonService", {"version": "1.0"})
+
+# Log service operations
+log_service_operation("ComparisonService", "compare", "success", "Comparison completed")
+```
+
+### Log Output Format
+
+```
+[2025-01-29 10:30:45,123] [INFO] [splurge_lazyframe_compare.ComparisonService] [initialization] Service initialized successfully Details: config={'version': '1.0'}
+[2025-01-29 10:30:45,234] [WARNING] [splurge_lazyframe_compare.ComparisonService] [find_differences] SLOW OPERATION: 150.50ms (150.50ms) Details: records=1000
+[2025-01-29 10:30:45,345] [ERROR] [splurge_lazyframe_compare.ValidationService] [validate_schema] Schema validation failed: Invalid column type
+```
+
+### Log Levels
+
+- **DEBUG**: Detailed debugging information and performance metrics
+- **INFO**: General information about operations and service lifecycle
+- **WARNING**: Warning conditions that don't prevent operation
+- **ERROR**: Error conditions that may affect functionality
 
 ## API Reference
 
@@ -542,6 +622,19 @@ pytest --cov=splurge_lazyframe_compare
 pytest tests/test_comparator.py
 ```
 
+### Logging in Development
+
+The framework uses structured logging throughout. During development, you can enable debug logging to see detailed information:
+
+```python
+import logging
+
+# Enable debug logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Now all framework operations will be logged with detailed information
+```
+
 ### Code Quality
 
 ```bash
@@ -550,7 +643,17 @@ ruff check .
 
 # Run formatting
 ruff format .
+
+# Type checking (if mypy is configured)
+mypy splurge_lazyframe_compare
 ```
+
+### Recent Improvements
+
+- **Production-ready logging**: Replaced all `print()` statements with proper Python logging module
+- **Structured logging**: Consistent log format with timestamps, service names, and operation context
+- **Performance monitoring**: Built-in performance tracking and slow operation detection
+- **Error handling**: Robust exception handling with custom exceptions and graceful recovery
 
 ## Contributing
 
@@ -570,6 +673,7 @@ MIT License - see LICENSE file for details.
 - **Python**: 3.10 or higher
 - **Polars**: >= 1.32.0 (core data processing)
 - **tabulate**: >= 0.9.0 (table formatting for reports)
+- **logging**: Built-in (structured logging and monitoring)
 - **typing**: Built-in (for type annotations)
 
 ### Optional Dependencies

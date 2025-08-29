@@ -194,19 +194,16 @@ def optimize_dataframe(df: pl.LazyFrame) -> pl.LazyFrame:
         return df
 
 
-def safe_collect(df: pl.LazyFrame, timeout_seconds: int = 30) -> pl.DataFrame | None:
-    """Safely collect a LazyFrame with timeout protection.
+def safe_collect(df: pl.LazyFrame) -> pl.DataFrame | None:
+    """Safely collect a LazyFrame with error handling.
 
     Args:
         df: LazyFrame to collect.
-        timeout_seconds: Timeout in seconds.
 
     Returns:
-        Collected DataFrame or None if timeout/collection fails.
+        Collected DataFrame or None if collection fails.
     """
     try:
-        # For now, just collect without timeout
-        # In a production system, you might want to implement actual timeout logic
         return df.collect()
     except Exception:
         return None

@@ -1,10 +1,38 @@
 """Logging and monitoring helpers for the comparison framework."""
 
+import logging
 import time
 from contextlib import contextmanager
 from typing import Any
 
 from splurge_lazyframe_compare.utils.constants import TIMESTAMP_FORMAT
+
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Only add handler if none exists to avoid duplicate logs
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s",
+        datefmt=TIMESTAMP_FORMAT
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+
+def get_logger(name: str) -> logging.Logger:
+    """Get a configured logger instance.
+
+    Args:
+        name: Logger name (typically __name__ from calling module).
+
+    Returns:
+        Configured logger instance.
+    """
+    return logging.getLogger(f"splurge_lazyframe_compare.{name}")
 
 
 class LoggingConstants:
@@ -93,6 +121,10 @@ def log_performance(
         level = LoggingConstants.DEBUG
         message = f"Operation completed in {duration_ms:.2f}ms"
 
+    # Get logger for the service
+    service_logger = get_logger(service_name)
+
+    # Create structured log message
     log_message = create_log_message(
         level=level,
         service_name=service_name,
@@ -102,8 +134,15 @@ def log_performance(
         duration_ms=duration_ms
     )
 
-    # In a real implementation, this would use a proper logging framework
-    print(log_message)
+    # Log using appropriate level
+    if level == LoggingConstants.DEBUG:
+        service_logger.debug(log_message)
+    elif level == LoggingConstants.INFO:
+        service_logger.info(log_message)
+    elif level == LoggingConstants.WARNING:
+        service_logger.warning(log_message)
+    elif level == LoggingConstants.ERROR:
+        service_logger.error(log_message)
 
 
 @contextmanager
@@ -153,6 +192,10 @@ def log_service_initialization(service_name: str, config: dict[str, Any] | None 
     message = "Service initialized successfully"
     details = {"config": config} if config else None
 
+    # Get logger for the service
+    service_logger = get_logger(service_name)
+
+    # Create structured log message
     log_message = create_log_message(
         level=LoggingConstants.INFO,
         service_name=service_name,
@@ -161,7 +204,7 @@ def log_service_initialization(service_name: str, config: dict[str, Any] | None 
         details=details
     )
 
-    print(log_message)
+    service_logger.info(log_message)
 
 
 def log_service_operation(
@@ -190,6 +233,10 @@ def log_service_operation(
     level = level_map.get(status.lower(), LoggingConstants.INFO)
     log_message = message or f"Operation {status}"
 
+    # Get logger for the service
+    service_logger = get_logger(service_name)
+
+    # Create structured log message
     log_details = create_log_message(
         level=level,
         service_name=service_name,
@@ -198,7 +245,15 @@ def log_service_operation(
         details=details
     )
 
-    print(log_details)
+    # Log using appropriate level
+    if level == LoggingConstants.DEBUG:
+        service_logger.debug(log_details)
+    elif level == LoggingConstants.INFO:
+        service_logger.info(log_details)
+    elif level == LoggingConstants.WARNING:
+        service_logger.warning(log_details)
+    elif level == LoggingConstants.ERROR:
+        service_logger.error(log_details)
 
 
 def create_operation_context(
@@ -282,6 +337,10 @@ def log_dataframe_stats(
         "column_types": df_info.get("column_types", []),
     }
 
+    # Get logger for the service
+    service_logger = get_logger(service_name)
+
+    # Create structured log message
     log_message = create_log_message(
         level=LoggingConstants.DEBUG,
         service_name=service_name,
@@ -290,7 +349,7 @@ def log_dataframe_stats(
         details=details
     )
 
-    print(log_message)
+    service_logger.debug(log_message)
 
 
 def create_service_health_check(service_name: str) -> dict[str, Any]:
@@ -324,6 +383,10 @@ def log_service_health(service_name: str, health_data: dict[str, Any]) -> None:
 
     message = f"Health check: {status}"
 
+    # Get logger for the service
+    service_logger = get_logger(service_name)
+
+    # Create structured log message
     log_message = create_log_message(
         level=level,
         service_name=service_name,
@@ -332,4 +395,8 @@ def log_service_health(service_name: str, health_data: dict[str, Any]) -> None:
         details=health_data
     )
 
-    print(log_message)
+    # Log using appropriate level
+    if level == LoggingConstants.INFO:
+        service_logger.info(log_message)
+    else:
+        service_logger.warning(log_message)

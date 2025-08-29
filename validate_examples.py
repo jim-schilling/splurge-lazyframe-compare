@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Quick validation script to test the updated examples."""
 
+import logging
 import sys
-import os
-sys.path.insert(0, os.path.dirname(__file__))
 
 from splurge_lazyframe_compare import ColumnDefinition, ComparisonSchema
+from splurge_lazyframe_compare.utils.logging_helpers import get_logger
+
+# Configure logging for testing
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s"
+)
 
 def test_basic_mixed_usage():
     """Test basic mixed datatype usage."""
@@ -66,14 +72,20 @@ def test_complex_datatypes():
 if __name__ == "__main__":
     import polars as pl
 
+    # Test logging functions
+    logger = get_logger('validation')
+    logger.info("Starting validation tests...")
+
     print("Validating mixed datatype usage in examples...")
 
     success1 = test_basic_mixed_usage()
     success2 = test_complex_datatypes()
 
     if success1 and success2:
+        logger.info("All validations passed successfully")
         print("\n🎉 All validations passed! Mixed datatype usage works perfectly!")
         print("The README.md and examples have been successfully updated.")
     else:
+        logger.error("Some validations failed")
         print("\n❌ Some validations failed!")
         sys.exit(1)
