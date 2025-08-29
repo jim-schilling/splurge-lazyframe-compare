@@ -169,16 +169,14 @@ class TestGetPolarsDatatypeType:
         assert get_polars_datatype_type("Struct") == pl.Struct
         assert get_polars_datatype_type("Null") == pl.Null
 
-    def test_case_insensitive_conversion(self) -> None:
+    def test_exact_case_conversion(self) -> None:
         """Test that the function handles exact case input correctly."""
         # Since we removed .title(), we need exact case matching
         assert get_polars_datatype_type("Int8") == pl.Int8
         assert get_polars_datatype_type("String") == pl.Utf8
         assert get_polars_datatype_type("Boolean") == pl.Boolean
         assert get_polars_datatype_type("Float64") == pl.Float64
-
-    def test_exact_case_conversion(self) -> None:
-        """Test that exact case matching is required."""
+        
         # Test that incorrect case fails
         with pytest.raises(AttributeError):
             get_polars_datatype_type("int64")

@@ -51,19 +51,27 @@ class ColumnDefinition:
             self.datatype = get_polars_datatype_type(self.datatype)
 
         # Check for unparameterized complex types and provide helpful error messages
-        if hasattr(self.datatype, '__name__'):
-            type_name = self.datatype.__name__
+        from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_name
+        try:
+            type_name = get_polars_datatype_name(self.datatype)
             if type_name == 'List':
-                raise ValueError(
-                    f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
-                    f"Use pl.List(inner_type) instead, e.g., pl.List(pl.Utf8) for a list of strings."
-                )
+                # Check if this is an unparameterized List by seeing if it has an inner type
+                if not hasattr(self.datatype, 'inner'):
+                    raise ValueError(
+                        f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
+                        f"Use pl.List(inner_type) instead, e.g., pl.List(pl.Utf8) for a list of strings."
+                    )
             elif type_name == 'Struct':
-                raise ValueError(
-                    f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
-                    f"Use pl.Struct(fields) instead, e.g., pl.Struct([]) for an empty struct "
-                    f"or pl.Struct({{'field': pl.Utf8}}) for a struct with fields."
-                )
+                # Check if this is an unparameterized Struct by seeing if it has fields
+                if not hasattr(self.datatype, 'fields') or self.datatype.fields is None:
+                    raise ValueError(
+                        f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
+                        f"Use pl.Struct(fields) instead, e.g., pl.Struct([]) for an empty struct "
+                        f"or pl.Struct({{'field': pl.Utf8}}) for a struct with fields."
+                    )
+        except (TypeError, AttributeError):
+            # If we can't get the type name, skip this validation
+            pass
 
         # Check if datatype is a valid polars data type
         try:
@@ -71,13 +79,25 @@ class ColumnDefinition:
             schema = pl.Schema({"test": self.datatype})
         except Exception as e:
             # Provide more specific error message for complex types
-            if hasattr(self.datatype, '__name__'):
-                type_name = self.datatype.__name__
+            try:
+                type_name = get_polars_datatype_name(self.datatype)
                 if type_name in ['List', 'Struct']:
-                    raise ValueError(
-                        f"ColumnDefinition.datatype {type_name} requires parameters. "
-                        f"Use proper instantiation: pl.{type_name}(...) instead of pl.{type_name}"
-                    ) from e
+                    # Check if this is actually parameterized
+                    if type_name == 'List' and hasattr(self.datatype, 'inner'):
+                        # This is a parameterized List, so the error is not about parameterization
+                        pass
+                    elif type_name == 'Struct' and hasattr(self.datatype, 'fields') and self.datatype.fields is not None:
+                        # This is a parameterized Struct, so the error is not about parameterization
+                        pass
+                    else:
+                        # This is truly unparameterized
+                        raise ValueError(
+                            f"ColumnDefinition.datatype {type_name} requires parameters. "
+                            f"Use proper instantiation: pl.{type_name}(...) instead of pl.{type_name}"
+                        ) from e
+            except (TypeError, AttributeError):
+                # If we can't get the type name, fall back to generic error
+                pass
             raise ValueError("ColumnDefinition.datatype must be a valid polars data type") from e
 
     def validate_column_exists(self, df: pl.LazyFrame) -> bool:

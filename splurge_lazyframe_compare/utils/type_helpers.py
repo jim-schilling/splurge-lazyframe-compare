@@ -65,12 +65,52 @@ def get_polars_datatype_name(datatype: pl.DataType) -> str:
     if datatype is None:
         raise TypeError("datatype cannot be None")
 
-    # Try __name__ first (works for class constants like pl.Int64)
-    if hasattr(datatype, '__name__'):
-        return datatype.__name__
+    # Type mapping for reliable name resolution
+    # Handle common aliases and version differences
+    type_mappings = {
+        # Handle both Utf8 and String (they're the same type)
+        pl.Utf8: "String",
+        pl.String: "String",
+        # Handle other common types
+        pl.Int8: "Int8",
+        pl.Int16: "Int16",
+        pl.Int32: "Int32",
+        pl.Int64: "Int64",
+        pl.UInt8: "UInt8",
+        pl.UInt16: "UInt16",
+        pl.UInt32: "UInt32",
+        pl.UInt64: "UInt64",
+        pl.Float32: "Float32",
+        pl.Float64: "Float64",
+        pl.Boolean: "Boolean",
+        pl.Datetime: "Datetime",
+        pl.Date: "Date",
+        pl.Time: "Time",
+        pl.Duration: "Duration",
+        pl.Categorical: "Categorical",
+        pl.Binary: "Binary",
+        pl.Null: "Null",
+    }
 
-    # Fall back to __class__.__name__ (works for instances)
-    return datatype.__class__.__name__
+    # First, try direct type mapping for known types
+    for type_class, name in type_mappings.items():
+        if datatype == type_class:
+            return name
+
+    # Try __name__ for simple types (works for class constants like pl.Int64)
+    if hasattr(datatype, '__name__'):
+        name = datatype.__name__
+        # Handle the Utf8 -> String alias consistently
+        if name == "Utf8":
+            return "String"
+        return name
+
+    # Fall back to __class__.__name__ (works for instances like Struct, List)
+    class_name = datatype.__class__.__name__
+    # Handle the Utf8 -> String alias consistently
+    if class_name == "Utf8":
+        return "String"
+    return class_name
 
 
 def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
