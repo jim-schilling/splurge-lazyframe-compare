@@ -94,9 +94,14 @@ class ComparisonService(BaseService):
                     left=left, right=right, config=config
                 )
 
-                # Get record counts
-                total_left_records = prepared_left.select(pl.len()).collect().item()
-                total_right_records = prepared_right.select(pl.len()).collect().item()
+                # Get record counts - optimized to collect once
+                counts_df = pl.concat([
+                    prepared_left.select(pl.len().alias("count")),
+                    prepared_right.select(pl.len().alias("count"))
+                ]).collect()
+
+                total_left_records = counts_df["count"][0]
+                total_right_records = counts_df["count"][1]
 
                 ctx["record_counts"] = {
                     "left": total_left_records,
@@ -161,7 +166,7 @@ class ComparisonService(BaseService):
         """
         try:
             # Get primary key columns with PK_ prefix
-            pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.primary_key_columns]
+            pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
             # Join on primary key columns
             joined = left.join(
@@ -171,7 +176,7 @@ class ComparisonService(BaseService):
             # Create difference conditions for each mapped column
             diff_conditions = []
             for mapping in config.column_mappings:
-                if mapping.name in config.primary_key_columns:
+                if mapping.name in config.pk_columns:
                     # Primary key columns use PK_ prefix
                     left_col = f"{PRIMARY_KEY_PREFIX}{mapping.name}"
                     right_col = left_col  # Same column since they're joined on PK
@@ -180,15 +185,23 @@ class ComparisonService(BaseService):
                     left_col = f"{LEFT_PREFIX}{mapping.name}"
                     right_col = f"{RIGHT_PREFIX}{mapping.name}"
 
-                # Build comparison condition combining null handling and tolerance
-
-                # Handle null comparisons based on config
+                # Handle null comparisons and tolerance together
                 if config.null_equals_null:
-                    # null == null, but null != value
+                    # null == null, but null != value (always different when one is null and one isn't)
                     null_condition = ~pl.col(left_col).eq_missing(pl.col(right_col))
                 else:
-                    # null != null and null != value
-                    null_condition = pl.col(left_col) != pl.col(right_col)
+                    # null != null and null != value - handle null comparisons explicitly
+                    # When null_equals_null=False, any null comparison should be a difference
+                    null_condition = (
+                        # Both are null: always different when null_equals_null=False
+                        (pl.col(left_col).is_null() & pl.col(right_col).is_null()) |
+                        # One is null, one is not: always different
+                        (pl.col(left_col).is_null() & pl.col(right_col).is_not_null()) |
+                        (pl.col(left_col).is_not_null() & pl.col(right_col).is_null()) |
+                        # Both are non-null: use standard inequality
+                        (pl.col(left_col).is_not_null() & pl.col(right_col).is_not_null() &
+                         (pl.col(left_col) != pl.col(right_col)))
+                    )
 
                 # Apply tolerance for numeric columns if specified
                 if (
@@ -197,17 +210,16 @@ class ComparisonService(BaseService):
                 ):
                     tolerance = config.tolerance[mapping.name]
 
-                    # Create a comprehensive condition that handles all cases:
-                    # 1. If either value is null: use null_condition
-                    # 2. If both values are non-null: check both exact equality AND tolerance
+                    # Use null_condition as base, but override the non-null case to use tolerance
                     condition = pl.when(
-                        pl.col(left_col).is_null() | pl.col(right_col).is_null()
+                        # Both values are non-null: use tolerance comparison
+                        pl.col(left_col).is_not_null() & pl.col(right_col).is_not_null()
                     ).then(
-                        # Handle null cases
-                        null_condition
-                    ).otherwise(
-                        # Handle non-null cases: difference if values differ by more than tolerance
+                        # Check if difference exceeds tolerance
                         (pl.col(left_col) - pl.col(right_col)).abs() > tolerance
+                    ).otherwise(
+                        # Use the null_condition for all null cases
+                        null_condition
                     )
                 else:
                     # No tolerance, use null condition as-is
@@ -249,7 +261,7 @@ class ComparisonService(BaseService):
         """
         try:
             # Get primary key columns with PK_ prefix
-            pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.primary_key_columns]
+            pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
             # Join and filter for left-only records (anti-join)
             left_only_joined = left.join(
@@ -283,7 +295,7 @@ class ComparisonService(BaseService):
         """
         try:
             # Get primary key columns with PK_ prefix
-            pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.primary_key_columns]
+            pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
             # Join and filter for right-only records (anti-join)
             right_only_joined = right.join(

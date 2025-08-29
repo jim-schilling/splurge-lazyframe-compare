@@ -97,13 +97,13 @@ class ValidationService(BaseService):
                 pk_columns = [
                     mapping.left
                     for mapping in config.column_mappings
-                    if mapping.name in config.primary_key_columns
+                    if mapping.name in config.pk_columns
                 ]
             else:
                 pk_columns = [
                     mapping.right
                     for mapping in config.column_mappings
-                    if mapping.name in config.primary_key_columns
+                    if mapping.name in config.pk_columns
                 ]
 
             # Check for duplicates
@@ -151,13 +151,17 @@ class ValidationService(BaseService):
                 if col not in all_columns:
                     missing_columns.append(col)
 
-            # Check for entirely null columns
-            for col in required_columns:
-                if col in df_columns:
-                    null_count = df.select(pl.col(col).is_null().sum()).collect().item()
-                    total_count = df.select(pl.len()).collect().item()
-                    if null_count == total_count:
-                        null_columns.append(col)
+            # Check for entirely null columns - optimized to collect once per column
+            if required_columns:
+                # Get total count once for all columns
+                total_count = df.select(pl.len()).collect().item()
+
+                # Check each required column for null percentage
+                for col in required_columns:
+                    if col in df_columns:
+                        null_count = df.select(pl.col(col).is_null().sum()).collect().item()
+                        if null_count == total_count:
+                            null_columns.append(col)
 
             if missing_columns or null_columns:
                 details = {

@@ -119,7 +119,7 @@ def complex_config(complex_dataframes):
         left_schema=left_schema,
         right_schema=right_schema,
         column_mappings=mappings,
-        primary_key_columns=["customer_id"],
+        pk_columns=["customer_id"],
         ignore_case=False,
         null_equals_null=True,
     )

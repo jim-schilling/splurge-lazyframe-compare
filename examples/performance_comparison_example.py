@@ -557,7 +557,7 @@ def main() -> None:
         left_schema=left_schema,
         right_schema=right_schema,
         column_mappings=mappings,
-        primary_key_columns=["id", "batch_date", "sequence_id"],
+        pk_columns=["id", "batch_date", "sequence_id"],
         ignore_case=False,
         null_equals_null=True,
     )

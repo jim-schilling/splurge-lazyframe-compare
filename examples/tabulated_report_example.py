@@ -155,7 +155,7 @@ def main() -> None:
         left_schema=left_schema,
         right_schema=right_schema,
         column_mappings=mappings,
-        primary_key_columns=["customer_id", "order_date"],
+        pk_columns=["customer_id", "order_date"],
         ignore_case=False,
         null_equals_null=True,
     )

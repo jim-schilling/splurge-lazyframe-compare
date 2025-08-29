@@ -85,7 +85,7 @@ class DataPreparationService(BaseService):
             right_mapping = {}
 
             for mapping in config.column_mappings:
-                if mapping.name in config.primary_key_columns:
+                if mapping.name in config.pk_columns:
                     # Primary key columns get PK_ prefix
                     left_mapping[mapping.left] = f"{PRIMARY_KEY_PREFIX}{mapping.name}"
                     right_mapping[mapping.right] = f"{PRIMARY_KEY_PREFIX}{mapping.name}"
@@ -103,7 +103,7 @@ class DataPreparationService(BaseService):
             right_columns = []
 
             for mapping in config.column_mappings:
-                if mapping.name in config.primary_key_columns:
+                if mapping.name in config.pk_columns:
                     left_columns.append(f"{PRIMARY_KEY_PREFIX}{mapping.name}")
                     right_columns.append(f"{PRIMARY_KEY_PREFIX}{mapping.name}")
                 else:
@@ -155,12 +155,12 @@ class DataPreparationService(BaseService):
             List of column names in the desired order: primary keys first, then alternating Left/Right.
         """
         # Start with primary key columns
-        column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.primary_key_columns]
+        column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
         # Add non-primary key columns in alternating Left/Right order
         non_pk_mappings = [
             mapping for mapping in config.column_mappings
-            if mapping.name not in config.primary_key_columns
+            if mapping.name not in config.pk_columns
         ]
 
         for mapping in non_pk_mappings:
@@ -180,12 +180,12 @@ class DataPreparationService(BaseService):
             List of column names in the desired order: primary keys first, then left columns.
         """
         # Start with primary key columns
-        column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.primary_key_columns]
+        column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
         # Add only left columns for non-primary key columns
         non_pk_mappings = [
             mapping for mapping in config.column_mappings
-            if mapping.name not in config.primary_key_columns
+            if mapping.name not in config.pk_columns
         ]
 
         for mapping in non_pk_mappings:
@@ -204,12 +204,12 @@ class DataPreparationService(BaseService):
             List of column names in the desired order: primary keys first, then right columns.
         """
         # Start with primary key columns
-        column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.primary_key_columns]
+        column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
         # Add only right columns for non-primary key columns
         non_pk_mappings = [
             mapping for mapping in config.column_mappings
-            if mapping.name not in config.primary_key_columns
+            if mapping.name not in config.pk_columns
         ]
 
         for mapping in non_pk_mappings:

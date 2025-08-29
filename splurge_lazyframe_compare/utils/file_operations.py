@@ -1,6 +1,10 @@
 """File operation utilities for the comparison framework."""
 
+import os
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Any, Generator
 
 import polars as pl
 
@@ -19,6 +23,99 @@ class FileOperationConstants:
 
     # Buffer sizes
     DEFAULT_BUFFER_SIZE: int = 8192
+
+
+@contextmanager
+def atomic_write(file_path: Path) -> Generator[Path, None, None]:
+    """Context manager for atomic file writes.
+
+    Creates a temporary file and only renames it to the target path
+    if the operation succeeds. This ensures that partial writes don't
+    corrupt the target file.
+
+    Args:
+        file_path: Target file path
+
+    Yields:
+        Path to temporary file to write to
+    """
+    # Ensure parent directory exists
+    ensure_directory_exists(file_path.parent)
+
+    # Create temporary file in the same directory as target
+    with tempfile.NamedTemporaryFile(
+        dir=file_path.parent,
+        prefix=f"{file_path.stem}_tmp_",
+        suffix=file_path.suffix,
+        delete=False
+    ) as temp_file:
+        temp_path = Path(temp_file.name)
+
+    try:
+        yield temp_path
+        # Atomic rename only if successful
+        temp_path.replace(file_path)
+    except Exception:
+        # Clean up temp file on failure
+        if temp_path.exists():
+            temp_path.unlink()
+        raise
+    finally:
+        # Ensure cleanup in case of any other issues
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass  # Ignore cleanup errors
+
+
+def validate_file_path(file_path: Path, create_parent: bool = True, require_writable: bool = False) -> None:
+    """Validate file path for security and accessibility.
+
+    Args:
+        file_path: File path to validate
+        create_parent: Whether to create parent directories (legacy parameter)
+        require_writable: Whether to check if path is writable (new parameter)
+
+    Raises:
+        ValueError: If path is invalid or insecure
+        PermissionError: If path is not accessible
+    """
+    if not file_path:
+        raise ValueError("File path cannot be empty")
+
+    # Convert to absolute path and resolve any symlinks
+    resolved_path = file_path.resolve()
+
+    # Check for directory traversal attempts
+    try:
+        resolved_path.relative_to(file_path.parent.resolve())
+    except ValueError:
+        # Path goes outside the intended directory
+        raise ValueError(f"Invalid path: {file_path} (directory traversal detected)")
+
+    # Handle legacy create_parent parameter
+    if create_parent:
+        ensure_directory_exists(file_path.parent)
+    elif not file_path.parent.exists():
+        raise ValueError(f"Parent directory does not exist: {file_path.parent}")
+
+    # Check if parent directory exists and is writable (if required)
+    if require_writable:
+        parent = resolved_path.parent
+        if not parent.exists():
+            raise FileNotFoundError(f"Parent directory does not exist: {parent}")
+        if not os.access(parent, os.W_OK):
+            raise PermissionError(f"Cannot write to directory: {parent}")
+
+    # Check if we have write permissions (legacy behavior)
+    if not require_writable and create_parent:
+        try:
+            # Test write permission by creating a temporary file
+            with tempfile.NamedTemporaryFile(dir=file_path.parent, delete=True):
+                pass
+        except (OSError, PermissionError) as e:
+            raise PermissionError(f"Cannot write to directory {file_path.parent}: {e}") from e
 
 
 def ensure_directory_exists(path: Path) -> None:
@@ -58,35 +155,54 @@ def export_lazyframe(
     lazyframe: pl.LazyFrame,
     file_path: Path,
     format_name: str = FileOperationConstants.DEFAULT_FORMAT,
-    **kwargs
+    **kwargs: Any
 ) -> None:
-    """Export a LazyFrame to a file.
+    """Export a LazyFrame to a file with atomic writes and proper cleanup.
 
     Args:
         lazyframe: LazyFrame to export.
         file_path: Path to save the file.
         format_name: Export format (parquet, csv, json).
         **kwargs: Additional format-specific arguments.
-    """
-    # Ensure parent directory exists
-    ensure_directory_exists(file_path.parent)
 
-    if format_name == "parquet":
-        lazyframe.sink_parquet(file_path, **kwargs)
-    elif format_name == "csv":
-        lazyframe.sink_csv(file_path, **kwargs)
-    elif format_name == "json":
-        lazyframe.sink_ndjson(file_path, **kwargs)
-    else:
-        raise ValueError(f"Unsupported format: {format_name}")
+    Raises:
+        ValueError: If format is not supported.
+        PermissionError: If target location is not writable.
+        OSError: If file operation fails.
+    """
+    # Validate file path for security
+    validate_file_path(file_path, create_parent=True, require_writable=True)
+
+    # Use atomic writes for data integrity
+    with atomic_write(file_path) as temp_path:
+        try:
+            if format_name == "parquet":
+                lazyframe.sink_parquet(temp_path, **kwargs)
+            elif format_name == "csv":
+                lazyframe.sink_csv(temp_path, **kwargs)
+            elif format_name == "json":
+                lazyframe.sink_ndjson(temp_path, **kwargs)
+            else:
+                raise ValueError(f"Unsupported format: {format_name}")
+        except ValueError:
+            # Re-raise ValueError as-is for format validation errors
+            raise
+        except Exception as e:
+            # Clean up temp file on any error
+            if temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except OSError:
+                    pass
+            raise OSError(f"Failed to export LazyFrame to {file_path}: {e}") from e
 
 
 def import_lazyframe(
     file_path: Path,
     format_name: str | None = None,
-    **kwargs
+    **kwargs: Any
 ) -> pl.LazyFrame:
-    """Import a LazyFrame from a file.
+    """Import a LazyFrame from a file with proper validation and error handling.
 
     Args:
         file_path: Path to the file to import.
@@ -95,22 +211,56 @@ def import_lazyframe(
 
     Returns:
         Imported LazyFrame.
+
+    Raises:
+        FileNotFoundError: If file does not exist.
+        ValueError: If format is not supported or file path is invalid.
+        PermissionError: If file is not readable.
+        OSError: If file operation fails.
     """
+    # Validate file path for security
+    validate_file_path(file_path)
+
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
+    if not file_path.is_file():
+        raise ValueError(f"Path is not a file: {file_path}")
+
+    if not os.access(file_path, os.R_OK):
+        raise PermissionError(f"Cannot read file: {file_path}")
+
+    # Check file size (prevent reading extremely large files)
+    file_size = file_path.stat().st_size
+    if file_size == 0:
+        raise ValueError(f"File is empty: {file_path}")
+
     # Auto-detect format if not specified
     if format_name is None:
-        format_name = file_path.suffix[1:]  # Remove the dot
+        suffix = file_path.suffix.lower()
+        if suffix == FileOperationConstants.PARQUET_EXT:
+            format_name = "parquet"
+        elif suffix == FileOperationConstants.CSV_EXT:
+            format_name = "csv"
+        elif suffix in (FileOperationConstants.JSON_EXT, ".ndjson"):
+            format_name = "json"
+        else:
+            raise ValueError(f"Cannot auto-detect format for extension: {suffix}")
 
-    if format_name == "parquet":
-        return pl.scan_parquet(file_path, **kwargs)
-    elif format_name == "csv":
-        return pl.scan_csv(file_path, **kwargs)
-    elif format_name == "json":
-        return pl.scan_ndjson(file_path, **kwargs)
-    else:
-        raise ValueError(f"Unsupported format: {format_name}")
+    try:
+        if format_name == "parquet":
+            return pl.scan_parquet(file_path, **kwargs)
+        elif format_name == "csv":
+            return pl.scan_csv(file_path, **kwargs)
+        elif format_name == "json":
+            return pl.scan_ndjson(file_path, **kwargs)
+        else:
+            raise ValueError(f"Unsupported format: {format_name}. Supported formats: {list(FileOperationConstants.SUPPORTED_FORMATS)}")
+    except ValueError:
+        # Re-raise ValueError as-is for format validation errors
+        raise
+    except Exception as e:
+        raise OSError(f"Failed to import LazyFrame from {file_path}: {e}") from e
 
 
 def get_export_file_paths(
@@ -138,33 +288,6 @@ def get_export_file_paths(
 
     return file_paths
 
-
-def validate_file_path(file_path: Path, create_parent: bool = True) -> None:
-    """Validate a file path for writing.
-
-    Args:
-        file_path: File path to validate.
-        create_parent: Whether to create parent directories.
-
-    Raises:
-        ValueError: If the path is invalid.
-    """
-    if not file_path:
-        raise ValueError("File path cannot be empty")
-
-    # Check if parent directory exists or can be created
-    if create_parent:
-        ensure_directory_exists(file_path.parent)
-    elif not file_path.parent.exists():
-        raise ValueError(f"Parent directory does not exist: {file_path.parent}")
-
-    # Check if we have write permissions
-    try:
-        # Try to create the parent directory to test permissions
-        if create_parent:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-    except PermissionError as e:
-        raise ValueError(f"No write permission for directory: {file_path.parent}") from e
 
 
 def list_files_by_pattern(directory: Path, pattern: str) -> list[Path]:

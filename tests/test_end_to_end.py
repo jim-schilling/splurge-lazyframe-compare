@@ -69,7 +69,7 @@ class TestEndToEndScenarios:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["customer_id"]
+            pk_columns=["customer_id"]
         )
 
         # Step 2: Execute comparison
@@ -177,7 +177,7 @@ class TestEndToEndScenarios:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"]
+            pk_columns=["id"]
         )
 
         # Execute comparison
@@ -254,7 +254,7 @@ class TestEndToEndScenarios:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"]
+            pk_columns=["id"]
         )
 
         # Execute comparison - should handle larger dataset efficiently
@@ -319,13 +319,13 @@ class TestEndToEndScenarios:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=column_mappings,
-            primary_key_columns=['id'],
+            pk_columns=['id'],
             tolerance={}
         )
 
         # Convert config to dictionary for JSON serialization
         config_dict = {
-            'primary_key_columns': config.primary_key_columns,
+            'primary_key_columns': config.pk_columns,
             'column_mappings': [mapping.__dict__ for mapping in config.column_mappings],
             'ignore_case': config.ignore_case,
             'null_equals_null': config.null_equals_null,
@@ -336,7 +336,7 @@ class TestEndToEndScenarios:
         from splurge_lazyframe_compare.utils import validate_config
         # Convert config to dictionary for validation
         config_for_validation = {
-            'primary_key_columns': config.primary_key_columns,
+            'primary_key_columns': config.pk_columns,
             'column_mappings': [mapping.__dict__ for mapping in config.column_mappings],
             'ignore_case': config.ignore_case,
             'null_equals_null': config.null_equals_null,
@@ -396,7 +396,7 @@ class TestEndToEndScenarios:
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=column_mappings,
-                primary_key_columns=loaded_config['primary_key_columns'],
+                pk_columns=loaded_config['primary_key_columns'],
                 ignore_case=loaded_config.get('ignore_case', False),
                 null_equals_null=loaded_config.get('null_equals_null', True),
                 tolerance=loaded_config.get('tolerance', {})
@@ -464,7 +464,7 @@ class TestEndToEndScenarios:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"]
+            pk_columns=["id"]
         )
 
         # Test error handling
@@ -525,7 +525,7 @@ class TestEndToEndScenarios:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"]
+            pk_columns=["id"]
         )
 
         # Create custom services

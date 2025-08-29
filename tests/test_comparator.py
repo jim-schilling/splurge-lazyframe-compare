@@ -57,7 +57,7 @@ class TestLazyFrameComparator:
             left_schema=self.left_schema,
             right_schema=self.right_schema,
             column_mappings=self.mappings,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
         )
 
         # Create comparator
@@ -312,7 +312,7 @@ class TestLazyFrameComparator:
             left_schema=self.left_schema,
             right_schema=self.right_schema,
             column_mappings=self.mappings,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
             tolerance={"amount": 0.01},  # Allow 1 cent difference
         )
         comparator = LazyFrameComparator(config_with_tolerance)
@@ -348,7 +348,7 @@ class TestLazyFrameComparator:
             left_schema=self.left_schema,
             right_schema=self.right_schema,
             column_mappings=self.mappings,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
             ignore_case=True,
         )
         comparator = LazyFrameComparator(config_case_insensitive)
@@ -690,7 +690,7 @@ class TestLazyFrameComparator:
                 ColumnMapping(left="id", right="id", name="id"),
                 ColumnMapping(left="name", right="name", name="name"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
         simple_comparator = LazyFrameComparator(simple_config)
 
@@ -821,7 +821,7 @@ class TestComparisonReport:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
         )
 
         self.orchestrator = ComparisonOrchestrator()

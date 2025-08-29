@@ -57,7 +57,7 @@ class TestEdgeCasesEmptyDataFrames:
                 ColumnMapping(left="id", right="customer_id", name="id"),
                 ColumnMapping(left="name", right="full_name", name="name"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         self.orchestrator = ComparisonOrchestrator()
@@ -199,7 +199,7 @@ class TestDataTypeEdgeCases:
                 ColumnMapping(left="id", right="customer_id", name="id"),
                 ColumnMapping(left="timestamp", right="event_time", name="timestamp"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         orchestrator = ComparisonOrchestrator()
@@ -247,7 +247,7 @@ class TestDataTypeEdgeCases:
                 ColumnMapping(left="id", right="customer_id", name="id"),
                 ColumnMapping(left="tags", right="categories", name="tags"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         orchestrator = ComparisonOrchestrator()
@@ -304,7 +304,7 @@ class TestDataTypeEdgeCases:
                 ColumnMapping(left="id", right="customer_id", name="id"),
                 ColumnMapping(left="address", right="location", name="address"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         orchestrator = ComparisonOrchestrator()
@@ -352,7 +352,7 @@ class TestDataTypeEdgeCases:
                 ColumnMapping(left="id", right="customer_id", name="id"),
                 ColumnMapping(left="optional_field", right="optional_data", name="optional_field"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             null_equals_null=True,
         )
 
@@ -401,7 +401,7 @@ class TestDataTypeEdgeCases:
                 ColumnMapping(left="id", right="customer_id", name="id"),
                 ColumnMapping(left="value", right="amount", name="value"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             tolerance={"value": 1e-10},  # Very small tolerance
         )
 
@@ -442,7 +442,7 @@ class TestConfigurationValidationEdgeCases:
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=[],  # Empty mappings
-                primary_key_columns=["id"],
+                pk_columns=["id"],
             )
 
     def test_config_with_invalid_primary_key_mapping(self) -> None:
@@ -470,7 +470,7 @@ class TestConfigurationValidationEdgeCases:
                     ColumnMapping(left="name", right="full_name", name="name"),
                     # Missing primary key mapping
                 ],
-                primary_key_columns=["id"],
+                pk_columns=["id"],
             )
 
     def test_config_with_duplicate_comparison_names(self) -> None:
@@ -492,19 +492,23 @@ class TestConfigurationValidationEdgeCases:
             pk_columns=["customer_id"],
         )
 
-        # This should work - duplicate comparison names are allowed
-        config = ComparisonConfig(
-            left_schema=left_schema,
-            right_schema=right_schema,
-            column_mappings=[
-                ColumnMapping(left="id", right="customer_id", name="id"),
-                ColumnMapping(left="name", right="full_name", name="name"),
-                ColumnMapping(left="email", right="email_addr", name="name"),  # Same comparison name
-            ],
-            primary_key_columns=["id"],
-        )
+        # Duplicate comparison names should now be rejected as they cause ambiguity
+        with pytest.raises(SchemaValidationError) as exc_info:
+            config = ComparisonConfig(
+                left_schema=left_schema,
+                right_schema=right_schema,
+                column_mappings=[
+                    ColumnMapping(left="id", right="customer_id", name="id"),
+                    ColumnMapping(left="name", right="full_name", name="name"),
+                    ColumnMapping(left="email", right="email_addr", name="name"),  # Same comparison name - should fail
+                ],
+                pk_columns=["id"],
+            )
 
-        assert len(config.column_mappings) == 3
+        # Verify the error message mentions duplicate names
+        error_msg = str(exc_info.value)
+        assert "duplicate column mapping names" in error_msg.lower()
+        assert "name" in error_msg
 
 
 class TestPerformanceAndScalability:
@@ -560,7 +564,7 @@ class TestPerformanceAndScalability:
                 ColumnMapping(left="category", right="category", name="category"),
                 ColumnMapping(left="active", right="active", name="active"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             tolerance={"value": 5.0},  # Allow some tolerance for floating point differences
         )
 
@@ -607,7 +611,7 @@ class TestPerformanceAndScalability:
                 ColumnMapping(left="id", right="id", name="id"),
                 ColumnMapping(left="data", right="data", name="data"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         orchestrator = ComparisonOrchestrator()
@@ -719,7 +723,7 @@ class TestRealWorldUsagePatterns:
                 ColumnMapping(left="account_balance", right="balance", name="account_balance"),
                 ColumnMapping(left="is_active", right="status", name="status"),
             ],
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
             ignore_case=True,
             tolerance={"account_balance": 10.0},  # Allow $10 tolerance for balances
         )
@@ -812,7 +816,7 @@ class TestRealWorldUsagePatterns:
                 ColumnMapping(left="id", right="id", name="id"),
                 ColumnMapping(left="value", right="value", name="value"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         orchestrator = ComparisonOrchestrator()
@@ -889,7 +893,7 @@ class TestRealWorldUsagePatterns:
                 ColumnMapping(left="id", right="customer_id", name="id"),
                 ColumnMapping(left="name", right="name", name="name"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
         )
 
         orchestrator = ComparisonOrchestrator()
@@ -953,7 +957,7 @@ class TestRealWorldUsagePatterns:
                 ColumnMapping(left="value", right="value", name="value"),
                 ColumnMapping(left="number", right="number", name="number"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             ignore_case=False,
         )
 
@@ -966,7 +970,7 @@ class TestRealWorldUsagePatterns:
                 ColumnMapping(left="value", right="value", name="value"),
                 ColumnMapping(left="number", right="number", name="number"),
             ],
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             ignore_case=True,
             tolerance={"number": 0.01},  # Small tolerance for floating point
         )
@@ -1039,7 +1043,7 @@ class TestToleranceNullLogicFix:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             null_equals_null=True,  # Nulls should be considered equal
             tolerance={"amount": 1.0}  # 1.0 tolerance for amount
         )
@@ -1092,7 +1096,7 @@ class TestToleranceNullLogicFix:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             null_equals_null=False,  # Nulls should be considered different
             tolerance={"amount": 1.0}  # 1.0 tolerance for amount
         )
@@ -1156,7 +1160,7 @@ class TestOriginalBugInvestigation:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             null_equals_null=False  # Nulls should be considered different
             # No tolerance specified
         )
@@ -1211,7 +1215,7 @@ class TestOriginalBugInvestigation:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             null_equals_null=True  # Nulls should be considered equal
             # No tolerance specified
         )
@@ -1227,6 +1231,83 @@ class TestOriginalBugInvestigation:
 
         assert result.summary.matching_records == 1  # Only record 2 matches
         assert result.summary.value_differences_count == 2  # Records 1 and 3 differ
+
+
+class TestHTMLSecurity:
+    """Test HTML security features to prevent XSS attacks."""
+
+    def test_html_escaping_prevents_xss(self):
+        """Test that HTML escaping prevents XSS attacks in reports."""
+        from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
+
+        # Test various XSS payloads
+        xss_payloads = [
+            "<script>alert('xss')</script>",
+            "<img src=x onerror=alert('xss')>",
+            "<iframe src='javascript:alert(\"xss\")'>",
+            "<div onclick='alert(\"xss\")'>Click me</div>",
+            "'><script>alert('xss')</script><!--",
+        ]
+
+        for i, payload in enumerate(xss_payloads):
+            escaped = ComparisonOrchestrator._escape_html(payload)
+            # Verify dangerous tags are escaped
+            assert '<script>' not in escaped
+            assert '<iframe>' not in escaped
+
+            # Check specific payloads for their dangerous content
+            if i == 1:  # "<img src=x onerror=alert('xss')>"
+                assert 'onerror' in escaped
+                assert 'onerror=' not in escaped
+            elif i == 3:  # "<div onclick='alert(\"xss\")'>Click me</div>"
+                assert 'onclick' in escaped
+                assert 'onclick=' not in escaped
+            elif i == 0 or i == 4:  # script tags
+                assert 'script' in escaped
+                assert '<script>' not in escaped
+
+    def test_html_escaping_normal_text(self):
+        """Test that normal text is not affected by HTML escaping."""
+        from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
+
+        normal_texts = [
+            "Normal text without HTML",
+            "Text with numbers 123",
+            "2025-08-29T09:00:00.123456",
+            "100.5",
+        ]
+
+        for text in normal_texts:
+            escaped = ComparisonOrchestrator._escape_html(text)
+            # Normal text should be unchanged (no HTML special chars)
+            assert escaped == text
+
+        # Test text with HTML special characters
+        text_with_special = "Text with symbols !@#$%^*"
+        escaped_special = ComparisonOrchestrator._escape_html(text_with_special)
+        # Should escape the ^ character (if it were HTML-significant, but it's not)
+        # Actually, ^ doesn't need escaping, so it should remain unchanged
+        assert escaped_special == text_with_special
+
+    def test_html_escaping_edge_cases(self):
+        """Test HTML escaping with edge cases."""
+        from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
+
+        # Test None value
+        assert ComparisonOrchestrator._escape_html(None) == ""
+
+        # Test empty string
+        assert ComparisonOrchestrator._escape_html("") == ""
+
+        # Test string with only special characters
+        special = "<>&\"'/"
+        escaped = ComparisonOrchestrator._escape_html(special)
+        assert escaped == "&lt;&gt;&amp;&quot;&#x27;&#x2F;"
+
+        # Test equals sign escaping
+        equals_text = "onerror=alert('xss')"
+        escaped_equals = ComparisonOrchestrator._escape_html(equals_text)
+        assert escaped_equals == "onerror&#x3D;alert(&#x27;xss&#x27;)"
 
 
 class TestToleranceNullLogicFix:
@@ -1269,7 +1350,7 @@ class TestToleranceNullLogicFix:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["id"],
+            pk_columns=["id"],
             null_equals_null=True  # Nulls should be considered equal
         )
 
@@ -1282,3 +1363,108 @@ class TestToleranceNullLogicFix:
         # - Record 3: 300.0 != 350.0 → Difference
         assert result.summary.matching_records == 2
         assert result.summary.value_differences_count == 1
+
+    def test_tolerance_with_null_equals_null_true(self):
+        """Test tolerance combined with null_equals_null=True."""
+        left_data = {
+            "id": [1, 2, 3, 4],
+            "amount": [100.0, 200.0, None, 400.0],
+        }
+
+        right_data = {
+            "customer_id": [1, 2, 3, 4],
+            "total": [100.5, 199.8, None, 410.0],  # Within tolerance: 0.5, 0.2, null, over tolerance: 10.0
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        # Define schemas
+        left_columns = {
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=True),
+        }
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
+
+        right_columns = {
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "total": ColumnDefinition(name="total", alias="Total", datatype=pl.Float64, nullable=True),
+        }
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
+
+        mappings = [
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="amount", right="total", name="amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            pk_columns=["id"],
+            null_equals_null=True,  # Nulls should be considered equal
+            tolerance={"amount": 1.0}  # 1.0 tolerance for amount
+        )
+
+        comparator = LazyFrameComparator(config)
+        result = comparator.compare(left=left_df, right=right_df)
+
+        # With null_equals_null=True and tolerance=1.0:
+        # - Record 1: |100.0 - 100.5| = 0.5 <= 1.0 → No difference
+        # - Record 2: |200.0 - 199.8| = 0.2 <= 1.0 → No difference
+        # - Record 3: Both null → No difference (null_equals_null=True)
+        # - Record 4: |400.0 - 410.0| = 10.0 > 1.0 → Difference
+        assert result.summary.matching_records == 3
+        assert result.summary.value_differences_count == 1
+
+    def test_tolerance_with_null_equals_null_false(self):
+        """Test tolerance combined with null_equals_null=False."""
+        left_data = {
+            "id": [1, 2, 3],
+            "amount": [100.0, None, 300.0],
+        }
+
+        right_data = {
+            "customer_id": [1, 2, 3],
+            "total": [100.5, 200.0, None],  # Within tolerance: 0.5, null vs non-null, both null
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        # Define schemas
+        left_columns = {
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=True),
+        }
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
+
+        right_columns = {
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "total": ColumnDefinition(name="total", alias="Total", datatype=pl.Float64, nullable=True),
+        }
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
+
+        mappings = [
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="amount", right="total", name="amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            pk_columns=["id"],
+            null_equals_null=False,  # Nulls should be considered different
+            tolerance={"amount": 1.0}  # 1.0 tolerance for amount
+        )
+
+        comparator = LazyFrameComparator(config)
+        result = comparator.compare(left=left_df, right=right_df)
+
+        # With null_equals_null=False and tolerance=1.0:
+        # - Record 1: |100.0 - 100.5| = 0.5 <= 1.0 → No difference
+        # - Record 2: null vs 200.0 → Difference (null_equals_null=False)
+        # - Record 3: 300.0 vs null → Difference (null_equals_null=False)
+        assert result.summary.matching_records == 1
+        assert result.summary.value_differences_count == 2

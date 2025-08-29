@@ -11,13 +11,35 @@ from splurge_lazyframe_compare.services.reporting_service import ReportingServic
 
 
 class ComparisonOrchestrator(BaseService):
-    """Main orchestrator for LazyFrame comparisons.
+    """Main orchestrator for LazyFrame comparisons with HTML security."""
 
-    This class serves as the primary entry point for the comparison framework,
-    orchestrating the various services to perform complete DataFrame comparisons.
-    It provides a clean, service-oriented interface while maintaining backward
-    compatibility patterns.
-    """
+    @staticmethod
+    def _escape_html(text: str) -> str:
+        """Escape HTML special characters to prevent XSS attacks.
+
+        Args:
+            text: Text to escape
+
+        Returns:
+            HTML-escaped text
+        """
+        if text is None:
+            return ""
+        # Use a comprehensive set of HTML entity replacements
+        html_entities = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#x27;',
+            '/': '&#x2F;',
+            '=': '&#x3D;',  # Escape equals sign to prevent attribute injection
+        }
+
+        result = str(text)
+        for char, entity in html_entities.items():
+            result = result.replace(char, entity)
+        return result
 
     def __init__(
         self,
@@ -270,6 +292,9 @@ class ComparisonOrchestrator(BaseService):
         try:
             summary = result.summary
 
+            # Escape data values to prevent XSS
+            escaped_timestamp = self._escape_html(summary.comparison_timestamp)
+
             html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -344,7 +369,7 @@ class ComparisonOrchestrator(BaseService):
 <body>
     <div class="header">
         <h1>SPLURGE LazyFrame Comparison Report</h1>
-        <p>Generated on {summary.comparison_timestamp}</p>
+        <p>Generated on {escaped_timestamp}</p>
     </div>
 
     <div class="section">

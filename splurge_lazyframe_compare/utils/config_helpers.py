@@ -2,7 +2,10 @@
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from splurge_lazyframe_compare.models.schema import ColumnDefinition
 
 import polars as pl
 
@@ -424,11 +427,11 @@ def create_comparison_config_from_lazyframes(
         left_schema=left_comparison_schema,
         right_schema=right_comparison_schema,
         column_mappings=column_mappings,
-        primary_key_columns=pk_columns,
+        pk_columns=pk_columns,
     )
 
 
-def _create_column_definitions_from_schema(schema: pl.Schema):
+def _create_column_definitions_from_schema(schema: pl.Schema) -> dict[str, "ColumnDefinition"]:
     """Create ColumnDefinition objects from a Polars Schema.
 
     Args:

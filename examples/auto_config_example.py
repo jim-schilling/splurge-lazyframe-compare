@@ -51,7 +51,7 @@ def main():
         )
 
         print("\nComparisonConfig generated successfully!")
-        print(f"Primary key columns: {config.primary_key_columns}")
+        print(f"Primary key columns: {config.pk_columns}")
         print(f"Number of column mappings: {len(config.column_mappings)}")
         print(f"Left schema columns: {list(config.left_schema.columns.keys())}")
         print(f"Right schema columns: {list(config.right_schema.columns.keys())}")

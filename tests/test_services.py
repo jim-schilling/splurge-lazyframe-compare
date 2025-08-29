@@ -68,7 +68,7 @@ def sample_config(sample_dataframes):
         left_schema=left_schema,
         right_schema=right_schema,
         column_mappings=mappings,
-        primary_key_columns=["id"]
+        pk_columns=["id"]
     )
 
     return config
@@ -787,8 +787,8 @@ class TestConfigHelpers:
 
         # Verify config structure
         assert isinstance(config, ComparisonConfig)
-        assert len(config.primary_key_columns) == 1
-        assert config.primary_key_columns == ["customer_id"]
+        assert len(config.pk_columns) == 1
+        assert config.pk_columns == ["customer_id"]
 
         # Verify schemas
         assert len(config.left_schema.columns) == 4
@@ -847,8 +847,8 @@ class TestConfigHelpers:
             left_df=left_df, right_df=right_df, pk_columns=["store_id", "product_id"]
         )
 
-        assert len(config.primary_key_columns) == 2
-        assert set(config.primary_key_columns) == {"store_id", "product_id"}
+        assert len(config.pk_columns) == 2
+        assert set(config.pk_columns) == {"store_id", "product_id"}
         assert config.left_schema.pk_columns == ["store_id", "product_id"]
         assert config.right_schema.pk_columns == ["store_id", "product_id"]
 
@@ -999,7 +999,7 @@ class TestConfigHelpers:
         )
 
         # Should still create config even with empty DataFrames
-        assert len(config.primary_key_columns) == 1
+        assert len(config.pk_columns) == 1
         assert len(config.column_mappings) == 2  # customer_id and name
         assert len(config.left_schema.columns) == 2
         assert len(config.right_schema.columns) == 2
@@ -3029,7 +3029,7 @@ class TestComparisonOrchestratorComprehensive:
             left_schema=self.left_schema,
             right_schema=self.right_schema,
             column_mappings=self.mappings,
-            primary_key_columns=["customer_id", "order_date"],
+            pk_columns=["customer_id", "order_date"],
         )
 
         self.orchestrator = ComparisonOrchestrator()

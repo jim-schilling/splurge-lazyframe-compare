@@ -262,13 +262,13 @@ class TestComparisonConfig:
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=mappings,
-            primary_key_columns=["customer_id"],
+            pk_columns=["customer_id"],
         )
 
         assert config.left_schema == left_schema
         assert config.right_schema == right_schema
         assert len(config.column_mappings) == 2
-        assert config.primary_key_columns == ["customer_id"]
+        assert config.pk_columns == ["customer_id"]
         assert config.ignore_case is False
         assert config.null_equals_null is True
 
@@ -282,7 +282,7 @@ class TestComparisonConfig:
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=[],
-                primary_key_columns=[],
+                pk_columns=[],
             )
 
         assert "no columns defined" in str(exc_info.value)
@@ -314,7 +314,7 @@ class TestComparisonConfig:
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=mappings,
-                primary_key_columns=[],  # No primary keys
+                pk_columns=[],  # No primary keys
             )
 
         assert "No primary key columns defined" in str(exc_info.value)
@@ -348,7 +348,7 @@ class TestComparisonConfig:
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=mappings,
-                primary_key_columns=["customer_id"],
+                pk_columns=["customer_id"],
             )
 
         assert "missing mapped columns" in str(exc_info.value)
@@ -383,7 +383,7 @@ class TestComparisonConfig:
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=mappings,
-                primary_key_columns=["customer_id"],
+                pk_columns=["customer_id"],
             )
 
         assert "not found in column mappings" in str(exc_info.value)

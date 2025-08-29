@@ -3,7 +3,7 @@
 import logging
 import time
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Generator
 
 from splurge_lazyframe_compare.utils.constants import TIMESTAMP_FORMAT
 
@@ -146,7 +146,7 @@ def log_performance(
 
 
 @contextmanager
-def performance_monitor(service_name: str, operation: str):
+def performance_monitor(service_name: str, operation: str) -> "Generator[dict[str, Any], None, None]":
     """Context manager for monitoring operation performance.
 
     Args:
