@@ -115,10 +115,15 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
         elif datatype_name == "Decimal":
             # Decimal needs precision and scale; handle Polars version compatibility
             try:
-                return datatype_attr(precision=None, scale=None)
+                # Try with sensible defaults first
+                return datatype_attr(precision=38, scale=9)
             except TypeError:
-                # Older Polars versions may not support these parameters
-                return datatype_attr()
+                # Fallback: try with None values for older Polars versions
+                try:
+                    return datatype_attr(precision=None, scale=None)
+                except TypeError:
+                    # Final fallback: try with no parameters
+                    return datatype_attr()
         else:
             # Try to instantiate with no arguments as fallback
             try:

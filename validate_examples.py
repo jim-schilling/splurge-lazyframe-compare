@@ -92,6 +92,28 @@ def verify_copy_fix():
     print(f"  Values are different: {left_data['value'] != right_data['value']}")  # Should be True
     return True
 
+def verify_decimal_defaults():
+    """Verify that Decimal type uses proper defaults."""
+    from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_type
+
+    try:
+        decimal_type = get_polars_datatype_type('Decimal')
+        decimal_str = str(decimal_type)
+
+        # Check if it contains the expected default values
+        has_precision = 'precision=38' in decimal_str
+        has_scale = 'scale=9' in decimal_str
+
+        print("✅ Decimal defaults verification:")
+        print(f"  Decimal type: {decimal_str}")
+        print(f"  Has precision=38: {has_precision}")
+        print(f"  Has scale=9: {has_scale}")
+
+        return has_precision and has_scale
+    except Exception as e:
+        print(f"❌ Decimal defaults verification failed: {e}")
+        return False
+
 if __name__ == "__main__":
     import polars as pl
 
@@ -104,8 +126,9 @@ if __name__ == "__main__":
     success1 = test_basic_mixed_usage()
     success2 = test_complex_datatypes()
     success3 = verify_copy_fix()
+    success4 = verify_decimal_defaults()
 
-    if success1 and success2 and success3:
+    if success1 and success2 and success3 and success4:
         logger.info("All validations passed successfully")
         print("\n🎉 All validations passed! Mixed datatype usage works perfectly!")
         print("The README.md and examples have been successfully updated.")
