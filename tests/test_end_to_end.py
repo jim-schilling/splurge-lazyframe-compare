@@ -376,7 +376,7 @@ class TestEndToEndScenarios:
             left_schema = ComparisonSchema(
                 columns={
                     col: ColumnDefinition(name=col, alias=col, datatype=dtype, nullable=True)
-                    for col, dtype in zip(left_schema_obj.names(), left_schema_obj.dtypes())
+                    for col, dtype in zip(left_schema_obj.names(), left_schema_obj.dtypes(), strict=False)
                 },
                 pk_columns=['id']
             )
@@ -384,7 +384,7 @@ class TestEndToEndScenarios:
             right_schema = ComparisonSchema(
                 columns={
                     col: ColumnDefinition(name=col, alias=col, datatype=dtype, nullable=True)
-                    for col, dtype in zip(right_schema_obj.names(), right_schema_obj.dtypes())
+                    for col, dtype in zip(right_schema_obj.names(), right_schema_obj.dtypes(), strict=False)
                 },
                 pk_columns=['student_id']
             )

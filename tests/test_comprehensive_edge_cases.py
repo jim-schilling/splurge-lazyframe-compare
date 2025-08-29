@@ -4,10 +4,8 @@ These tests focus on achieving 85%+ code coverage by testing edge cases,
 error conditions, boundary scenarios, and real-world usage patterns.
 """
 
-import copy
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
 
 import polars as pl
 import pytest
@@ -18,11 +16,9 @@ from splurge_lazyframe_compare import (
     ComparisonConfig,
     ComparisonOrchestrator,
     ComparisonSchema,
-    ComparisonSummary,
     LazyFrameComparator,
 )
 from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
-    PrimaryKeyViolationError,
     SchemaValidationError,
 )
 
@@ -154,8 +150,6 @@ class TestEdgeCasesEmptyDataFrames:
 
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report
         assert "0" in report  # Record counts should be 0
-
-
 class TestDataTypeEdgeCases:
     """Test edge cases with various Polars data types."""
 
@@ -415,8 +409,6 @@ class TestDataTypeEdgeCases:
         # With small tolerance, these should match
         assert result.summary.matching_records == 3
         assert result.summary.value_differences_count == 0
-
-
 class TestConfigurationValidationEdgeCases:
     """Test edge cases in configuration validation."""
 
@@ -494,7 +486,7 @@ class TestConfigurationValidationEdgeCases:
 
         # Duplicate comparison names should now be rejected as they cause ambiguity
         with pytest.raises(SchemaValidationError) as exc_info:
-            config = ComparisonConfig(
+            ComparisonConfig(
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=[
@@ -509,8 +501,6 @@ class TestConfigurationValidationEdgeCases:
         error_msg = str(exc_info.value)
         assert "duplicate column mapping names" in error_msg.lower()
         assert "name" in error_msg
-
-
 class TestPerformanceAndScalability:
     """Test performance and scalability scenarios."""
 
@@ -639,8 +629,6 @@ class TestPerformanceAndScalability:
             for file_path in exported_files.values():
                 assert Path(file_path).exists()
                 assert file_path.endswith('.json')  # Summary is always JSON
-
-
 class TestRealWorldUsagePatterns:
     """Test real-world usage patterns and scenarios."""
 
@@ -917,7 +905,7 @@ class TestRealWorldUsagePatterns:
                 left=left_df,
                 right=right_df
             )
-            assert False, "Should have raised an exception"
+            raise AssertionError("Should have raised an exception")
         except SchemaValidationError:
             pass  # Expected behavior
 
@@ -997,7 +985,6 @@ class TestRealWorldUsagePatterns:
         # Should match all records due to ignore_case and tolerance
         assert result_insensitive.summary.matching_records == 3
         assert result_insensitive.summary.value_differences_count == 0
-
 
 class TestToleranceNullLogicFix:
     """Test the fix for tolerance + null comparison logic bug.
@@ -1120,10 +1107,8 @@ class TestToleranceNullLogicFix:
         assert result.summary.value_differences_count == 2
 
 
-
-
-class TestToleranceNullLogicFix:
-    """Test the fix for tolerance + null comparison logic bug."""
+class TestNullHandlingWithoutTolerance:
+    """Test null handling without tolerance configuration."""
 
     def test_null_only_no_tolerance(self):
         """Test null handling without tolerance configuration."""

@@ -125,8 +125,6 @@ def complex_config(complex_dataframes):
     )
 
     return config
-
-
 class TestCompleteWorkflow:
     """Test complete comparison workflows."""
 
@@ -288,8 +286,6 @@ class TestCompleteWorkflow:
 
         assert result is not None
         assert result.summary is not None
-
-
 class TestDataQualityWorkflow:
     """Test data quality validation workflows."""
 
@@ -338,8 +334,6 @@ class TestDataQualityWorkflow:
         for result in results:
             assert hasattr(result, 'is_valid')
             assert hasattr(result, 'message')
-
-
 class TestUtilityIntegrationWorkflow:
     """Test utility integration in complete workflows."""
 

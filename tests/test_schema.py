@@ -67,8 +67,6 @@ class TestColumnDefinition:
         # Test with missing column
         df = pl.LazyFrame({"other_col": [1, 2, 3]})
         assert col_def.validate_data_type(df) is False
-
-
 class TestColumnMapping:
     """Test ColumnMapping class."""
 
@@ -83,8 +81,6 @@ class TestColumnMapping:
         assert mapping.left == "left_col"
         assert mapping.right == "right_col"
         assert mapping.name == "standard_name"
-
-
 class TestComparisonSchema:
     """Test ComparisonSchema class."""
 
@@ -228,8 +224,6 @@ class TestComparisonSchema:
         assert "name" in compare_cols
         assert "age" in compare_cols
         assert "id" not in compare_cols
-
-
 class TestComparisonConfig:
     """Test ComparisonConfig class."""
 

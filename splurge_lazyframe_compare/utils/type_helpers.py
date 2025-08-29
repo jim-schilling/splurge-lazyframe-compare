@@ -125,8 +125,8 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
     # Get the attribute from polars module
     try:
         datatype_attr = getattr(pl, datatype_name)
-    except AttributeError:
-        raise AttributeError(f"'{datatype_name}' is not a valid Polars data type")
+    except AttributeError as err:
+        raise AttributeError(f"'{datatype_name}' is not a valid Polars data type") from err
 
     # Check if it's already a DataType instance (simple types)
     if isinstance(datatype_attr, pl.DataType):
@@ -156,8 +156,8 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
             # Try to instantiate with no arguments as fallback
             try:
                 return datatype_attr()
-            except TypeError:
-                raise ValueError(f"Cannot instantiate {datatype_name} without parameters")
+            except TypeError as err:
+                raise ValueError(f"Cannot instantiate {datatype_name} without parameters") from err
 
     # If we get here, it's not a valid datatype
     raise ValueError(f"'{datatype_name}' is not a valid Polars data type")

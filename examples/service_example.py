@@ -214,7 +214,7 @@ def demonstrate_new_comparator():
 
     # Method 2: Compare and report in one step
     print("\n2. Generating report...")
-    report = comparator.compare_and_report(
+    comparator.compare_and_report(
         left=left_df,
         right=right_df,
         include_samples=False
@@ -242,9 +242,9 @@ def demonstrate_service_injection():
 
     from splurge_lazyframe_compare.services import (
         ComparisonService,
-        ValidationService,
         DataPreparationService,
         ReportingService,
+        ValidationService,
     )
 
     # Create custom services (could be customized versions)

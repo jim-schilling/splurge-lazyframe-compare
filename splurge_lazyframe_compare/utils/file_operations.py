@@ -90,9 +90,9 @@ def validate_file_path(file_path: Path, require_writable: bool = False) -> None:
     # Check for directory traversal attempts
     try:
         resolved_path.relative_to(file_path.parent.resolve())
-    except ValueError:
+    except ValueError as err:
         # Path goes outside the intended directory
-        raise ValueError(f"Invalid path: {file_path} (directory traversal detected)")
+        raise ValueError(f"Invalid path: {file_path} (directory traversal detected)") from err
 
     # Ensure parent directory exists
     ensure_directory_exists(file_path.parent)

@@ -776,8 +776,6 @@ class TestLazyFrameComparator:
         # This should raise a SchemaValidationError due to missing columns
         with pytest.raises(SchemaValidationError):
             self.comparator.compare(left=left_df, right=right_df)
-
-
 class TestComparisonReport:
     """Test ComparisonReport class functionality."""
 
@@ -1074,9 +1072,6 @@ class TestComparisonReport:
 
         assert "Left DataFrame" in table_report
         assert "2" in table_report  # Record counts
-
-
-
     def test_report_state_management(self) -> None:
         """Test that report properly manages internal state."""
         from splurge_lazyframe_compare.core.comparator import ComparisonReport

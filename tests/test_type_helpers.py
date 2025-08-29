@@ -44,8 +44,6 @@ class TestIsNumericDatatype:
         assert is_numeric_datatype(pl.Struct) is False
         assert is_numeric_datatype(pl.Null) is False
 
-
-
     def test_edge_cases(self) -> None:
         """Test edge cases and error handling."""
         # Test with None (should raise TypeError)
@@ -169,7 +167,7 @@ class TestGetPolarsDatatypeType:
         assert get_polars_datatype_type("String") == pl.Utf8
         assert get_polars_datatype_type("Boolean") == pl.Boolean
         assert get_polars_datatype_type("Float64") == pl.Float64
-        
+
         # Test that incorrect case fails
         with pytest.raises(AttributeError):
             get_polars_datatype_type("int64")
@@ -260,7 +258,7 @@ class TestTypeHelpersIntegration:
             "score": pl.Float32,
         })
 
-        for col_name, dtype in schema.items():
+        for _col_name, dtype in schema.items():
             # Get name from schema dtype
             name = get_polars_datatype_name(dtype)
             assert isinstance(name, str)
@@ -285,7 +283,7 @@ class TestTypeHelpersIntegration:
 
         schema = df.collect_schema()
 
-        for col_name, dtype in schema.items():
+        for _col_name, dtype in schema.items():
             name = get_polars_datatype_name(dtype)
             converted_type = get_polars_datatype_type(name)
             assert converted_type == dtype
@@ -384,12 +382,9 @@ class TestTypeHelpersIntegration:
         start_time = time.time()
 
         # Perform multiple operations
-        for i in range(100):
-            name = get_polars_datatype_name(pl.Int64)
-            assert name == "Int64"
-
-            converted = get_polars_datatype_type("Int64")
-            assert converted == pl.Int64
+        for _i in range(100):
+            assert get_polars_datatype_name(pl.Int64) == "Int64"
+            assert get_polars_datatype_type("Int64") == pl.Int64
 
             assert is_numeric_datatype(pl.Int64) is True
 
@@ -407,10 +402,10 @@ class TestTypeHelpersIntegration:
         initial_objects = len(gc.get_objects())
 
         # Perform operations that might create objects
-        for i in range(1000):
-            name = get_polars_datatype_name(pl.Int64)
-            converted = get_polars_datatype_type("Int64")
-            is_numeric = is_numeric_datatype(pl.Int64)
+        for _i in range(1000):
+            get_polars_datatype_name(pl.Int64)
+            get_polars_datatype_type("Int64")
+            is_numeric_datatype(pl.Int64)
 
         # Force garbage collection
         gc.collect()

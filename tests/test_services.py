@@ -1,8 +1,9 @@
 """Unit tests for service classes."""
 
+from pathlib import Path
+
 import polars as pl
 import pytest
-from pathlib import Path
 
 from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
     PrimaryKeyViolationError,
@@ -72,8 +73,6 @@ def sample_config(sample_dataframes):
     )
 
     return config
-
-
 class TestValidationService:
     """Test ValidationService functionality."""
 
@@ -426,8 +425,6 @@ class TestValidationService:
         result = service.validate_data_types(df=df, expected_types=expected_types)
 
         assert result.is_valid
-
-
 class TestConfigHelpers:
     """Test configuration helper functions."""
 
@@ -451,8 +448,9 @@ class TestConfigHelpers:
 
     def test_load_config_from_file_not_found(self):
         """Test config file not found error."""
-        from splurge_lazyframe_compare.utils.config_helpers import load_config_from_file
         import pytest
+
+        from splurge_lazyframe_compare.utils.config_helpers import load_config_from_file
 
         with pytest.raises(FileNotFoundError):
             load_config_from_file("nonexistent_file.json")
@@ -463,8 +461,9 @@ class TestConfigHelpers:
         with open(config_file, 'w') as f:
             f.write("{invalid json content")
 
-        from splurge_lazyframe_compare.utils.config_helpers import load_config_from_file
         import pytest
+
+        from splurge_lazyframe_compare.utils.config_helpers import load_config_from_file
 
         with pytest.raises(ValueError):
             load_config_from_file(config_file)
@@ -904,8 +903,8 @@ class TestConfigHelpers:
             "name": ["Alice", "Bob"]
         })
 
-        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
 
         # Empty PK list is caught by ComparisonConfig validation
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -1018,8 +1017,8 @@ class TestConfigHelpers:
             "balance": [150.5, 250.0, 400.0]  # Balance differences for matching records
         })
 
-        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         from splurge_lazyframe_compare.services.comparison_service import ComparisonService
+        from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
 
         # Create config automatically
         config = create_comparison_config_from_lazyframes(
@@ -1039,8 +1038,6 @@ class TestConfigHelpers:
         assert results.summary.right_only_count == 1  # customer_id=4
         assert results.summary.value_differences_count == 2  # balance differences for customer_id=1 and 2
         assert results.summary.matching_records == 0  # No exact matches due to balance differences
-
-
 class TestDataHelpers:
     """Test data manipulation helper functions."""
 
@@ -1054,8 +1051,9 @@ class TestDataHelpers:
 
     def test_validate_dataframe_none(self):
         """Test DataFrame validation with None input."""
-        from splurge_lazyframe_compare.utils.data_helpers import validate_dataframe
         import pytest
+
+        from splurge_lazyframe_compare.utils.data_helpers import validate_dataframe
 
         with pytest.raises(ValueError) as exc_info:
             validate_dataframe(None, "test_df")
@@ -1068,8 +1066,9 @@ class TestDataHelpers:
         """Test DataFrame validation with no columns."""
         df = pl.LazyFrame()
 
-        from splurge_lazyframe_compare.utils.data_helpers import validate_dataframe
         import pytest
+
+        from splurge_lazyframe_compare.utils.data_helpers import validate_dataframe
 
         with pytest.raises(ValueError) as exc_info:
             validate_dataframe(df, "empty_df")
@@ -1227,10 +1226,6 @@ class TestDataHelpers:
         assert "extra_col" in comparison["column_overlap"]["df2_only_columns"]
         # No common columns since column names are different
         assert len(comparison["column_overlap"]["common_columns"]) == 0
-
-
-
-
 class TestLoggingHelpers:
     """Test logging and monitoring helper functions."""
 
@@ -1272,6 +1267,7 @@ class TestLoggingHelpers:
     def test_performance_monitor(self):
         """Test performance monitoring context manager."""
         import time
+
         from splurge_lazyframe_compare.utils.logging_helpers import performance_monitor
 
         with performance_monitor("TestService", "test_operation") as ctx:
@@ -1361,10 +1357,7 @@ class TestLoggingHelpers:
 
     def test_update_operation_context(self):
         """Test operation context updating."""
-        from splurge_lazyframe_compare.utils.logging_helpers import (
-            create_operation_context,
-            update_operation_context
-        )
+        from splurge_lazyframe_compare.utils.logging_helpers import create_operation_context, update_operation_context
 
         ctx = create_operation_context("test_operation")
 
@@ -1382,10 +1375,7 @@ class TestLoggingHelpers:
 
     def test_update_operation_context_with_error(self):
         """Test operation context updating with error."""
-        from splurge_lazyframe_compare.utils.logging_helpers import (
-            create_operation_context,
-            update_operation_context
-        )
+        from splurge_lazyframe_compare.utils.logging_helpers import create_operation_context, update_operation_context
 
         ctx = create_operation_context("test_operation")
 
@@ -1428,10 +1418,7 @@ class TestLoggingHelpers:
 
     def test_log_service_health(self):
         """Test service health logging."""
-        from splurge_lazyframe_compare.utils.logging_helpers import (
-            create_service_health_check,
-            log_service_health
-        )
+        from splurge_lazyframe_compare.utils.logging_helpers import create_service_health_check, log_service_health
 
         health_data = create_service_health_check("TestService")
         health_data["status"] = "warning"
@@ -1439,8 +1426,6 @@ class TestLoggingHelpers:
 
         # Should not raise any exceptions
         log_service_health("TestService", health_data)
-
-
 class TestTypeHelpers:
     """Test type helper functions."""
 
@@ -1458,9 +1443,6 @@ class TestTypeHelpers:
         assert is_numeric_datatype(pl.Utf8) is False
         assert is_numeric_datatype(pl.Boolean) is False
         assert is_numeric_datatype(pl.Date) is False
-
-
-
     def test_get_friendly_dtype_name(self):
         """Test human-readable data type names."""
         from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_name
@@ -1489,8 +1471,6 @@ class TestTypeHelpers:
         result = get_polars_datatype_name(UnknownDataType())
         assert isinstance(result, str)
         assert len(result) > 0
-
-
 class TestFileOperations:
     """Test file operation utility functions."""
 
@@ -1526,8 +1506,9 @@ class TestFileOperations:
 
     def test_get_file_extension_invalid_format(self):
         """Test getting file extensions for invalid formats."""
-        from splurge_lazyframe_compare.utils.file_operations import get_file_extension
         import pytest
+
+        from splurge_lazyframe_compare.utils.file_operations import get_file_extension
 
         with pytest.raises(ValueError) as exc_info:
             get_file_extension("invalid_format")
@@ -1596,8 +1577,9 @@ class TestFileOperations:
         """Test exporting LazyFrame with invalid format."""
         df = pl.LazyFrame({"id": [1, 2, 3]})
 
-        from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
         import pytest
+
+        from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
 
         with pytest.raises(ValueError) as exc_info:
             export_lazyframe(df, Path("test.json"), "invalid")
@@ -1670,8 +1652,9 @@ class TestFileOperations:
 
     def test_import_lazyframe_file_not_found(self):
         """Test importing LazyFrame from non-existent file."""
-        from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
         import pytest
+
+        from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
 
         with pytest.raises(FileNotFoundError) as exc_info:
             import_lazyframe(Path("nonexistent.parquet"))
@@ -1685,8 +1668,9 @@ class TestFileOperations:
         test_file = tmp_path / "test.parquet"
         test_file.write_text("dummy")
 
-        from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
         import pytest
+
+        from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
 
         with pytest.raises(ValueError) as exc_info:
             import_lazyframe(test_file, "invalid")
@@ -1720,8 +1704,9 @@ class TestFileOperations:
 
     def test_get_export_file_paths_invalid_format(self, tmp_path):
         """Test getting export file paths with invalid format."""
-        from splurge_lazyframe_compare.utils.file_operations import get_export_file_paths
         import pytest
+
+        from splurge_lazyframe_compare.utils.file_operations import get_export_file_paths
 
         with pytest.raises(ValueError) as exc_info:
             get_export_file_paths("test", tmp_path, ["invalid"])
@@ -1744,8 +1729,6 @@ class TestFileOperations:
 
     def test_validate_file_path_basic_validation(self):
         """Test basic file path validation."""
-        from splurge_lazyframe_compare.utils.file_operations import validate_file_path
-        import pytest
 
         # Test with None (should be handled appropriately)
         # Note: The actual implementation may need to handle None differently
@@ -1788,8 +1771,6 @@ class TestFileOperations:
 
         files = list_files_by_pattern(Path("nonexistent"), "*.txt")
         assert files == []
-
-
 class TestFormatting:
     """Test formatting utility functions."""
 
@@ -1994,8 +1975,6 @@ class TestFormatting:
         result = create_summary_table(data, headers=["Custom Header 1", "Custom Header 2"])
         assert isinstance(result, str)
         assert len(result) > 0
-
-
 class TestDataPreparationService:
     """Test DataPreparationService functionality."""
 
@@ -2051,8 +2030,6 @@ class TestDataPreparationService:
         assert "R_name" in column_order
         assert "L_amount" in column_order
         assert "R_amount" in column_order
-
-
 class TestReportingService:
     """Test ReportingService functionality."""
 
@@ -2589,13 +2566,6 @@ class TestReportingService:
 
         with pytest.raises(ValueError, match="results must be a ComparisonResult"):
             service.export_results(results="invalid")
-
-
-
-
-
-
-
     def test_edge_case_special_characters_in_data(self, sample_config):
         """Test handling of special characters in data."""
         from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
@@ -2825,8 +2795,6 @@ class TestReportingService:
 
         finally:
             os.chdir(original_cwd)
-
-
 class TestComparisonService:
     """Test ComparisonService functionality."""
 
@@ -2857,8 +2825,6 @@ class TestComparisonService:
         assert result.value_differences is not None
         assert result.left_only_records is not None
         assert result.right_only_records is not None
-
-
 class TestComparisonOrchestrator:
     """Test ComparisonOrchestrator functionality."""
 
@@ -2928,8 +2894,6 @@ class TestComparisonOrchestrator:
         )
 
         assert result.summary.matching_records >= 0
-
-
 class TestComparisonOrchestratorComprehensive:
     """Comprehensive tests for ComparisonOrchestrator public APIs."""
 
@@ -3215,9 +3179,6 @@ class TestComparisonOrchestratorComprehensive:
         assert "report" in error_msg.lower()
         assert "type" in error_msg.lower()
         assert "invalid" in error_msg.lower() or "unknown" in error_msg.lower()
-
-
-
     def test_get_comparison_summary_comprehensive(self) -> None:
         """Test get_comparison_summary method."""
         left_data = {

@@ -44,15 +44,15 @@ def generate_mixed_data(
         Dictionary with column names as keys and lists of values as values.
     """
     data = {}
-    
+
     # Primary key columns (3 columns)
     data["id"] = list(range(start_id, start_id + num_records))
     data["batch_date"] = [
-        date(2024, 1, 1) + timedelta(days=i % 365) 
+        date(2024, 1, 1) + timedelta(days=i % 365)
         for i in range(num_records)
     ]
     data["sequence_id"] = [i % 1000 for i in range(num_records)]
-    
+
     # String columns (35 columns)
     string_columns = [
         "name", "email", "category", "status", "region", "department", "title",
@@ -63,7 +63,7 @@ def generate_mixed_data(
         "certification", "license", "membership", "affiliation", "preference",
         "notes"
     ]
-    
+
     for i, col in enumerate(string_columns):
         if col == "name":
             data[col] = [f"User_{i:06d}" for i in range(num_records)]
@@ -135,7 +135,7 @@ def generate_mixed_data(
             data[col] = [f"Pref_{i % 6}" for i in range(num_records)]
         elif col == "notes":
             data[col] = [f"Note_{i:06d}" for i in range(num_records)]
-    
+
     # Integer columns (25 columns)
     int_columns = [
         "age", "experience_years", "projects_count", "team_size", "salary_grade",
@@ -145,7 +145,7 @@ def generate_mixed_data(
         "languages_known", "timezone_offset", "security_level", "access_level",
         "priority_level", "performance_rating", "satisfaction_score", "tenure_months"
     ]
-    
+
     for i, col in enumerate(int_columns):
         if col == "age":
             data[col] = [20 + (i % 60) for i in range(num_records)]
@@ -197,14 +197,14 @@ def generate_mixed_data(
             data[col] = [1 + (i % 10) for i in range(num_records)]
         elif col == "tenure_months":
             data[col] = [i % 120 for i in range(num_records)]
-    
+
     # Float columns (12 columns)
     float_columns = [
         "salary", "bonus", "performance_score", "efficiency_ratio", "cost_per_hour",
         "hourly_rate", "commission_rate", "tax_rate", "discount_rate", "interest_rate",
         "exchange_rate", "conversion_rate"
     ]
-    
+
     for i, col in enumerate(float_columns):
         if col == "salary":
             data[col] = [50000.0 + (i * 1000.0) + (i % 1000) * 0.5 for i in range(num_records)]
@@ -230,27 +230,27 @@ def generate_mixed_data(
             data[col] = [1.0 + (i % 10) * 0.1 for i in range(num_records)]
         elif col == "conversion_rate":
             data[col] = [0.02 + (i % 5) * 0.005 for i in range(num_records)]
-    
+
     # Date columns (2 columns)
     data["hire_date"] = [
-        date(2020, 1, 1) + timedelta(days=i % 365) 
+        date(2020, 1, 1) + timedelta(days=i % 365)
         for i in range(num_records)
     ]
     data["last_review_date"] = [
-        date(2023, 1, 1) + timedelta(days=i % 365) 
+        date(2023, 1, 1) + timedelta(days=i % 365)
         for i in range(num_records)
     ]
-    
+
     # Datetime columns (2 columns)
     data["created_at"] = [
-        datetime(2024, 1, 1) + timedelta(hours=i) 
+        datetime(2024, 1, 1) + timedelta(hours=i)
         for i in range(num_records)
     ]
     data["updated_at"] = [
-        datetime(2024, 6, 1) + timedelta(hours=i * 2) 
+        datetime(2024, 6, 1) + timedelta(hours=i * 2)
         for i in range(num_records)
     ]
-    
+
     # Introduce some differences if requested
     if include_differences:
         # Modify some values to create differences based on difference_rate
@@ -262,7 +262,7 @@ def generate_mixed_data(
                 data["performance_score"][i] += 0.5
                 data["age"][i] += 1
                 data["bonus"][i] += 500.0
-    
+
     return data
 
 
@@ -284,21 +284,21 @@ def create_test_datasets(
     """
     print(f"  Generating left dataset ({left_size:,} records)...")
     left_data = generate_mixed_data(
-        num_records=left_size, 
-        start_id=1, 
+        num_records=left_size,
+        start_id=1,
         include_differences=False
     )
     left_df = pl.LazyFrame(left_data)
-    
+
     print(f"  Generating right dataset ({right_size:,} records)...")
     right_data = generate_mixed_data(
-        num_records=right_size, 
-        start_id=1, 
+        num_records=right_size,
+        start_id=1,
         include_differences=True,
         difference_rate=difference_rate
     )
     right_df = pl.LazyFrame(right_data)
-    
+
     return left_df, right_df
 
 
@@ -314,7 +314,7 @@ def define_test_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "id": ColumnDefinition(name="id", alias="Employee ID", datatype=pl.Int64, nullable=False),
         "batch_date": ColumnDefinition(name="batch_date", alias="Batch Date", datatype=pl.Date, nullable=False),
         "sequence_id": ColumnDefinition(name="sequence_id", alias="Sequence ID", datatype=pl.Int64, nullable=False),
-        
+
         # String columns (35 columns)
         "name": ColumnDefinition(name="name", alias="Employee Name", datatype=pl.Utf8, nullable=False),
         "email": ColumnDefinition(name="email", alias="Email Address", datatype=pl.Utf8, nullable=False),
@@ -351,7 +351,7 @@ def define_test_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "affiliation": ColumnDefinition(name="affiliation", alias="Affiliation", datatype=pl.Utf8, nullable=False),
         "preference": ColumnDefinition(name="preference", alias="Preference", datatype=pl.Utf8, nullable=False),
         "notes": ColumnDefinition(name="notes", alias="Notes", datatype=pl.Utf8, nullable=False),
-        
+
         # Integer columns (25 columns)
         "age": ColumnDefinition(name="age", alias="Age", datatype=pl.Int64, nullable=False),
         "experience_years": ColumnDefinition(name="experience_years", alias="Experience Years", datatype=pl.Int64, nullable=False),
@@ -378,7 +378,7 @@ def define_test_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "performance_rating": ColumnDefinition(name="performance_rating", alias="Performance Rating", datatype=pl.Int64, nullable=False),
         "satisfaction_score": ColumnDefinition(name="satisfaction_score", alias="Satisfaction Score", datatype=pl.Int64, nullable=False),
         "tenure_months": ColumnDefinition(name="tenure_months", alias="Tenure Months", datatype=pl.Int64, nullable=False),
-        
+
         # Float columns (12 columns)
         "salary": ColumnDefinition(name="salary", alias="Salary", datatype=pl.Float64, nullable=False),
         "bonus": ColumnDefinition(name="bonus", alias="Bonus", datatype=pl.Float64, nullable=False),
@@ -392,27 +392,27 @@ def define_test_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "interest_rate": ColumnDefinition(name="interest_rate", alias="Interest Rate", datatype=pl.Float64, nullable=False),
         "exchange_rate": ColumnDefinition(name="exchange_rate", alias="Exchange Rate", datatype=pl.Float64, nullable=False),
         "conversion_rate": ColumnDefinition(name="conversion_rate", alias="Conversion Rate", datatype=pl.Float64, nullable=False),
-        
+
         # Date columns (2 columns)
         "hire_date": ColumnDefinition(name="hire_date", alias="Hire Date", datatype=pl.Date, nullable=False),
         "last_review_date": ColumnDefinition(name="last_review_date", alias="Last Review Date", datatype=pl.Date, nullable=False),
-        
+
         # Datetime columns (2 columns)
         "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype=pl.Datetime(time_unit='us'), nullable=False),
         "updated_at": ColumnDefinition(name="updated_at", alias="Updated At", datatype=pl.Datetime(time_unit='us'), nullable=False),
     }
-    
+
     # Both schemas are identical for this test
     left_schema = ComparisonSchema(
         columns=column_definitions,
         pk_columns=["id", "batch_date", "sequence_id"],
     )
-    
+
     right_schema = ComparisonSchema(
         columns=column_definitions,
         pk_columns=["id", "batch_date", "sequence_id"],
     )
-    
+
     return left_schema, right_schema
 
 
@@ -426,7 +426,7 @@ def create_column_mappings() -> list[ColumnMapping]:
     column_names = [
         # Primary key columns (3 columns)
         "id", "batch_date", "sequence_id",
-        
+
         # String columns (35 columns)
         "name", "email", "category", "status", "region", "department", "title",
         "first_name", "last_name", "middle_name", "nickname", "username",
@@ -435,7 +435,7 @@ def create_column_mappings() -> list[ColumnMapping]:
         "company_name", "division", "team", "role", "level", "grade",
         "certification", "license", "membership", "affiliation", "preference",
         "notes",
-        
+
         # Integer columns (25 columns)
         "age", "experience_years", "projects_count", "team_size", "salary_grade",
         "employee_id", "manager_id", "department_id", "location_id", "skill_level",
@@ -443,19 +443,19 @@ def create_column_mappings() -> list[ColumnMapping]:
         "meetings_attended", "trainings_completed", "certifications_count",
         "languages_known", "timezone_offset", "security_level", "access_level",
         "priority_level", "performance_rating", "satisfaction_score", "tenure_months",
-        
+
         # Float columns (12 columns)
         "salary", "bonus", "performance_score", "efficiency_ratio", "cost_per_hour",
         "hourly_rate", "commission_rate", "tax_rate", "discount_rate", "interest_rate",
         "exchange_rate", "conversion_rate",
-        
+
         # Date columns (2 columns)
         "hire_date", "last_review_date",
-        
+
         # Datetime columns (2 columns)
         "created_at", "updated_at"
     ]
-    
+
     return [
         ColumnMapping(left=col, right=col, name=col) for col in column_names
     ]
@@ -483,20 +483,19 @@ def run_single_benchmark(
     start_time = time.time()
     comparator = LazyFrameComparator(config)
     init_time = time.time() - start_time
-    
+
     print(f"    Iteration {iteration}: Running comparison...")
     start_time = time.time()
     results = comparator.compare(left=left_df, right=right_df)
     comparison_time = time.time() - start_time
-    
+
     print(f"    Iteration {iteration}: Collecting results...")
     start_time = time.time()
-    summary = results.summary
     value_differences_count = results.value_differences.select(pl.len()).collect().item()
     left_only_count = results.left_only_records.select(pl.len()).collect().item()
     right_only_count = results.right_only_records.select(pl.len()).collect().item()
     collect_time = time.time() - start_time
-    
+
     return {
         "initialization_time": init_time,
         "comparison_time": comparison_time,
@@ -526,23 +525,23 @@ def run_benchmark_suite(
     Returns:
         Dictionary with comprehensive benchmark results.
     """
-    print(f"\nRunning benchmark suite:")
+    print("\nRunning benchmark suite:")
     print(f"  Left dataset: {left_size:,} records")
     print(f"  Right dataset: {right_size:,} records")
     print(f"  Iterations: {iterations}")
     print(f"  Difference rate: {difference_rate:.2%}")
-    
+
     # Create test data
     left_df, right_df = create_test_datasets(
         left_size=left_size,
         right_size=right_size,
         difference_rate=difference_rate
     )
-    
+
     # Define schemas and mappings
     left_schema, right_schema = define_test_schemas()
     mappings = create_column_mappings()
-    
+
     # Create configuration
     config = ComparisonConfig(
         left_schema=left_schema,
@@ -552,13 +551,13 @@ def run_benchmark_suite(
         ignore_case=False,
         null_equals_null=True,
     )
-    
+
     # Run iterations
     results = []
     for i in range(iterations):
         # Force garbage collection before each iteration
         gc.collect()
-        
+
         iteration_result = run_single_benchmark(
             left_df=left_df,
             right_df=right_df,
@@ -566,25 +565,25 @@ def run_benchmark_suite(
             iteration=i + 1
         )
         results.append(iteration_result)
-    
+
     # Calculate statistics
     total_records = left_size + right_size
-    
+
     # Calculate averages and standard deviations
     avg_init_time = sum(r["initialization_time"] for r in results) / len(results)
     avg_comparison_time = sum(r["comparison_time"] for r in results) / len(results)
     avg_collection_time = sum(r["collection_time"] for r in results) / len(results)
     avg_total_time = sum(r["total_time"] for r in results) / len(results)
-    
+
     # Calculate processing rates
     avg_records_per_second = total_records / avg_comparison_time
     avg_ms_per_record = (avg_comparison_time / total_records) * 1000
-    
+
     # Get consistent result counts (should be the same across iterations)
     value_differences_count = results[0]["value_differences_count"]
     left_only_count = results[0]["left_only_count"]
     right_only_count = results[0]["right_only_count"]
-    
+
     return {
         "dataset_info": {
             "left_size": left_size,
@@ -623,30 +622,30 @@ def print_benchmark_results(results: dict[str, Any]) -> None:
     timing_stats = results["timing_stats"]
     performance_metrics = results["performance_metrics"]
     comparison_results = results["comparison_results"]
-    
+
     print("\n" + "=" * 80)
     print("DETAILED BENCHMARK RESULTS")
     print("=" * 80)
-    
-    print(f"\nDataset Information:")
+
+    print("\nDataset Information:")
     print(f"  Left dataset:      {dataset_info['left_size']:,} records")
     print(f"  Right dataset:     {dataset_info['right_size']:,} records")
     print(f"  Total records:     {dataset_info['total_records']:,}")
     print(f"  Difference rate:   {dataset_info['difference_rate']:.2%}")
-    
-    print(f"\nTiming Statistics:")
+
+    print("\nTiming Statistics:")
     print(f"  Avg initialization: {timing_stats['avg_initialization_time']:.4f} seconds")
     print(f"  Avg comparison:     {timing_stats['avg_comparison_time']:.4f} seconds")
     print(f"  Avg collection:     {timing_stats['avg_collection_time']:.4f} seconds")
     print(f"  Avg total time:     {timing_stats['avg_total_time']:.4f} seconds")
     print(f"  Min comparison:     {timing_stats['min_comparison_time']:.4f} seconds")
     print(f"  Max comparison:     {timing_stats['max_comparison_time']:.4f} seconds")
-    
-    print(f"\nPerformance Metrics:")
+
+    print("\nPerformance Metrics:")
     print(f"  Avg processing rate: {performance_metrics['avg_records_per_second']:,.0f} records/second")
     print(f"  Avg time per record: {performance_metrics['avg_ms_per_record']:.4f} ms/record")
-    
-    print(f"\nComparison Results:")
+
+    print("\nComparison Results:")
     print(f"  Value differences:   {comparison_results['value_differences_count']:,} records")
     print(f"  Left-only records:   {comparison_results['left_only_count']:,} records")
     print(f"  Right-only records:  {comparison_results['right_only_count']:,} records")
@@ -657,7 +656,7 @@ def main() -> None:
     print("=" * 80)
     print("POLARS LAZYFRAME COMPARISON FRAMEWORK - DETAILED PERFORMANCE BENCHMARK")
     print("=" * 80)
-    
+
     # Define test scenarios
     test_scenarios = [
         {"left_size": 1_000, "right_size": 1_050, "iterations": 3},
@@ -667,44 +666,44 @@ def main() -> None:
         {"left_size": 50_000, "right_size": 50_250, "iterations": 2},
         {"left_size": 100_000, "right_size": 101_000, "iterations": 1},
     ]
-    
+
     all_results = []
-    
+
     for scenario in test_scenarios:
         print(f"\n{'='*60}")
         print(f"SCENARIO: {scenario['left_size']:,} vs {scenario['right_size']:,} records")
         print(f"{'='*60}")
-        
+
         result = run_benchmark_suite(
             left_size=scenario["left_size"],
             right_size=scenario["right_size"],
             iterations=scenario["iterations"],
             difference_rate=0.01
         )
-        
+
         print_benchmark_results(result)
         all_results.append(result)
-    
+
     # Print summary comparison
     print(f"\n{'='*80}")
     print("PERFORMANCE SUMMARY COMPARISON")
     print(f"{'='*80}")
-    
+
     print(f"\n{'Size':<15} {'Records/sec':<15} {'ms/record':<12} {'Total Time':<12}")
     print("-" * 60)
-    
+
     for result in all_results:
         dataset_info = result["dataset_info"]
         performance_metrics = result["performance_metrics"]
         timing_stats = result["timing_stats"]
-        
+
         size_str = f"{dataset_info['total_records']:,}"
         records_per_sec = f"{performance_metrics['avg_records_per_second']:,.0f}"
         ms_per_record = f"{performance_metrics['avg_ms_per_record']:.4f}"
         total_time = f"{timing_stats['avg_total_time']:.4f}"
-        
+
         print(f"{size_str:<15} {records_per_sec:<15} {ms_per_record:<12} {total_time:<12}")
-    
+
     print(f"\n{'='*80}")
     print("DETAILED BENCHMARK COMPLETED!")
     print(f"{'='*80}")
