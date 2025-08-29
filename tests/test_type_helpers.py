@@ -391,7 +391,7 @@ class TestTypeHelpersIntegration:
         end_time = time.time()
         duration = end_time - start_time
 
-        # Should complete in reasonable time (less than 1 second for 300 operations)
+        # Should complete in reasonable time (less than 1 second for 100 iterations of 3 operations)
         assert duration < 1.0, f"Operations took too long: {duration:.3f} seconds"
 
     def test_memory_behavior(self) -> None:
