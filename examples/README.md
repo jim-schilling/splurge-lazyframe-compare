@@ -12,7 +12,7 @@ A simple example demonstrating the basic usage of the comparison framework with 
 - Small dataset for quick testing
 - Different column names between datasets
 - Basic comparison workflow
-- Result export and HTML report generation
+- Result export and report generation
 
 **Usage:**
 ```bash
@@ -226,7 +226,7 @@ python examples/auto_config_example.py
 ### Output
 - Console output with timing and performance metrics
 - CSV exports in `./comparison_results/` directory
-- HTML reports for detailed analysis
+- Detailed reports for analysis
 
 ## Performance Tips
 

@@ -249,9 +249,6 @@ class ComparisonReport:
         
     def generate_detailed_report(self) -> str:
         """Generate detailed report with sample differences."""
-        
-    def export_to_html(self, filename: str) -> None:
-        """Export report as HTML file."""
 ```
 
 ## 5. Implementation Details

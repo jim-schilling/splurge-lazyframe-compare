@@ -220,23 +220,4 @@ class ComparisonReport:
             report_type="table"
         )
 
-    def export_to_html(
-        self,
-        *,
-        result: ComparisonResult | None = None,
-        filename: str
-    ) -> None:
-        """Export comparison result to HTML file.
 
-        Args:
-            result: Optional comparison result. If not provided, uses last result.
-            filename: Path to save the HTML file.
-        """
-        if result is None and self._last_result is None:
-            raise ValueError("No comparison result available. Call generate_from_result first.")
-
-        target_result = result or self._last_result
-        self.orchestrator.export_result_to_html(
-            result=target_result,
-            filename=filename
-        )

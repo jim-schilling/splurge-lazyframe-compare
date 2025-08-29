@@ -16,7 +16,7 @@ A comprehensive Python framework for comparing two Polars LazyFrames with config
 - **Data validation** - Built-in data quality validation capabilities
 - **Type-safe implementation** - Full type annotations and validation
 - **Performance optimized** - Leverages Polars' lazy evaluation for memory efficiency
-- **Export capabilities** - Export results to CSV, Parquet, JSON, and HTML formats
+- **Export capabilities** - Export results to CSV, Parquet, and JSON formats
 - **Auto-configuration** - Automatically generate comparison configurations from LazyFrames with identical schemas
 - **Configuration management** - Load, save, and manage comparison configurations with environment variable support
 - **Production-ready logging** - Structured logging with Python's logging module, configurable log levels, and performance monitoring
@@ -241,31 +241,7 @@ summary_pipe = reporter.generate_summary_table(
 print(summary_pipe)
 ```
 
-### HTML Export
 
-```python
-# Export comparison results to HTML using ReportingService
-reporter = ReportingService()
-reporter.export_to_html(
-    results=results,
-    filename="comparison_report.html"
-)
-
-# Or using the orchestrator for complete workflow
-orchestrator = ComparisonOrchestrator()
-html_content = orchestrator.export_result_to_html(
-    result=results,
-    filename="comparison_report.html"
-)
-
-# Or using the comparator
-comparator = LazyFrameComparator(config)
-comparator.export_to_html(
-    left=left_df,
-    right=right_df,
-    filename="comparison_report.html"
-)
-```
 
 ## Configuration Management
 
@@ -659,11 +635,7 @@ report = orchestrator.generate_report_from_result(
     max_samples=10
 )
 
-# Export result to HTML file
-orchestrator.export_result_to_html(
-    result=results,
-    filename="comparison_report.html"
-)
+
 ```
 
 ### Configuration Management API
@@ -866,7 +838,7 @@ See the `examples/` directory for comprehensive working examples demonstrating a
 - **`detailed_performance_benchmark.py`** - Comprehensive performance analysis with statistical reporting
 
 ### Reporting Examples
-- **`tabulated_report_example.py`** - Multiple table formats (grid, simple, pipe, orgtbl) and export functionality including HTML export
+- **`tabulated_report_example.py`** - Multiple table formats (grid, simple, pipe, orgtbl) and export functionality
 
 ### Running Examples
 ```bash
@@ -885,7 +857,7 @@ python examples/performance_comparison_example.py
 # Detailed benchmarking
 python examples/detailed_performance_benchmark.py
 
-# Tabulated reporting with HTML export
+# Tabulated reporting
 python examples/tabulated_report_example.py
 ```
 

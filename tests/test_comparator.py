@@ -1075,76 +1075,7 @@ class TestComparisonReport:
         assert "Left DataFrame" in table_report
         assert "2" in table_report  # Record counts
 
-    def test_export_to_html_comprehensive(self) -> None:
-        """Test export_to_html method with various scenarios."""
-        from splurge_lazyframe_compare.core.comparator import ComparisonReport
-        import tempfile
 
-        # Create test data with all required columns
-        left_data = {
-            "customer_id": [1, 2],
-            "order_date": ["2023-01-01", "2023-01-02"],
-            "amount": [100.0, 200.0],
-            "status": ["pending", "completed"],
-        }
-
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-
-        # Create right data with correct column names for schema
-        right_data = {
-            "cust_id": [1, 2],
-            "order_dt": ["2023-01-01", "2023-01-02"],
-            "total_amount": [100.0, 200.0],
-            "order_status": ["pending", "completed"],
-        }
-
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-
-        # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
-
-        # Create report
-        report = ComparisonReport(self.orchestrator, self.config)
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            html_file = f"{temp_dir}/test_report.html"
-
-            # Test export with explicit result
-            report.export_to_html(result=result, filename=html_file)
-
-            # Verify file was created
-            from pathlib import Path
-            assert Path(html_file).exists()
-            assert Path(html_file).stat().st_size > 0
-
-            # Test export using last result (should work after generate_from_result)
-            report.generate_from_result(result)
-            html_file2 = f"{temp_dir}/test_report2.html"
-            report.export_to_html(filename=html_file2)
-
-            assert Path(html_file2).exists()
-            assert Path(html_file2).stat().st_size > 0
-
-    def test_export_to_html_no_result_error(self) -> None:
-        """Test export_to_html raises error when no result available."""
-        from splurge_lazyframe_compare.core.comparator import ComparisonReport
-        import tempfile
-
-        report = ComparisonReport(self.orchestrator, self.config)
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            html_file = f"{temp_dir}/test_report.html"
-
-            with pytest.raises(ValueError, match="No comparison result available"):
-                report.export_to_html(filename=html_file)
 
     def test_report_state_management(self) -> None:
         """Test that report properly manages internal state."""

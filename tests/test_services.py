@@ -3274,57 +3274,7 @@ class TestComparisonOrchestratorComprehensive:
         assert "type" in error_msg.lower()
         assert "invalid" in error_msg.lower() or "unknown" in error_msg.lower()
 
-    def test_export_result_to_html_comprehensive(self) -> None:
-        """Test export_result_to_html functionality."""
-        import tempfile
-        from pathlib import Path
 
-        left_data = {
-            "customer_id": [1, 2],
-            "order_date": ["2023-01-01", "2023-01-02"],
-            "amount": [100.0, 200.0],
-            "status": ["pending", "completed"],
-        }
-
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-
-        # Create right dataframe with correct column names for right schema
-        right_data = {
-            "cust_id": [1, 2],
-            "order_dt": ["2023-01-01", "2023-01-02"],
-            "total_amount": [100.0, 200.0],
-            "order_status": ["pending", "completed"],
-        }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-
-        # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            html_file = f"{temp_dir}/test_report.html"
-
-            # Test HTML export
-            self.orchestrator.export_result_to_html(
-                result=result,
-                filename=html_file
-            )
-
-            # Verify file was created
-            assert Path(html_file).exists()
-            assert Path(html_file).stat().st_size > 0
-
-            # Verify it's actually an HTML file
-            with open(html_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                assert '<html>' in content.lower() or '<!doctype html>' in content.lower()
 
     def test_get_comparison_summary_comprehensive(self) -> None:
         """Test get_comparison_summary method."""
