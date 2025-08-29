@@ -1,4 +1,4 @@
-"""New service-based comparator interface for the comparison framework."""
+"""Service-based comparator interface for the comparison framework."""
 
 
 import polars as pl
@@ -11,10 +11,8 @@ from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrat
 class LazyFrameComparator:
     """Service-based LazyFrame comparator.
 
-    This is the new primary interface for the comparison framework,
-    built on the service architecture. It provides the same API as the
-    original comparator but uses the new modular service architecture
-    internally.
+    Primary interface for the comparison framework, built on the
+    service architecture for modular and maintainable comparisons.
     """
 
     def __init__(self, config: ComparisonConfig) -> None:
@@ -118,7 +116,7 @@ class LazyFrameComparator:
 
 
 class ComparisonReport:
-    """New report generator using the service architecture."""
+    """Report generator using the service architecture."""
 
     def __init__(
         self,

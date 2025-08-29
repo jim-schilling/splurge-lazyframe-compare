@@ -44,14 +44,7 @@ class TestIsNumericDatatype:
         assert is_numeric_datatype(pl.Struct) is False
         assert is_numeric_datatype(pl.Null) is False
 
-    def test_fallback_behavior(self) -> None:
-        """Test fallback behavior for types without is_numeric method."""
 
-        class MockDataType:
-            """Mock data type without is_numeric method."""
-            pass
-
-        assert is_numeric_datatype(MockDataType()) is False
 
     def test_edge_cases(self) -> None:
         """Test edge cases and error handling."""

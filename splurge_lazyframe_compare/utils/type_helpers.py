@@ -18,36 +18,20 @@ def is_numeric_datatype(datatype: pl.DataType) -> bool:
     if datatype is None:
         raise TypeError("datatype cannot be None")
 
-    try:
-        return datatype.is_numeric()
-    except AttributeError:
-        # Fallback for older Polars versions or different data types
-        return False
+    return datatype.is_numeric()
 
 
 def _create_decimal_type(decimal_attr) -> pl.DataType:
-    """Create a Decimal data type with appropriate precision and scale, handling Polars version compatibility.
+    """Create a Decimal data type with appropriate precision and scale.
 
     Args:
         decimal_attr: The Decimal class from the polars module.
 
     Returns:
         Polars Decimal data type with appropriate parameters.
-
-    Raises:
-        TypeError: If the Decimal type cannot be instantiated with any parameter combination.
     """
-    # Decimal needs precision and scale; handle Polars version compatibility
-    try:
-        # Try with sensible defaults first
-        return decimal_attr(precision=38, scale=9)
-    except TypeError:
-        # Fallback: try with None values for older Polars versions
-        try:
-            return decimal_attr(precision=None, scale=None)
-        except TypeError:
-            # Final fallback: try with no parameters
-            return decimal_attr()
+    # Create Decimal with sensible defaults
+    return decimal_attr(precision=38, scale=9)
 
 
 def get_polars_datatype_name(datatype: pl.DataType) -> str:
@@ -66,7 +50,6 @@ def get_polars_datatype_name(datatype: pl.DataType) -> str:
         raise TypeError("datatype cannot be None")
 
     # Type mapping for reliable name resolution
-    # Handle common aliases and version differences
     type_mappings = {
         # Handle both Utf8 and String (they're the same type)
         pl.Utf8: "String",
@@ -147,23 +130,11 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
     if hasattr(datatype_attr, '__call__'):
         # These are classes that need to be instantiated
         if datatype_name == "Datetime":
-            # Default to microsecond precision with no timezone; handle Polars version compatibility
-            try:
-                return datatype_attr(time_unit="us", time_zone=None)
-            except TypeError:
-                # Older Polars versions may not support all parameters
-                try:
-                    return datatype_attr(time_unit="us")
-                except TypeError:
-                    # Even older versions may not support time_unit
-                    return datatype_attr()
+            # Default to microsecond precision with no timezone
+            return datatype_attr(time_unit="us", time_zone=None)
         elif datatype_name == "Categorical":
-            # Default categorical with no ordering; handle Polars version compatibility
-            try:
-                return datatype_attr(ordering="physical")
-            except TypeError:
-                # Older Polars versions do not support 'ordering' parameter
-                return datatype_attr()
+            # Default categorical with physical ordering
+            return datatype_attr(ordering="physical")
         elif datatype_name == "List":
             # List needs an inner type - default to Int64
             return datatype_attr(pl.Int64)
@@ -171,12 +142,8 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
             # Struct needs fields - default to empty struct
             return datatype_attr([])
         elif datatype_name == "Duration":
-            # Duration needs time unit; handle Polars version compatibility
-            try:
-                return datatype_attr(time_unit="us")
-            except TypeError:
-                # Older Polars versions may not support time_unit parameter
-                return datatype_attr()
+            # Duration needs time unit - default to microseconds
+            return datatype_attr(time_unit="us")
         elif datatype_name == "Decimal":
             return _create_decimal_type(datatype_attr)
         else:

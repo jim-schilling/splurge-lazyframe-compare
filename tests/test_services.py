@@ -1228,53 +1228,7 @@ class TestDataHelpers:
         # No common columns since column names are different
         assert len(comparison["column_overlap"]["common_columns"]) == 0
 
-    def test_validate_column_compatibility(self):
-        """Test column compatibility validation."""
-        df1 = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
 
-        df2 = pl.LazyFrame({
-            "customer_id": [1, 2, 4],
-            "customer_name": ["Alice", "Bob", "David"]
-        })
-
-        mapping = {"id": "customer_id", "name": "customer_name"}
-
-        from splurge_lazyframe_compare.utils.data_helpers import validate_column_compatibility
-        result = validate_column_compatibility(df1, df2, mapping)
-
-        assert "valid_mappings" in result
-        assert "invalid_mappings" in result
-        assert "type_mismatches" in result
-        assert len(result["valid_mappings"]) == 2
-        assert len(result["invalid_mappings"]) == 0
-
-    def test_validate_column_compatibility_with_errors(self):
-        """Test column compatibility validation with errors."""
-        df1 = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "missing_col": ["a", "b", "c"]
-        })
-
-        df2 = pl.LazyFrame({
-            "customer_id": [1, 2, 4],
-            "wrong_type": [1, 2, 3]  # Int64 vs expected Utf8
-        })
-
-        mapping = {
-            "id": "customer_id",
-            "missing_col": "missing_in_df2",  # Column doesn't exist in df2
-            "missing_in_df1": "wrong_type"    # Column doesn't exist in df1
-        }
-
-        from splurge_lazyframe_compare.utils.data_helpers import validate_column_compatibility
-        result = validate_column_compatibility(df1, df2, mapping)
-
-        assert len(result["invalid_mappings"]) > 0
-        assert len(result["missing_columns_df2"]) > 0
-        assert len(result["missing_columns_df1"]) > 0
 
 
 class TestLoggingHelpers:
@@ -1505,16 +1459,7 @@ class TestTypeHelpers:
         assert is_numeric_datatype(pl.Boolean) is False
         assert is_numeric_datatype(pl.Date) is False
 
-    def test_is_numeric_dtype_fallback(self):
-        """Test numeric data type detection fallback."""
-        from splurge_lazyframe_compare.utils.type_helpers import is_numeric_datatype
 
-        # Create a mock data type that doesn't have is_numeric method
-        class MockDataType:
-            pass
-
-        # Should return False for types without is_numeric method
-        assert is_numeric_datatype(MockDataType()) is False
 
     def test_get_friendly_dtype_name(self):
         """Test human-readable data type names."""
@@ -1793,7 +1738,7 @@ class TestFileOperations:
 
         from splurge_lazyframe_compare.utils.file_operations import validate_file_path
         # Should not raise any exceptions
-        validate_file_path(test_file, create_parent=True)
+        validate_file_path(test_file)
 
         assert test_file.parent.exists()
 
@@ -1806,22 +1751,19 @@ class TestFileOperations:
         # Note: The actual implementation may need to handle None differently
         # This test verifies the function doesn't crash with None input
 
-    def test_validate_file_path_no_create_parent(self, tmp_path):
-        """Test validating file path without creating parent directories."""
+    def test_validate_file_path_creates_parent(self, tmp_path):
+        """Test that validating file path creates parent directories."""
         non_existent_dir = tmp_path / "nonexistent"
         test_file = non_existent_dir / "test.txt"
 
         from splurge_lazyframe_compare.utils.file_operations import validate_file_path
-        import pytest
 
-        with pytest.raises(ValueError) as exc_info:
-            validate_file_path(test_file, create_parent=False)
+        # Should create parent directory and not raise any exceptions
+        validate_file_path(test_file)
 
-        # Test that error message contains key information
-        error_msg = str(exc_info.value)
-        assert "parent" in error_msg.lower()
-        assert "directory" in error_msg.lower()
-        assert "exist" in error_msg.lower()
+        # Verify parent directory was created
+        assert non_existent_dir.exists()
+        assert test_file.parent.exists()
 
     def test_list_files_by_pattern(self, tmp_path):
         """Test listing files by pattern."""

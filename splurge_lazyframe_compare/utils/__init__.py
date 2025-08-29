@@ -90,7 +90,6 @@ from .data_helpers import (
     has_null_values,
     optimize_dataframe,
     safe_collect,
-    validate_column_compatibility,
     validate_dataframe,
 )
 from .file_operations import (
@@ -223,7 +222,6 @@ __all__ = [
     "has_null_values",
     "optimize_dataframe",
     "safe_collect",
-    "validate_column_compatibility",
     "validate_dataframe",
     # Logging helpers
     "create_log_message",

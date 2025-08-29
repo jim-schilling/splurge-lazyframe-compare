@@ -69,13 +69,12 @@ def atomic_write(file_path: Path) -> Generator[Path, None, None]:
                 pass  # Ignore cleanup errors
 
 
-def validate_file_path(file_path: Path, create_parent: bool = True, require_writable: bool = False) -> None:
+def validate_file_path(file_path: Path, require_writable: bool = False) -> None:
     """Validate file path for security and accessibility.
 
     Args:
         file_path: File path to validate
-        create_parent: Whether to create parent directories (legacy parameter)
-        require_writable: Whether to check if path is writable (new parameter)
+        require_writable: Whether to check if path is writable
 
     Raises:
         ValueError: If path is invalid or insecure
@@ -94,28 +93,14 @@ def validate_file_path(file_path: Path, create_parent: bool = True, require_writ
         # Path goes outside the intended directory
         raise ValueError(f"Invalid path: {file_path} (directory traversal detected)")
 
-    # Handle legacy create_parent parameter
-    if create_parent:
-        ensure_directory_exists(file_path.parent)
-    elif not file_path.parent.exists():
-        raise ValueError(f"Parent directory does not exist: {file_path.parent}")
+    # Ensure parent directory exists
+    ensure_directory_exists(file_path.parent)
 
-    # Check if parent directory exists and is writable (if required)
+    # Check if parent directory is writable (if required)
     if require_writable:
         parent = resolved_path.parent
-        if not parent.exists():
-            raise FileNotFoundError(f"Parent directory does not exist: {parent}")
         if not os.access(parent, os.W_OK):
             raise PermissionError(f"Cannot write to directory: {parent}")
-
-    # Check if we have write permissions (legacy behavior)
-    if not require_writable and create_parent:
-        try:
-            # Test write permission by creating a temporary file
-            with tempfile.NamedTemporaryFile(dir=file_path.parent, delete=True):
-                pass
-        except (OSError, PermissionError) as e:
-            raise PermissionError(f"Cannot write to directory {file_path.parent}: {e}") from e
 
 
 def ensure_directory_exists(path: Path) -> None:
@@ -171,7 +156,7 @@ def export_lazyframe(
         OSError: If file operation fails.
     """
     # Validate file path for security
-    validate_file_path(file_path, create_parent=True, require_writable=True)
+    validate_file_path(file_path, require_writable=True)
 
     # Use atomic writes for data integrity
     with atomic_write(file_path) as temp_path:
