@@ -25,6 +25,31 @@ def is_numeric_datatype(datatype: pl.DataType) -> bool:
         return False
 
 
+def _create_decimal_type(decimal_attr) -> pl.DataType:
+    """Create a Decimal data type with appropriate precision and scale, handling Polars version compatibility.
+
+    Args:
+        decimal_attr: The Decimal class from the polars module.
+
+    Returns:
+        Polars Decimal data type with appropriate parameters.
+
+    Raises:
+        TypeError: If the Decimal type cannot be instantiated with any parameter combination.
+    """
+    # Decimal needs precision and scale; handle Polars version compatibility
+    try:
+        # Try with sensible defaults first
+        return decimal_attr(precision=38, scale=9)
+    except TypeError:
+        # Fallback: try with None values for older Polars versions
+        try:
+            return decimal_attr(precision=None, scale=None)
+        except TypeError:
+            # Final fallback: try with no parameters
+            return decimal_attr()
+
+
 def get_polars_datatype_name(datatype: pl.DataType) -> str:
     """Get a human-readable name for a Polars data type.
 
@@ -113,17 +138,7 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
                 # Older Polars versions may not support time_unit parameter
                 return datatype_attr()
         elif datatype_name == "Decimal":
-            # Decimal needs precision and scale; handle Polars version compatibility
-            try:
-                # Try with sensible defaults first
-                return datatype_attr(precision=38, scale=9)
-            except TypeError:
-                # Fallback: try with None values for older Polars versions
-                try:
-                    return datatype_attr(precision=None, scale=None)
-                except TypeError:
-                    # Final fallback: try with no parameters
-                    return datatype_attr()
+            return _create_decimal_type(datatype_attr)
         else:
             # Try to instantiate with no arguments as fallback
             try:

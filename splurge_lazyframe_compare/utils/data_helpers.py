@@ -16,6 +16,15 @@ class DataHelperConstants:
     BATCH_SIZE_DEFAULT: int = 10000
     MEMORY_LIMIT_MB: int = 1000
 
+    # Memory estimation (bytes per value)
+    BYTES_PER_INT64: int = 8
+    BYTES_PER_INT32: int = 4
+    BYTES_PER_FLOAT64: int = 8
+    BYTES_PER_FLOAT32: int = 4
+    BYTES_PER_BOOLEAN: int = 1
+    BYTES_PER_STRING_AVG: int = 16  # Average string length in bytes
+    BYTES_PER_DEFAULT: int = 8
+
     # Performance tuning
     OPTIMIZE_THRESHOLD: int = 100000
     PARALLEL_WORKERS: int = 4
@@ -95,11 +104,11 @@ def estimate_dataframe_memory(df: pl.LazyFrame) -> float:
         # Rough estimation based on Polars internals
         # This is approximate and may vary by system
         bytes_per_row = sum(
-            8 if dtype in [pl.Int64, pl.Float64, pl.Datetime] else
-            4 if dtype in [pl.Int32, pl.Float32] else
-            1 if dtype == pl.Boolean else
-            16 if dtype == pl.Utf8 else  # Average string length
-            8  # Default
+            DataHelperConstants.BYTES_PER_INT64 if dtype in [pl.Int64, pl.Float64, pl.Datetime] else
+            DataHelperConstants.BYTES_PER_INT32 if dtype in [pl.Int32, pl.Float32] else
+            DataHelperConstants.BYTES_PER_BOOLEAN if dtype == pl.Boolean else
+            DataHelperConstants.BYTES_PER_STRING_AVG if dtype == pl.Utf8 else  # Average string length
+            DataHelperConstants.BYTES_PER_DEFAULT  # Default for other types
             for dtype in sample_df.dtypes
         )
 

@@ -158,9 +158,12 @@ def performance_monitor(service_name: str, operation: str):
 
     Example:
         with performance_monitor("ComparisonService", "find_differences") as ctx:
-            # Perform operation (pseudocode; replace with your actual function)
-            result = perform_comparison()  # perform_comparison() is a placeholder
-            ctx["records_processed"] = len(result)
+            # Perform your actual operation here
+            result = perform_comparison()  # Your actual function call
+            # Add custom metrics (result may not always have len() method)
+            if hasattr(result, '__len__'):
+                ctx["records_processed"] = len(result)
+            ctx["operation_status"] = "completed"
     """
     start_time = time.perf_counter()
     context = {}

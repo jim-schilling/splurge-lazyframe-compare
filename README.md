@@ -276,8 +276,11 @@ from splurge_lazyframe_compare.utils.logging_helpers import performance_monitor
 
 # Automatically log performance metrics
 with performance_monitor("ComparisonService", "find_differences") as ctx:
-    result = perform_comparison()
-    ctx["records_processed"] = len(result)
+    result = perform_comparison()  # Your actual operation here
+    # Add custom metrics (result may not always have len() method)
+    if hasattr(result, '__len__'):
+        ctx["records_processed"] = len(result)
+    ctx["operation_status"] = "completed"
 ```
 
 ### Service Logging
