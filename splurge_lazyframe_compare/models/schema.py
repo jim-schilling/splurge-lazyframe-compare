@@ -49,12 +49,36 @@ class ColumnDefinition:
             raise ValueError("ColumnDefinition.alias cannot be None, empty, or whitespace-only")
         if isinstance(self.datatype, str):
             self.datatype = get_polars_datatype_type(self.datatype)
+
+        # Check for unparameterized complex types and provide helpful error messages
+        if hasattr(self.datatype, '__name__'):
+            type_name = self.datatype.__name__
+            if type_name == 'List':
+                raise ValueError(
+                    f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
+                    f"Use pl.List(inner_type) instead, e.g., pl.List(pl.Utf8) for a list of strings."
+                )
+            elif type_name == 'Struct':
+                raise ValueError(
+                    f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
+                    f"Use pl.Struct(fields) instead, e.g., pl.Struct([]) for an empty struct "
+                    f"or pl.Struct({{'field': pl.Utf8}}) for a struct with fields."
+                )
+
         # Check if datatype is a valid polars data type
         try:
             # Check if it's a valid polars data type by trying to create a schema
             schema = pl.Schema({"test": self.datatype})
-        except Exception:
-            raise ValueError("ColumnDefinition.datatype must be a valid polars data type")
+        except Exception as e:
+            # Provide more specific error message for complex types
+            if hasattr(self.datatype, '__name__'):
+                type_name = self.datatype.__name__
+                if type_name in ['List', 'Struct']:
+                    raise ValueError(
+                        f"ColumnDefinition.datatype {type_name} requires parameters. "
+                        f"Use proper instantiation: pl.{type_name}(...) instead of pl.{type_name}"
+                    ) from e
+            raise ValueError("ColumnDefinition.datatype must be a valid polars data type") from e
 
     def validate_column_exists(self, df: pl.LazyFrame) -> bool:
         """Check if column exists in DataFrame.

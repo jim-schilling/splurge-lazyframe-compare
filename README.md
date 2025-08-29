@@ -374,11 +374,17 @@ schema = ComparisonSchema(
         "id": ColumnDefinition("id", "ID", "Int64", False),  # String
         "name": ColumnDefinition("name", "Name", pl.Utf8, True),  # Direct
         "created": ColumnDefinition("created", "Created", "Datetime", False),  # String
-        "tags": ColumnDefinition("tags", "Tags", pl.List, True),  # Direct
+        "tags": ColumnDefinition("tags", "Tags", pl.List(pl.Utf8), True),  # Direct
     },
     primary_key_columns=["id"]
 )
 ```
+
+**⚠️ Important Notes for Complex Types:**
+
+- **List types** require an inner type: `pl.List(pl.Utf8)` ✅, not `pl.List` ❌
+- **Struct types** require field definitions: `pl.Struct([])` ✅ or `pl.Struct({"field": pl.Utf8})` ✅, not `pl.Struct` ❌
+- The framework will provide clear error messages if you accidentally use unparameterized complex types
 
 #### `ColumnMapping`
 Maps columns between left and right datasets.

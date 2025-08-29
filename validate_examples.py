@@ -23,8 +23,8 @@ def test_basic_mixed_usage():
     col3 = ColumnDefinition(name="created", alias="Created", datatype="Datetime", nullable=False)
 
     # Test direct datatypes
-    col4 = ColumnDefinition(name="tags", alias="Tags", datatype=pl.List, nullable=True)
-    col5 = ColumnDefinition(name="metadata", alias="Metadata", datatype=pl.Struct, nullable=True)
+    col4 = ColumnDefinition(name="tags", alias="Tags", datatype=pl.List(pl.Utf8), nullable=True)
+    col5 = ColumnDefinition(name="metadata", alias="Metadata", datatype=pl.Struct([]), nullable=True)
 
     print(f"✓ String 'Int64': {col1.datatype}")
     print(f"✓ String 'String': {col2.datatype}")
