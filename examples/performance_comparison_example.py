@@ -336,7 +336,7 @@ def define_performance_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "projects_count": ColumnDefinition(name="projects_count", alias="Projects Count", datatype=pl.Int64, nullable=False),
         "team_size": ColumnDefinition(name="team_size", alias="Team Size", datatype=pl.Int64, nullable=False),
         "salary_grade": ColumnDefinition(name="salary_grade", alias="Salary Grade", datatype=pl.Int64, nullable=False),
-        "employee_id": ColumnDefinition(name="employee_id", alias="Employee ID", datatype=pl.Int64, nullable=False),
+        "employee_id": ColumnDefinition(name="employee_id", alias="Secondary Employee ID", datatype=pl.Int64, nullable=False),
         "manager_id": ColumnDefinition(name="manager_id", alias="Manager ID", datatype=pl.Int64, nullable=False),
         "department_id": ColumnDefinition(name="department_id", alias="Department ID", datatype=pl.Int64, nullable=False),
         "location_id": ColumnDefinition(name="location_id", alias="Location ID", datatype=pl.Int64, nullable=False),
@@ -376,8 +376,8 @@ def define_performance_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "last_review_date": ColumnDefinition(name="last_review_date", alias="Last Review Date", datatype=pl.Date, nullable=False),
         
         # Datetime columns (2 columns)
-        "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype=pl.Datetime, nullable=False),
-        "updated_at": ColumnDefinition(name="updated_at", alias="Updated At", datatype=pl.Datetime, nullable=False),
+        "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype=pl.Datetime(time_unit='us'), nullable=False),
+        "updated_at": ColumnDefinition(name="updated_at", alias="Updated At", datatype=pl.Datetime(time_unit='us'), nullable=False),
     }
     
     # Both schemas are identical for this performance test

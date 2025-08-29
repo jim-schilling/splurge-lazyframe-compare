@@ -61,8 +61,12 @@ def create_sample_data() -> tuple[pl.LazyFrame, pl.LazyFrame]:
         "priority_level": ["low", "medium", "high", "low", "high", "low", "medium", "high"],  # Some priority different
     }
 
-    left_df = pl.LazyFrame(left_data)
-    right_df = pl.LazyFrame(right_data)
+    left_df = pl.LazyFrame(left_data).with_columns(
+        pl.col("priority").cast(pl.Categorical)
+    )
+    right_df = pl.LazyFrame(right_data).with_columns(
+        pl.col("priority_level").cast(pl.Categorical)
+    )
 
     return left_df, right_df
 
@@ -79,12 +83,8 @@ def define_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype="Int64", nullable=False),
         "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype="Date", nullable=False),
         "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype="Float64", nullable=False),
-        # Complex datatypes using string names
-        "tags": ColumnDefinition(name="tags", alias="Tags", datatype="List", nullable=True),
-        "metadata": ColumnDefinition(name="metadata", alias="Metadata", datatype="Struct", nullable=True),
         "status": ColumnDefinition(name="status", alias="Order Status", datatype="String", nullable=True),
         "priority": ColumnDefinition(name="priority", alias="Priority Level", datatype="Categorical", nullable=True),
-        "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype="Datetime", nullable=False),
     }
     left_schema = ComparisonSchema(
         columns=left_columns,
@@ -97,11 +97,8 @@ def define_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
         "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
         "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
-        # Using string names for complex types
-        "categories": ColumnDefinition(name="categories", alias="Categories", datatype="List", nullable=True),
         "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype="String", nullable=True),
         "priority_level": ColumnDefinition(name="priority_level", alias="Priority Level", datatype="Categorical", nullable=True),
-        "processed_at": ColumnDefinition(name="processed_at", alias="Processed At", datatype="Datetime", nullable=True),
     }
     right_schema = ComparisonSchema(
         columns=right_columns,

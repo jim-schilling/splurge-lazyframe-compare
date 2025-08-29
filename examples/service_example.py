@@ -68,7 +68,9 @@ def create_sample_data():
     }
 
     left_df = pl.LazyFrame(left_data)
-    right_df = pl.LazyFrame(right_data)
+    right_df = pl.LazyFrame(right_data).with_columns(
+        pl.col("category").cast(pl.Categorical)
+    )
 
     return left_df, right_df
 
@@ -81,9 +83,9 @@ def define_schemas():
         "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype="Int64", nullable=False),
         "order_date": ColumnDefinition(name="order_date", alias="Order Date", datatype="Date", nullable=False),
         "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype="Float64", nullable=False),
-        # Complex datatypes using string names
-        "tags": ColumnDefinition(name="tags", alias="Tags", datatype="List", nullable=True),
-        "metadata": ColumnDefinition(name="metadata", alias="Metadata", datatype="Struct", nullable=True),
+        # Complex datatypes using direct Polars types
+        "tags": ColumnDefinition(name="tags", alias="Tags", datatype=pl.List(pl.Utf8), nullable=True),
+        "metadata": ColumnDefinition(name="metadata", alias="Metadata", datatype=pl.Struct({"source": pl.Utf8}), nullable=True),
         "status": ColumnDefinition(name="status", alias="Order Status", datatype="String", nullable=True),
         "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype="Datetime", nullable=False),
     }
@@ -100,7 +102,7 @@ def define_schemas():
         "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
         # Using string names for complex types
         "category": ColumnDefinition(name="category", alias="Category", datatype="Categorical", nullable=False),
-        "tags": ColumnDefinition(name="tags", alias="Tags", datatype="List", nullable=True),
+        "tags": ColumnDefinition(name="tags", alias="Tags", datatype=pl.List(pl.Utf8), nullable=True),
         "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype="String", nullable=True),
         "processed_at": ColumnDefinition(name="processed_at", alias="Processed At", datatype="Datetime", nullable=True),
     }
@@ -226,7 +228,7 @@ def demonstrate_new_comparator():
         left=left_df,
         right=right_df,
         output_dir="./service_example_output",
-        format="csv"
+        format="parquet"
     )
 
     print(f"   Exported files: {list(exported_files.keys())}")
