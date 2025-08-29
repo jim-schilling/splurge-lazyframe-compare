@@ -6,6 +6,7 @@ import sys
 
 from splurge_lazyframe_compare import ColumnDefinition, ComparisonSchema
 from splurge_lazyframe_compare.utils.logging_helpers import get_logger
+from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_type
 
 # Configure logging for testing
 logging.basicConfig(
@@ -22,9 +23,11 @@ def test_basic_mixed_usage():
     col2 = ColumnDefinition(name="name", alias="Name", datatype="String", nullable=True)
     col3 = ColumnDefinition(name="created", alias="Created", datatype="Datetime", nullable=False)
 
-    # Test direct datatypes
-    col4 = ColumnDefinition(name="tags", alias="Tags", datatype=pl.List(pl.Utf8), nullable=True)
-    col5 = ColumnDefinition(name="metadata", alias="Metadata", datatype=pl.Struct([]), nullable=True)
+    # Test direct datatypes using helper function for version compatibility
+    list_class = getattr(pl, "List")
+    struct_class = getattr(pl, "Struct")
+    col4 = ColumnDefinition(name="tags", alias="Tags", datatype=list_class(get_polars_datatype_type("String")), nullable=True)
+    col5 = ColumnDefinition(name="metadata", alias="Metadata", datatype=struct_class([]), nullable=True)
 
     print(f"✓ String 'Int64': {col1.datatype}")
     print(f"✓ String 'String': {col2.datatype}")
@@ -82,7 +85,6 @@ def verify_copy_fix():
 
     # Test the new (clean) approach
     right_data = left_data.copy()
-    right_data["id"] = left_data["id"]  # Direct assignment - clearer intent
     right_data["value"] = [v + random.uniform(-1, 1) for v in right_data["value"]]
 
     print("✅ Copy fix verification:")

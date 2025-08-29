@@ -525,7 +525,6 @@ class TestPerformanceAndScalability:
 
         # Create right data with some differences (within tolerance)
         right_data = left_data.copy()
-        right_data["id"] = left_data["id"]  # Same IDs
         right_data["value"] = [v + random.uniform(-2, 2) for v in right_data["value"]]  # Small variation within tolerance
 
         left_df = pl.LazyFrame(left_data)
