@@ -180,11 +180,15 @@ class ComparisonService(BaseService):
                     left_col = f"{LEFT_PREFIX}{mapping.name}"
                     right_col = f"{RIGHT_PREFIX}{mapping.name}"
 
+                # Build comparison condition combining null handling and tolerance
+
                 # Handle null comparisons based on config
                 if config.null_equals_null:
-                    condition = ~pl.col(left_col).eq_missing(pl.col(right_col))
+                    # null == null, but null != value
+                    null_condition = ~pl.col(left_col).eq_missing(pl.col(right_col))
                 else:
-                    condition = pl.col(left_col) != pl.col(right_col)
+                    # null != null and null != value
+                    null_condition = pl.col(left_col) != pl.col(right_col)
 
                 # Apply tolerance for numeric columns if specified
                 if (
@@ -192,7 +196,22 @@ class ComparisonService(BaseService):
                     and mapping.name in config.tolerance
                 ):
                     tolerance = config.tolerance[mapping.name]
-                    condition = (pl.col(left_col) - pl.col(right_col)).abs() > tolerance
+
+                    # Create a comprehensive condition that handles all cases:
+                    # 1. If either value is null: use null_condition
+                    # 2. If both values are non-null: check both exact equality AND tolerance
+                    condition = pl.when(
+                        pl.col(left_col).is_null() | pl.col(right_col).is_null()
+                    ).then(
+                        # Handle null cases
+                        null_condition
+                    ).otherwise(
+                        # Handle non-null cases: difference if values differ by more than tolerance
+                        (pl.col(left_col) - pl.col(right_col)).abs() > tolerance
+                    )
+                else:
+                    # No tolerance, use null condition as-is
+                    condition = null_condition
 
                 diff_conditions.append(condition)
 

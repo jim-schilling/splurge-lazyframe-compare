@@ -993,3 +993,292 @@ class TestRealWorldUsagePatterns:
         # Should match all records due to ignore_case and tolerance
         assert result_insensitive.summary.matching_records == 3
         assert result_insensitive.summary.value_differences_count == 0
+
+
+class TestToleranceNullLogicFix:
+    """Test the fix for tolerance + null comparison logic bug.
+
+    This test class verifies that tolerance and null handling work correctly together,
+    addressing the critical bug where they were mutually exclusive.
+    """
+
+    def test_tolerance_with_null_equals_null_true(self):
+        """Test tolerance combined with null_equals_null=True."""
+        left_data = {
+            "id": [1, 2, 3, 4],
+            "amount": [100.0, 200.0, None, 400.0],
+        }
+
+        right_data = {
+            "customer_id": [1, 2, 3, 4],
+            "total": [100.5, 199.8, None, 410.0],  # Within tolerance: 0.5, 0.2, null, over tolerance: 10.0
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        # Define schemas
+        left_columns = {
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=True),
+        }
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
+
+        right_columns = {
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "total": ColumnDefinition(name="total", alias="Total", datatype=pl.Float64, nullable=True),
+        }
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
+
+        mappings = [
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="amount", right="total", name="amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            primary_key_columns=["id"],
+            null_equals_null=True,  # Nulls should be considered equal
+            tolerance={"amount": 1.0}  # 1.0 tolerance for amount
+        )
+
+        comparator = LazyFrameComparator(config)
+        result = comparator.compare(left=left_df, right=right_df)
+
+        # With null_equals_null=True and tolerance=1.0:
+        # - Record 1: |100.0 - 100.5| = 0.5 <= 1.0 → No difference
+        # - Record 2: |200.0 - 199.8| = 0.2 <= 1.0 → No difference
+        # - Record 3: Both null → No difference (null_equals_null=True)
+        # - Record 4: |400.0 - 410.0| = 10.0 > 1.0 → Difference
+        assert result.summary.matching_records == 3
+        assert result.summary.value_differences_count == 1
+
+    def test_tolerance_with_null_equals_null_false(self):
+        """Test tolerance combined with null_equals_null=False."""
+        left_data = {
+            "id": [1, 2, 3],
+            "amount": [100.0, None, 300.0],
+        }
+
+        right_data = {
+            "customer_id": [1, 2, 3],
+            "total": [100.5, 200.0, None],  # Within tolerance: 0.5, null vs non-null, both null
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        # Define schemas
+        left_columns = {
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=True),
+        }
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
+
+        right_columns = {
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "total": ColumnDefinition(name="total", alias="Total", datatype=pl.Float64, nullable=True),
+        }
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
+
+        mappings = [
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="amount", right="total", name="amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            primary_key_columns=["id"],
+            null_equals_null=False,  # Nulls should be considered different
+            tolerance={"amount": 1.0}  # 1.0 tolerance for amount
+        )
+
+        comparator = LazyFrameComparator(config)
+        result = comparator.compare(left=left_df, right=right_df)
+
+        # With null_equals_null=False and tolerance=1.0:
+        # - Record 1: |100.0 - 100.5| = 0.5 <= 1.0 → No difference
+        # - Record 2: null vs 200.0 → Difference (null_equals_null=False)
+        # - Record 3: 300.0 vs null → Difference (null_equals_null=False)
+        # DEBUG: Let's see what the actual differences are
+        print("Value differences count:", result.summary.value_differences_count)
+        print("Matching records:", result.summary.matching_records)
+        if result.summary.value_differences_count > 0:
+            diff_df = result.value_differences.collect()
+            print("Value differences DataFrame:")
+            print(diff_df)
+
+        assert result.summary.matching_records == 1
+        assert result.summary.value_differences_count == 2
+
+
+class TestOriginalBugInvestigation:
+    """Test to understand the original tolerance + null bug."""
+
+    def test_null_handling_without_tolerance(self):
+        """Test null handling without tolerance to understand baseline behavior."""
+        left_data = {
+            "id": [1, 2, 3],
+            "amount": [100.0, None, 300.0],
+        }
+
+        right_data = {
+            "customer_id": [1, 2, 3],
+            "total": [100.5, 200.0, None],  # Different values: 100.5, 200.0, null
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        # Define schemas
+        left_columns = {
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=True),
+        }
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
+
+        right_columns = {
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "total": ColumnDefinition(name="total", alias="Total", datatype=pl.Float64, nullable=True),
+        }
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
+
+        mappings = [
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="amount", right="total", name="amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            primary_key_columns=["id"],
+            null_equals_null=False  # Nulls should be considered different
+            # No tolerance specified
+        )
+
+        comparator = LazyFrameComparator(config)
+        result = comparator.compare(left=left_df, right=right_df)
+
+        # With null_equals_null=False and NO tolerance:
+        # - Record 1: 100.0 != 100.5 → Difference
+        # - Record 2: null vs 200.0 → Difference (null_equals_null=False)
+        # - Record 3: 300.0 vs null → Difference (null_equals_null=False)
+        print(f"Without tolerance - Matching: {result.summary.matching_records}, Differences: {result.summary.value_differences_count}")
+
+        # All records should have differences
+        assert result.summary.matching_records == 0
+        assert result.summary.value_differences_count == 3
+
+    def test_null_handling_with_null_equals_true(self):
+        """Test null handling with null_equals_null=True."""
+        left_data = {
+            "id": [1, 2, 3],
+            "amount": [100.0, None, 300.0],
+        }
+
+        right_data = {
+            "customer_id": [1, 2, 3],
+            "total": [100.5, None, 350.0],  # Different values: 100.5, null, 350.0
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        # Define schemas
+        left_columns = {
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=True),
+        }
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
+
+        right_columns = {
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "total": ColumnDefinition(name="total", alias="Total", datatype=pl.Float64, nullable=True),
+        }
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
+
+        mappings = [
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="amount", right="total", name="amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            primary_key_columns=["id"],
+            null_equals_null=True  # Nulls should be considered equal
+            # No tolerance specified
+        )
+
+        comparator = LazyFrameComparator(config)
+        result = comparator.compare(left=left_df, right=right_df)
+
+        # With null_equals_null=True and NO tolerance:
+        # - Record 1: 100.0 != 100.5 → Difference
+        # - Record 2: null == null → No difference (null_equals_null=True)
+        # - Record 3: 300.0 != 350.0 → Difference
+        print(f"With null_equals_null=True - Matching: {result.summary.matching_records}, Differences: {result.summary.value_differences_count}")
+
+        assert result.summary.matching_records == 1  # Only record 2 matches
+        assert result.summary.value_differences_count == 2  # Records 1 and 3 differ
+
+
+class TestToleranceNullLogicFix:
+    """Test the fix for tolerance + null comparison logic bug."""
+
+    def test_null_only_no_tolerance(self):
+        """Test null handling without tolerance configuration."""
+        left_data = {
+            "id": [1, 2, 3],
+            "amount": [100.0, None, 300.0],
+        }
+
+        right_data = {
+            "customer_id": [1, 2, 3],
+            "total": [100.0, None, 350.0],  # Exact match, both null, different value
+        }
+
+        left_df = pl.LazyFrame(left_data)
+        right_df = pl.LazyFrame(right_data)
+
+        # Define schemas
+        left_columns = {
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=True),
+        }
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
+
+        right_columns = {
+            "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+            "total": ColumnDefinition(name="total", alias="Total", datatype=pl.Float64, nullable=True),
+        }
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
+
+        mappings = [
+            ColumnMapping(left="id", right="customer_id", name="id"),
+            ColumnMapping(left="amount", right="total", name="amount"),
+        ]
+
+        config = ComparisonConfig(
+            left_schema=left_schema,
+            right_schema=right_schema,
+            column_mappings=mappings,
+            primary_key_columns=["id"],
+            null_equals_null=True  # Nulls should be considered equal
+        )
+
+        comparator = LazyFrameComparator(config)
+        result = comparator.compare(left=left_df, right=right_df)
+
+        # With null_equals_null=True:
+        # - Record 1: 100.0 == 100.0 → No difference
+        # - Record 2: null == null → No difference
+        # - Record 3: 300.0 != 350.0 → Difference
+        assert result.summary.matching_records == 2
+        assert result.summary.value_differences_count == 1
