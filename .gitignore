@@ -8,6 +8,10 @@ __pycache__/
 
 comparison_results/
 service_example_output/
+test_output/
+*.parquet
+*.csv
+*.json
 
 # Distribution / packaging
 .Python

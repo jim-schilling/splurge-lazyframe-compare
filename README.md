@@ -964,3 +964,11 @@ pip install splurge-lazyframe-compare
 # Install in development mode
 pip install -e .
 ```
+
+## Changelog
+
+### 2025.1.1 (2025-08-29)
+- Removed extraneous folders and plan documents.
+
+### 2025.1.0 (2025-08-29)
+- Initial Commit
