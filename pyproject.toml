@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["splurge_lazyframe_compare*"]
-exclude = ["tests*", "examples*", "plans*"]
+exclude = ["tests*", "examples*", "plans*", "docs*"]
 
 [project]
 name = "splurge-lazyframe-compare"
-version = "2025.1.0"
+version = "2025.1.1"
 description = "A Python package for comparing splurge and lazyframe functionality"
 readme = "README.md"
 license = "MIT"
@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 keywords = ["splurge", "lazyframe", "compare", "polars", "dataframe", "comparison"]
 urls = {Homepage = "https://github.com/jim-schilling/splurge-lazyframe-compare"}
