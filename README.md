@@ -16,7 +16,9 @@ A comprehensive Python framework for comparing two Polars LazyFrames with config
 - **Data validation** - Built-in data quality validation capabilities
 - **Type-safe implementation** - Full type annotations and validation
 - **Performance optimized** - Leverages Polars' lazy evaluation for memory efficiency
-- **Export capabilities** - Export results to CSV, Parquet, and JSON formats
+- **Export capabilities** - Export results to CSV, Parquet, JSON, and HTML formats
+- **Auto-configuration** - Automatically generate comparison configurations from LazyFrames with identical schemas
+- **Configuration management** - Load, save, and manage comparison configurations with environment variable support
 - **Production-ready logging** - Structured logging with Python's logging module, configurable log levels, and performance monitoring
 - **Error handling** - Robust exception handling with custom exceptions and graceful error recovery
 
@@ -47,7 +49,7 @@ left_schema = ComparisonSchema(
         "amount": ColumnDefinition("amount", "Order Amount", "Float64", False),         # String name
         "status": ColumnDefinition("status", "Order Status", pl.Utf8, True),            # Direct datatype
     },
-    primary_key_columns=["customer_id", "order_date"]
+    pk_columns=["customer_id", "order_date"]
 )
 
 right_schema = ComparisonSchema(
@@ -57,7 +59,7 @@ right_schema = ComparisonSchema(
         "total_amount": ColumnDefinition("total_amount", "Order Amount", pl.Float64, False), # Direct datatype
         "order_status": ColumnDefinition("order_status", "Order Status", "String", True), # String name
     },
-    primary_key_columns=["cust_id", "order_dt"]
+    pk_columns=["cust_id", "order_dt"]
 )
 
 # Define column mappings
@@ -73,7 +75,7 @@ config = ComparisonConfig(
     left_schema=left_schema,
     right_schema=right_schema,
     column_mappings=mappings,
-    primary_key_columns=["customer_id", "order_date"]
+    pk_columns=["customer_id", "order_date"]
 )
 
 # Create sample data
@@ -105,6 +107,66 @@ summary_report = reporter.generate_summary_report(results=results)
 print(summary_report)
 ```
 
+## Auto-Configuration from LazyFrames
+
+For cases where your LazyFrames have identical column names and you want to quickly set up a comparison, you can use the automatic configuration generator:
+
+```python
+from splurge_lazyframe_compare.utils import create_comparison_config_from_lazyframes
+
+# Your LazyFrames with identical column names
+left_data = {
+    "customer_id": [1, 2, 3, 4, 5],
+    "name": ["Alice", "Bob", "Charlie", "David", "Eve"],
+    "email": ["alice@example.com", "bob@example.com", "charlie@example.com", "david@example.com", "eve@example.com"],
+    "balance": [100.50, 250.00, 75.25, 300.00, 150.75],
+    "active": [True, True, False, True, True]
+}
+
+right_data = {
+    "customer_id": [1, 2, 3, 4, 6],  # ID 5 missing, ID 6 added
+    "name": ["Alice", "Bob", "Charlie", "Dave", "Frank"],  # David -> Dave, Eve -> Frank
+    "email": ["alice@example.com", "bob@example.com", "charlie@example.com", "dave@example.com", "frank@example.com"],
+    "balance": [100.50, 250.00, 75.25, 320.00, 200.00],  # David's balance changed
+    "active": [True, True, False, True, False]  # Frank is inactive
+}
+
+left_df = pl.LazyFrame(left_data)
+right_df = pl.LazyFrame(right_data)
+
+# Specify primary key columns
+primary_keys = ["customer_id"]
+
+# Generate ComparisonConfig automatically (keyword-only parameters)
+config = create_comparison_config_from_lazyframes(
+    left_df=left_df,
+    right_df=right_df,
+    pk_columns=primary_keys
+)
+
+print(f"Auto-generated config with {len(config.column_mappings)} column mappings")
+print(f"Primary key columns: {config.pk_columns}")
+
+# Use immediately for comparison
+from splurge_lazyframe_compare.services.comparison_service import ComparisonService
+
+comparison_service = ComparisonService()
+results = comparison_service.execute_comparison(
+    left=left_df,
+    right=right_df,
+    config=config
+)
+
+print(f"Comparison completed - found {results.summary.value_differences_count} differences")
+```
+
+**Key Benefits:**
+- **No Manual Configuration**: Eliminates need for manual schema and mapping definition
+- **Type Safety**: Automatically infers Polars data types from your LazyFrames
+- **Error Prevention**: Validates primary key columns exist before comparison
+- **Keyword-Only API**: Explicit parameter names prevent argument order errors
+- **Ready-to-Use**: Generated config works immediately with all comparison services
+
 ## Advanced Usage
 
 ### Numeric Tolerance
@@ -115,7 +177,7 @@ config = ComparisonConfig(
     left_schema=left_schema,
     right_schema=right_schema,
     column_mappings=mappings,
-    primary_key_columns=["customer_id", "order_date"],
+    pk_columns=["customer_id", "order_date"],
     tolerance={"amount": 0.01}  # Allow 1 cent difference
 )
 ```
@@ -128,7 +190,7 @@ config = ComparisonConfig(
     left_schema=left_schema,
     right_schema=right_schema,
     column_mappings=mappings,
-    primary_key_columns=["customer_id", "order_date"],
+    pk_columns=["customer_id", "order_date"],
     ignore_case=True
 )
 ```
@@ -141,7 +203,7 @@ config = ComparisonConfig(
     left_schema=left_schema,
     right_schema=right_schema,
     column_mappings=mappings,
-    primary_key_columns=["customer_id", "order_date"],
+    pk_columns=["customer_id", "order_date"],
     null_equals_null=True  # Treat null values as equal
 )
 ```
@@ -177,6 +239,105 @@ summary_pipe = reporter.generate_summary_table(
     table_format="pipe"
 )
 print(summary_pipe)
+```
+
+### HTML Export
+
+```python
+# Export comparison results to HTML using ReportingService
+reporter = ReportingService()
+reporter.export_to_html(
+    results=results,
+    filename="comparison_report.html"
+)
+
+# Or using the orchestrator for complete workflow
+orchestrator = ComparisonOrchestrator()
+html_content = orchestrator.export_result_to_html(
+    result=results,
+    filename="comparison_report.html"
+)
+
+# Or using the comparator
+comparator = LazyFrameComparator(config)
+comparator.export_to_html(
+    left=left_df,
+    right=right_df,
+    filename="comparison_report.html"
+)
+```
+
+## Configuration Management
+
+The framework provides comprehensive configuration management utilities for loading, saving, and manipulating comparison configurations:
+
+### Configuration Files
+
+```python
+from splurge_lazyframe_compare.utils.config_helpers import (
+    load_config_from_file,
+    save_config_to_file,
+    create_default_config,
+    validate_config
+)
+
+# Create a default configuration template
+default_config = create_default_config()
+print("Default config keys:", list(default_config.keys()))
+
+# Save configuration to file
+save_config_to_file(default_config, "my_comparison_config.json")
+
+# Load configuration from file
+loaded_config = load_config_from_file("my_comparison_config.json")
+
+# Validate configuration
+validation_errors = validate_config(loaded_config)
+if validation_errors:
+    print("Configuration errors:", validation_errors)
+else:
+    print("Configuration is valid")
+```
+
+### Environment Variable Configuration
+
+```python
+from splurge_lazyframe_compare.utils.config_helpers import (
+    get_env_config,
+    apply_environment_overrides,
+    merge_configs
+)
+
+# Load configuration from environment variables (prefixed with SPLURGE_)
+env_config = get_env_config()
+print("Environment config:", env_config)
+
+# Apply environment overrides to existing config
+final_config = apply_environment_overrides(default_config)
+
+# Merge multiple configuration sources
+custom_config = {"comparison": {"max_samples": 100}}
+merged_config = merge_configs(default_config, custom_config)
+```
+
+### Configuration Utilities
+
+```python
+from splurge_lazyframe_compare.utils.config_helpers import (
+    get_config_value,
+    create_config_from_dataframes
+)
+
+# Get nested configuration values
+max_samples = get_config_value(merged_config, "reporting.max_samples", default_value=10)
+
+# Create configuration from existing DataFrames
+basic_config = create_config_from_dataframes(
+    left_df=left_df,
+    right_df=right_df,
+    primary_keys=["customer_id"],
+    auto_map_columns=True
+)
 ```
 
 ## Service Architecture
@@ -326,7 +487,7 @@ schema = ComparisonSchema(
         "id": ColumnDefinition("id", "ID", pl.Int64, False),
         "name": ColumnDefinition("name", "Name", pl.Utf8, True),
     },
-    primary_key_columns=["id"]
+    pk_columns=["id"]
 )
 ```
 
@@ -379,7 +540,7 @@ schema = ComparisonSchema(
         "created": ColumnDefinition("created", "Created", "Datetime", False),  # String
         "tags": ColumnDefinition("tags", "Tags", pl.List(pl.Utf8), True),  # Direct
     },
-    primary_key_columns=["id"]
+    pk_columns=["id"]
 )
 ```
 
@@ -408,7 +569,7 @@ config = ComparisonConfig(
     left_schema=left_schema,
     right_schema=right_schema,
     column_mappings=mappings,
-    primary_key_columns=["customer_id", "order_date"],
+    pk_columns=["customer_id", "order_date"],
     ignore_case=False,
     null_equals_null=True,
     tolerance={"amount": 0.01}
@@ -475,6 +636,130 @@ exported_files = reporter.export_results(
 )
 ```
 
+#### `ComparisonOrchestrator` (Extended Methods)
+
+```python
+from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
+
+orchestrator = ComparisonOrchestrator()
+
+# Get comparison summary as string
+summary_str = orchestrator.get_comparison_summary(result=results)
+
+# Get comparison table in various formats
+table_str = orchestrator.get_comparison_table(
+    result=results,
+    table_format="grid"  # Options: grid, simple, pipe, orgtbl
+)
+
+# Generate report from existing result
+report = orchestrator.generate_report_from_result(
+    result=results,
+    report_type="detailed",  # Options: summary, detailed, table
+    max_samples=10
+)
+
+# Export result to HTML file
+orchestrator.export_result_to_html(
+    result=results,
+    filename="comparison_report.html"
+)
+```
+
+### Configuration Management API
+
+#### `create_comparison_config_from_lazyframes()`
+
+```python
+from splurge_lazyframe_compare.utils import create_comparison_config_from_lazyframes
+
+# Auto-generate ComparisonConfig from LazyFrames
+config = create_comparison_config_from_lazyframes(
+    left_df=left_lf,           # Left LazyFrame
+    right_df=right_lf,         # Right LazyFrame
+    pk_columns=["id"]          # Primary key columns
+)
+
+# Returns: ComparisonConfig ready for use
+```
+
+#### Configuration File Operations
+
+```python
+from splurge_lazyframe_compare.utils.config_helpers import (
+    load_config_from_file,
+    save_config_to_file,
+    create_default_config,
+    validate_config
+)
+
+# Create default configuration template
+config = create_default_config()
+
+# Save to file
+save_config_to_file(config, "comparison_config.json")
+
+# Load from file
+loaded_config = load_config_from_file("comparison_config.json")
+
+# Validate configuration
+errors = validate_config(loaded_config)  # Returns list of error messages
+```
+
+#### Environment Configuration
+
+```python
+from splurge_lazyframe_compare.utils.config_helpers import (
+    get_env_config,
+    apply_environment_overrides,
+    merge_configs,
+    get_config_value
+)
+
+# Get configuration from environment variables (SPLURGE_ prefix)
+env_config = get_env_config()
+
+# Apply environment overrides to existing config
+final_config = apply_environment_overrides(base_config)
+
+# Merge multiple configurations
+merged = merge_configs(base_config, override_config)
+
+# Get nested configuration values
+value = get_config_value(config, "reporting.max_samples", default_value=10)
+```
+
+#### DataFrame Configuration Generation
+
+```python
+from splurge_lazyframe_compare.utils.config_helpers import create_config_from_dataframes
+
+# Generate configuration from DataFrame schemas
+config = create_config_from_dataframes(
+    left_df=left_df,
+    right_df=right_df,
+    primary_keys=["customer_id"],
+    auto_map_columns=True  # Auto-map columns with same names
+)
+```
+
+### Utility Classes and Constants
+
+#### `ConfigConstants`
+
+```python
+from splurge_lazyframe_compare.utils.config_helpers import ConfigConstants
+
+# Configuration constants
+prefix = ConfigConstants.ENV_PREFIX  # "SPLURGE_"
+config_file = ConfigConstants.DEFAULT_CONFIG_FILE  # "comparison_config.json"
+schema_file = ConfigConstants.DEFAULT_SCHEMA_FILE  # "schemas.json"
+
+# Valid policy values
+null_policies = ConfigConstants.VALID_NULL_POLICIES  # ["equals", "not_equals", "ignore"]
+case_policies = ConfigConstants.VALID_CASE_POLICIES  # ["sensitive", "insensitive", "preserve"]
+```
+
 ## Data Quality Validation
 
 The framework includes comprehensive data quality validation through the ValidationService:
@@ -493,7 +778,7 @@ schema_result = validator.validate_dataframe_schema(
 # Check primary key uniqueness
 pk_result = validator.validate_primary_key_uniqueness(
     df=df,
-    primary_key_columns=["customer_id", "order_date"]
+    pk_columns=["customer_id", "order_date"]
 )
 
 # Validate data completeness
@@ -571,18 +856,28 @@ See the `examples/` directory for comprehensive working examples demonstrating a
 ### Core Usage Examples
 - **`basic_comparison_example.py`** - Basic usage demonstration with schema definition, column mapping, and report generation
 - **`service_example.py`** - Service-oriented architecture patterns and dependency injection
+- **`auto_config_example.py`** - Automatic configuration generation from LazyFrames (NEW)
+
+### Configuration Management Examples
+- **`auto_config_example.py`** - Demonstrates automatic ComparisonConfig generation from LazyFrames with identical column names
 
 ### Performance Examples
 - **`performance_comparison_example.py`** - Performance benchmarking with large datasets (100K+ records)
 - **`detailed_performance_benchmark.py`** - Comprehensive performance analysis with statistical reporting
 
 ### Reporting Examples
-- **`tabulated_report_example.py`** - Multiple table formats (grid, simple, pipe, orgtbl) and export functionality
+- **`tabulated_report_example.py`** - Multiple table formats (grid, simple, pipe, orgtbl) and export functionality including HTML export
 
 ### Running Examples
 ```bash
 # Basic comparison
 python examples/basic_comparison_example.py
+
+# Auto-configuration example (NEW)
+python examples/auto_config_example.py
+
+# Service architecture
+python examples/service_example.py
 
 # Performance testing
 python examples/performance_comparison_example.py
@@ -590,10 +885,7 @@ python examples/performance_comparison_example.py
 # Detailed benchmarking
 python examples/detailed_performance_benchmark.py
 
-# Service architecture
-python examples/service_example.py
-
-# Tabulated reporting
+# Tabulated reporting with HTML export
 python examples/tabulated_report_example.py
 ```
 
