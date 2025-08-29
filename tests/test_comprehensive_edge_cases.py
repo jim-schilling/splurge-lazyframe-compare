@@ -1095,13 +1095,6 @@ class TestToleranceNullLogicFix:
         # - Record 1: |100.0 - 100.5| = 0.5 <= 1.0 → No difference
         # - Record 2: null vs 200.0 → Difference (null_equals_null=False)
         # - Record 3: 300.0 vs null → Difference (null_equals_null=False)
-        # DEBUG: Let's see what the actual differences are
-        print("Value differences count:", result.summary.value_differences_count)
-        print("Matching records:", result.summary.matching_records)
-        if result.summary.value_differences_count > 0:
-            diff_df = result.value_differences.collect()
-            print("Value differences DataFrame:")
-            print(diff_df)
 
         assert result.summary.matching_records == 1
         assert result.summary.value_differences_count == 2
