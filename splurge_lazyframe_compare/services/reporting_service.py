@@ -1,5 +1,6 @@
 """Reporting service for the comparison framework."""
 
+import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -31,7 +32,7 @@ from splurge_lazyframe_compare.utils.constants import (
     VALUE_DIFFERENCES_SECTION,
     ZERO_THRESHOLD,
 )
-from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
+from splurge_lazyframe_compare.utils.file_operations import FileOperationConstants, export_lazyframe
 from splurge_lazyframe_compare.utils.formatting import (
     format_large_number,
     format_percentage,
@@ -116,7 +117,7 @@ class ReportingService(BaseService):
         *,
         results: ComparisonResult,
         max_samples: int = DEFAULT_MAX_SAMPLES,
-        table_format: str = "grid"
+        table_format: str = "grid",
     ) -> str:
         """Generate detailed report with sample differences.
 
@@ -294,7 +295,7 @@ class ReportingService(BaseService):
         *,
         results: ComparisonResult,
         format: str = DEFAULT_FORMAT,
-        output_dir: str = DEFAULT_OUTPUT_DIR
+        output_dir: str = DEFAULT_OUTPUT_DIR,
     ) -> dict[str, str]:
         """Export results to files.
 
@@ -309,7 +310,6 @@ class ReportingService(BaseService):
         self._validate_inputs(results=results)
         try:
             # Validate format
-            from splurge_lazyframe_compare.utils.file_operations import FileOperationConstants
             if format not in FileOperationConstants.SUPPORTED_FORMATS:
                 raise ValueError(f"Unsupported format: {format}. Supported formats are: {', '.join(FileOperationConstants.SUPPORTED_FORMATS)}")
 
@@ -403,8 +403,6 @@ class ReportingService(BaseService):
             file_path: Path to save the summary file.
         """
         try:
-            import json
-
             summary = results.summary
             summary_dict = {
                 "total_left_records": summary.total_left_records,

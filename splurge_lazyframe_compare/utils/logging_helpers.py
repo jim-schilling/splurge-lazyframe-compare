@@ -2,11 +2,11 @@
 
 import logging
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Generator
+from typing import Any
 
 from splurge_lazyframe_compare.utils.constants import TIMESTAMP_FORMAT
-
 
 # Configure logger
 logger = logging.getLogger(__name__)

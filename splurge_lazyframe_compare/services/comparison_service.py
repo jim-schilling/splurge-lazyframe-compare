@@ -57,7 +57,7 @@ class ComparisonService(BaseService):
         *,
         left: pl.LazyFrame,
         right: pl.LazyFrame,
-        config: ComparisonConfig
+        config: ComparisonConfig,
     ) -> ComparisonResult:
         """Execute complete comparison between two LazyFrames.
 

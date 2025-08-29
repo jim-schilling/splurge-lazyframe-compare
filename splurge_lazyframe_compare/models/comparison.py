@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from splurge_lazyframe_compare.models.schema import ComparisonConfig
 
 
-@dataclass
 class ComparisonConstants:
     """Constants for comparison operations."""
 
@@ -88,7 +87,7 @@ class ComparisonSummary:
         total_right_records: int,
         value_differences: pl.LazyFrame,
         left_only_records: pl.LazyFrame,
-        right_only_records: pl.LazyFrame,
+        right_only_records: pl.LazyFrame
     ) -> "ComparisonSummary":
         """Create a comparison summary from result DataFrames.
 

@@ -378,7 +378,6 @@ def create_comparison_config_from_lazyframes(
     """
     # Import here to avoid circular imports
     from splurge_lazyframe_compare.models.schema import (
-        ColumnDefinition,
         ColumnMapping,
         ComparisonConfig,
         ComparisonSchema,
@@ -444,7 +443,7 @@ def _create_column_definitions_from_schema(schema: pl.Schema) -> dict[str, "Colu
     from splurge_lazyframe_compare.models.schema import ColumnDefinition
     column_definitions = {}
 
-    for col_name, dtype in zip(schema.names(), schema.dtypes()):
+    for col_name, dtype in zip(schema.names(), schema.dtypes(), strict=False):
         column_definitions[col_name] = ColumnDefinition(
             name=col_name,
             alias=col_name,  # Use column name as alias for simplicity

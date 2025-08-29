@@ -20,7 +20,6 @@ from splurge_lazyframe_compare.utils.constants import (
     DTYPE_FAILED_MSG,
     DUPLICATE_PK_MSG,
     DUPLICATE_THRESHOLD,
-    FIRST_COLUMN_INDEX,
     LEFT_DF_NAME,
     LEN_COLUMN,
     PATTERN_FAILED_MSG,
@@ -53,7 +52,7 @@ class ValidationService(BaseService):
         *,
         df: pl.LazyFrame,
         schema: ComparisonSchema,
-        df_name: str
+        df_name: str,
     ) -> None:
         """Validate DataFrame against schema.
 

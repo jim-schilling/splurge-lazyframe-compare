@@ -2,6 +2,12 @@
 
 import polars as pl
 
+# Constants
+DEFAULT_DECIMAL_PRECISION: int = 38
+DEFAULT_DECIMAL_SCALE: int = 9
+DEFAULT_TIME_UNIT: str = "us"
+DEFAULT_LIST_INNER_TYPE: pl.DataType = pl.Int64
+
 
 def is_numeric_datatype(datatype: pl.DataType) -> bool:
     """Check if a Polars data type is numeric.
@@ -21,7 +27,7 @@ def is_numeric_datatype(datatype: pl.DataType) -> bool:
     return datatype.is_numeric()
 
 
-def _create_decimal_type(decimal_attr) -> pl.DataType:
+def _create_decimal_type(decimal_attr: type) -> pl.DataType:
     """Create a Decimal data type with appropriate precision and scale.
 
     Args:
@@ -31,7 +37,7 @@ def _create_decimal_type(decimal_attr) -> pl.DataType:
         Polars Decimal data type with appropriate parameters.
     """
     # Create Decimal with sensible defaults
-    return decimal_attr(precision=38, scale=9)
+    return decimal_attr(precision=DEFAULT_DECIMAL_PRECISION, scale=DEFAULT_DECIMAL_SCALE)
 
 
 def get_polars_datatype_name(datatype: pl.DataType) -> str:
@@ -127,23 +133,23 @@ def get_polars_datatype_type(datatype_name: str) -> pl.DataType:
         return datatype_attr
 
     # Handle complex types that need instantiation
-    if hasattr(datatype_attr, '__call__'):
+    if callable(datatype_attr):
         # These are classes that need to be instantiated
         if datatype_name == "Datetime":
             # Default to microsecond precision with no timezone
-            return datatype_attr(time_unit="us", time_zone=None)
+            return datatype_attr(time_unit=DEFAULT_TIME_UNIT, time_zone=None)
         elif datatype_name == "Categorical":
             # Default categorical with physical ordering
             return datatype_attr(ordering="physical")
         elif datatype_name == "List":
             # List needs an inner type - default to Int64
-            return datatype_attr(pl.Int64)
+            return datatype_attr(DEFAULT_LIST_INNER_TYPE)
         elif datatype_name == "Struct":
             # Struct needs fields - default to empty struct
             return datatype_attr([])
         elif datatype_name == "Duration":
             # Duration needs time unit - default to microseconds
-            return datatype_attr(time_unit="us")
+            return datatype_attr(time_unit=DEFAULT_TIME_UNIT)
         elif datatype_name == "Decimal":
             return _create_decimal_type(datatype_attr)
         else:

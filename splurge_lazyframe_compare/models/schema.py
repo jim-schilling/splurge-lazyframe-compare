@@ -5,10 +5,12 @@ from dataclasses import dataclass
 import polars as pl
 
 from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
-from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_type
+from splurge_lazyframe_compare.utils.type_helpers import (
+    get_polars_datatype_name,
+    get_polars_datatype_type,
+)
 
 
-@dataclass
 class SchemaConstants:
     """Constants for schema operations."""
 
@@ -72,7 +74,6 @@ class ColumnDefinition:
         self._validate_nullability_compatibility()
 
         # Check for unparameterized complex types and provide helpful error messages
-        from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_name
         try:
             type_name = get_polars_datatype_name(self.datatype)
             if type_name == 'List':
@@ -97,7 +98,7 @@ class ColumnDefinition:
         # Check if datatype is a valid polars data type
         try:
             # Check if it's a valid polars data type by trying to create a schema
-            schema = pl.Schema({"test": self.datatype})
+            pl.Schema({"test": self.datatype})
         except Exception as e:
             # Provide more specific error message for complex types
             try:
@@ -156,7 +157,7 @@ class ColumnDefinition:
         col_index = schema.names().index(self.name)
         actual_dtype = schema.dtypes()[col_index]
         return actual_dtype == self.datatype
-    
+
 
 @dataclass(kw_only=True)
 class ColumnMapping:
@@ -194,7 +195,10 @@ class ComparisonSchema:
     columns: dict[str, ColumnDefinition]
     pk_columns: list[str]
 
-    def validate_schema(self, df: pl.LazyFrame) -> list[str]:
+    def validate_schema(
+        self,
+        df: pl.LazyFrame
+    ) -> list[str]:
         """Validate DataFrame against schema, return validation errors.
 
         Args:
@@ -301,13 +305,13 @@ class ComparisonSchema:
 
         # Check for duplicate column names
         column_names = list(self.columns.keys())
-        duplicate_names = set([name for name in column_names if column_names.count(name) > 1])
+        duplicate_names = {name for name in column_names if column_names.count(name) > 1}
         if duplicate_names:
             errors.append(SchemaConstants.DUPLICATE_COLUMN_NAMES_MSG.format(duplicate_names))
 
         # Check for duplicate column aliases
         aliases = [col_def.alias for col_def in self.columns.values()]
-        duplicate_aliases = set([alias for alias in aliases if aliases.count(alias) > 1])
+        duplicate_aliases = {alias for alias in aliases if aliases.count(alias) > 1}
         if duplicate_aliases:
             errors.append(SchemaConstants.DUPLICATE_COLUMN_ALIASES_MSG.format(duplicate_aliases))
 
@@ -406,7 +410,7 @@ class ComparisonConfig:
         # Validate that column mappings are unique
         mapping_names = [mapping.name for mapping in self.column_mappings]
         if len(mapping_names) != len(set(mapping_names)):
-            duplicates = set([name for name in mapping_names if mapping_names.count(name) > 1])
+            duplicates = {name for name in mapping_names if mapping_names.count(name) > 1}
             errors.append(f"Duplicate column mapping names found: {duplicates}")
 
         # Validate that left and right column references are unique within their respective schemas
@@ -414,11 +418,11 @@ class ComparisonConfig:
         right_columns = [mapping.right for mapping in self.column_mappings]
 
         if len(left_columns) != len(set(left_columns)):
-            duplicates = set([col for col in left_columns if left_columns.count(col) > 1])
+            duplicates = {col for col in left_columns if left_columns.count(col) > 1}
             errors.append(f"Left schema has duplicate column references: {duplicates}")
 
         if len(right_columns) != len(set(right_columns)):
-            duplicates = set([col for col in right_columns if right_columns.count(col) > 1])
+            duplicates = {col for col in right_columns if right_columns.count(col) > 1}
             errors.append(f"Right schema has duplicate column references: {duplicates}")
 
         if errors:

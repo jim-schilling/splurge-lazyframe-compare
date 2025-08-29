@@ -87,7 +87,7 @@ class ComparisonOrchestrator(BaseService):
         right: pl.LazyFrame,
         include_samples: bool = True,
         max_samples: int = 10,
-        table_format: str = "grid"
+        table_format: str = "grid",
     ) -> str:
         """Compare DataFrames and generate a complete report.
 
@@ -138,7 +138,7 @@ class ComparisonOrchestrator(BaseService):
         left: pl.LazyFrame,
         right: pl.LazyFrame,
         output_dir: str = ".",
-        format: str = "parquet"
+        format: str = "parquet",
     ) -> dict[str, str]:
         """Compare DataFrames and export results to files.
 
@@ -180,7 +180,7 @@ class ComparisonOrchestrator(BaseService):
         result: ComparisonResult,
         report_type: str = "detailed",
         max_samples: int = 10,
-        table_format: str = "grid"
+        table_format: str = "grid",
     ) -> str:
         """Generate a report from existing comparison results.
 
@@ -229,7 +229,12 @@ class ComparisonOrchestrator(BaseService):
         except Exception as e:
             self._handle_error(e, {"operation": "get_comparison_summary"})
 
-    def get_comparison_table(self, *, result: ComparisonResult, table_format: str = "grid") -> str:
+    def get_comparison_table(
+        self,
+        *,
+        result: ComparisonResult,
+        table_format: str = "grid",
+    ) -> str:
         """Get comparison results as a formatted table.
 
         Args:

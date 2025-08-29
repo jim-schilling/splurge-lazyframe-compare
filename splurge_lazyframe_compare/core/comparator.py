@@ -1,6 +1,5 @@
 """Service-based comparator interface for the comparison framework."""
 
-
 import polars as pl
 
 from splurge_lazyframe_compare.models.comparison import ComparisonResult
