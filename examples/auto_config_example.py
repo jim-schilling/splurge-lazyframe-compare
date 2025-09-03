@@ -45,8 +45,8 @@ def main():
     try:
         # Automatically generate ComparisonConfig
         config = create_comparison_config_from_lazyframes(
-            left_df=left_lf,
-            right_df=right_lf,
+            left=left_lf,
+            right=right_lf,
             pk_columns=primary_keys
         )
 
