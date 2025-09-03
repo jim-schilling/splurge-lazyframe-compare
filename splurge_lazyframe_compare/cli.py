@@ -86,6 +86,23 @@ def _scan_lazyframe(path_str: str | None) -> pl.LazyFrame | None:
     raise DataSourceError(f"Unsupported file extension: {suffix}")
 
 
+def _to_schema(schema: pl.Schema) -> dict:
+    from splurge_lazyframe_compare.models.schema import ColumnDefinition
+    return {
+        name: ColumnDefinition(name=name, alias=name, datatype=dtype, nullable=True)
+        for name, dtype in zip(schema.names(), schema.dtypes(), strict=False)
+    }
+
+
+def _map_pk_columns_to_right(pk_columns: list[str], mappings_cfg: list[dict]) -> list[str]:
+    """Map left-side PK column names to right-side equivalents using config.
+
+    If a PK name has no explicit mapping, it is kept as-is.
+    """
+    right_by_name = {m["name"]: m.get("right", m["name"]) for m in mappings_cfg}
+    return [right_by_name.get(pk, pk) for pk in pk_columns]
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
 
@@ -96,6 +113,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         cfg = _load_and_validate_config(args.config)
     except ComparisonError as e:
+        print(f"Configuration error: {e}")
+        return 2
+    except (json.JSONDecodeError, FileNotFoundError, PermissionError) as e:
         print(f"Configuration error: {e}")
         return 2
     except Exception as e:  # noqa: BLE001
@@ -124,13 +144,6 @@ def main(argv: list[str] | None = None) -> int:
             left_schema = left_lf.collect_schema()
             right_schema = right_lf.collect_schema()
 
-            def to_schema(schema: pl.Schema) -> dict:
-                from splurge_lazyframe_compare.models.schema import ColumnDefinition
-                return {
-                    name: ColumnDefinition(name=name, alias=name, datatype=dtype, nullable=True)
-                    for name, dtype in zip(schema.names(), schema.dtypes(), strict=False)
-                }
-
             pk_cols = cfg.get("primary_key_columns", [])
             mappings_cfg = cfg.get("column_mappings", [])
             mappings = [
@@ -138,10 +151,11 @@ def main(argv: list[str] | None = None) -> int:
             ]
 
             config = ComparisonConfig(
-                left_schema=ComparisonSchema(columns=to_schema(left_schema), pk_columns=pk_cols),
-                right_schema=ComparisonSchema(columns=to_schema(right_schema), pk_columns=[
-                    next((m["right"] for m in mappings_cfg if m["name"] == pk), pk) for pk in pk_cols
-                ]),
+                left_schema=ComparisonSchema(columns=_to_schema(left_schema), pk_columns=pk_cols),
+                right_schema=ComparisonSchema(
+                    columns=_to_schema(right_schema),
+                    pk_columns=_map_pk_columns_to_right(pk_columns=pk_cols, mappings_cfg=mappings_cfg),
+                ),
                 column_mappings=mappings,
                 pk_columns=pk_cols,
                 ignore_case=cfg.get("ignore_case", False),
@@ -155,6 +169,9 @@ def main(argv: list[str] | None = None) -> int:
             print(report)
             return 0
         except ComparisonError as e:
+            print(f"Compare failed: {e}")
+            return 2
+        except (json.JSONDecodeError, FileNotFoundError, PermissionError) as e:
             print(f"Compare failed: {e}")
             return 2
         except Exception as e:  # noqa: BLE001
@@ -187,13 +204,6 @@ def main(argv: list[str] | None = None) -> int:
             left_schema = left_lf.collect_schema()
             right_schema = right_lf.collect_schema()
 
-            def to_schema(schema: pl.Schema) -> dict:
-                from splurge_lazyframe_compare.models.schema import ColumnDefinition
-                return {
-                    name: ColumnDefinition(name=name, alias=name, datatype=dtype, nullable=True)
-                    for name, dtype in zip(schema.names(), schema.dtypes(), strict=False)
-                }
-
             pk_cols = cfg.get("primary_key_columns", [])
             mappings_cfg = cfg.get("column_mappings", [])
             mappings = [
@@ -201,10 +211,11 @@ def main(argv: list[str] | None = None) -> int:
             ]
 
             config = ComparisonConfig(
-                left_schema=ComparisonSchema(columns=to_schema(left_schema), pk_columns=pk_cols),
-                right_schema=ComparisonSchema(columns=to_schema(right_schema), pk_columns=[
-                    next((m["right"] for m in mappings_cfg if m["name"] == pk), pk) for pk in pk_cols
-                ]),
+                left_schema=ComparisonSchema(columns=_to_schema(left_schema), pk_columns=pk_cols),
+                right_schema=ComparisonSchema(
+                    columns=_to_schema(right_schema),
+                    pk_columns=_map_pk_columns_to_right(pk_columns=pk_cols, mappings_cfg=mappings_cfg),
+                ),
                 column_mappings=mappings,
                 pk_columns=pk_cols,
                 ignore_case=cfg.get("ignore_case", False),
@@ -219,6 +230,9 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(exported, indent=2))
             return 0
         except ComparisonError as e:
+            print(f"Export failed: {e}")
+            return 2
+        except (json.JSONDecodeError, FileNotFoundError, PermissionError) as e:
             print(f"Export failed: {e}")
             return 2
         except Exception as e:  # noqa: BLE001
