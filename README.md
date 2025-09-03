@@ -139,8 +139,8 @@ primary_keys = ["customer_id"]
 
 # Generate ComparisonConfig automatically (keyword-only parameters)
 config = create_comparison_config_from_lazyframes(
-    left_df=left_df,
-    right_df=right_df,
+    left=left_df,
+    right=right_df,
     pk_columns=primary_keys
 )
 
@@ -393,14 +393,13 @@ The framework includes comprehensive logging and monitoring capabilities using P
 ### Logger Configuration
 
 ```python
-import logging
-from splurge_lazyframe_compare.utils.logging_helpers import get_logger
-
-# Configure logging (typically done once at application startup)
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s'
+from splurge_lazyframe_compare.utils.logging_helpers import (
+    get_logger,
+    configure_logging,
 )
+
+# Configure logging at application startup (no side-effects on import)
+configure_logging(level="INFO", fmt='[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s')
 
 # Get a logger for your module
 logger = get_logger(__name__)
@@ -647,9 +646,9 @@ from splurge_lazyframe_compare.utils import create_comparison_config_from_lazyfr
 
 # Auto-generate ComparisonConfig from LazyFrames
 config = create_comparison_config_from_lazyframes(
-    left_df=left_lf,           # Left LazyFrame
-    right_df=right_lf,         # Right LazyFrame
-    pk_columns=["id"]          # Primary key columns
+    left=left_lf,           # Left LazyFrame
+    right=right_lf,         # Right LazyFrame
+    pk_columns=["id"]      # Primary key columns
 )
 
 # Returns: ComparisonConfig ready for use
@@ -921,6 +920,18 @@ ruff format .
 mypy splurge_lazyframe_compare
 ```
 
+## CLI Usage
+
+After installation, a `slc` command is available:
+
+```bash
+# Show help
+slc --help
+
+# Dry run for compare (validates CLI wiring)
+slc compare --dry-run
+```
+
 ### Recent Improvements
 
 - **Production-ready logging**: Replaced all `print()` statements with proper Python logging module
@@ -966,6 +977,8 @@ pip install -e .
 ```
 
 ## Changelog
+
+### 2025.2.0 (2025-09-03)
 
 ### 2025.1.1 (2025-08-29)
 - Removed extraneous folders and plan documents.

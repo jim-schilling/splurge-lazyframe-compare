@@ -8,20 +8,6 @@ from typing import Any
 
 from splurge_lazyframe_compare.utils.constants import TIMESTAMP_FORMAT
 
-# Configure logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Only add handler if none exists to avoid duplicate logs
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter(
-        "[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s",
-        datefmt=TIMESTAMP_FORMAT
-    )
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
 
 def get_logger(name: str) -> logging.Logger:
     """Get a configured logger instance.
@@ -33,6 +19,38 @@ def get_logger(name: str) -> logging.Logger:
         Configured logger instance.
     """
     return logging.getLogger(f"splurge_lazyframe_compare.{name}")
+
+
+def configure_logging(level: int | str = logging.INFO, fmt: str | None = None) -> None:
+    """Configure root logging for the application.
+
+    This function intentionally avoids setting up any handlers at import-time.
+    Call this during application startup (or in CLI) to apply a consistent
+    logging format and level.
+
+    Args:
+        level: Logging level as int or string (e.g., INFO, DEBUG).
+        fmt: Logging format string. If None, a reasonable default is used.
+    """
+    # Resolve level value
+    if isinstance(level, str):
+        resolved = getattr(logging, level.upper(), None)
+        level_value = resolved if isinstance(resolved, int) else logging.INFO
+    else:
+        level_value = level
+
+    format_str = fmt or "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s"
+
+    # Reset root handlers to avoid duplicates across re-configurations
+    root_logger = logging.getLogger()
+    for handler in list(root_logger.handlers):
+        root_logger.removeHandler(handler)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(format_str, datefmt=TIMESTAMP_FORMAT))
+
+    root_logger.setLevel(level_value)
+    root_logger.addHandler(handler)
 
 
 class LoggingConstants:

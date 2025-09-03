@@ -8,14 +8,20 @@ from pathlib import Path
 from typing import Any
 
 import polars as pl
+from splurge_lazyframe_compare.utils.constants import (
+    DEFAULT_FORMAT,
+    FORMAT_CSV,
+    FORMAT_JSON,
+    FORMAT_PARQUET,
+)
 
 
 class FileOperationConstants:
     """Constants for file operations."""
 
     # Default formats
-    DEFAULT_FORMAT: str = "parquet"
-    SUPPORTED_FORMATS: tuple = ("parquet", "csv", "json")
+    DEFAULT_FORMAT: str = DEFAULT_FORMAT
+    SUPPORTED_FORMATS: tuple = (FORMAT_PARQUET, FORMAT_CSV, FORMAT_JSON)
 
     # File extensions
     PARQUET_EXT: str = ".parquet"
@@ -126,9 +132,9 @@ def get_file_extension(format_name: str) -> str:
         ValueError: If format is not supported.
     """
     format_map = {
-        "parquet": FileOperationConstants.PARQUET_EXT,
-        "csv": FileOperationConstants.CSV_EXT,
-        "json": FileOperationConstants.JSON_EXT,
+        FORMAT_PARQUET: FileOperationConstants.PARQUET_EXT,
+        FORMAT_CSV: FileOperationConstants.CSV_EXT,
+        FORMAT_JSON: FileOperationConstants.JSON_EXT,
     }
 
     if format_name not in format_map:
@@ -165,11 +171,16 @@ def export_lazyframe(
     # Use atomic writes for data integrity
     with atomic_write(file_path) as temp_path:
         try:
-            if format_name == "parquet":
+            if format_name == FORMAT_PARQUET:
+                # Safe default compression for parquet unless explicitly provided
+                if "compression" not in kwargs:
+                    kwargs["compression"] = "zstd"
                 lazyframe.sink_parquet(temp_path, **kwargs)
-            elif format_name == "csv":
+            elif format_name == FORMAT_CSV:
+                # Include header by default for CSV unless overridden
+                kwargs.setdefault("include_header", True)
                 lazyframe.sink_csv(temp_path, **kwargs)
-            elif format_name == "json":
+            elif format_name == FORMAT_JSON:
                 lazyframe.sink_ndjson(temp_path, **kwargs)
             else:
                 raise ValueError(f"Unsupported format: {format_name}")
@@ -228,20 +239,20 @@ def import_lazyframe(
     if format_name is None:
         suffix = file_path.suffix.lower()
         if suffix == FileOperationConstants.PARQUET_EXT:
-            format_name = "parquet"
+            format_name = FORMAT_PARQUET
         elif suffix == FileOperationConstants.CSV_EXT:
-            format_name = "csv"
+            format_name = FORMAT_CSV
         elif suffix in (FileOperationConstants.JSON_EXT, ".ndjson"):
-            format_name = "json"
+            format_name = FORMAT_JSON
         else:
             raise ValueError(f"Cannot auto-detect format for extension: {suffix}")
 
     try:
-        if format_name == "parquet":
+        if format_name == FORMAT_PARQUET:
             return pl.scan_parquet(file_path, **kwargs)
-        elif format_name == "csv":
+        elif format_name == FORMAT_CSV:
             return pl.scan_csv(file_path, **kwargs)
-        elif format_name == "json":
+        elif format_name == FORMAT_JSON:
             return pl.scan_ndjson(file_path, **kwargs)
         else:
             raise ValueError(
