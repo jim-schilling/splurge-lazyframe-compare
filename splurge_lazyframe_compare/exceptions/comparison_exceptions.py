@@ -1,4 +1,8 @@
-"""Custom exceptions for the Polars LazyFrame comparison framework."""
+"""Custom exceptions for the Polars LazyFrame comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 
 class ComparisonError(Exception):
@@ -58,3 +62,39 @@ class ColumnMappingError(ComparisonError):
         """
         super().__init__(message)
         self.mapping_errors = mapping_errors or []
+
+
+class ConfigError(ComparisonError):
+    """Raised when configuration is invalid or cannot be loaded."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class DataSourceError(ComparisonError):
+    """Raised when input data sources are missing or unsupported."""
+
+    def __init__(self, message: str, *, path: str | None = None) -> None:
+        if path:
+            super().__init__(f"{message}: {path}")
+        else:
+            super().__init__(message)
+        self.path = path
+
+
+class ReportError(ComparisonError):
+    """Raised when report generation fails for domain-specific reasons."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class ExportError(ComparisonError):
+    """Raised when exporting results fails for domain-specific reasons."""
+
+    def __init__(self, message: str, *, output_dir: str | None = None) -> None:
+        if output_dir:
+            super().__init__(f"{message}: {output_dir}")
+        else:
+            super().__init__(message)
+        self.output_dir = output_dir

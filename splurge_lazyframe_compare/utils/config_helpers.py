@@ -354,8 +354,8 @@ def create_config_from_dataframes(
 
 def create_comparison_config_from_lazyframes(
     *,
-    left_df: pl.LazyFrame,
-    right_df: pl.LazyFrame,
+    left: pl.LazyFrame,
+    right: pl.LazyFrame,
     pk_columns: list[str],
 ):
     """Create a ComparisonConfig from two LazyFrames with specified primary key columns.
@@ -366,8 +366,8 @@ def create_comparison_config_from_lazyframes(
     Note: All parameters are keyword-only to prevent argument order errors.
 
     Args:
-        left_df: Left LazyFrame to compare.
-        right_df: Right LazyFrame to compare.
+        left: Left LazyFrame to compare.
+        right: Right LazyFrame to compare.
         pk_columns: List of column names to use as primary keys.
 
     Returns:
@@ -383,8 +383,8 @@ def create_comparison_config_from_lazyframes(
         ComparisonSchema,
     )
     # Validate that primary key columns exist in both LazyFrames
-    left_schema = left_df.collect_schema()
-    right_schema = right_df.collect_schema()
+    left_schema = left.collect_schema()
+    right_schema = right.collect_schema()
     left_columns = set(left_schema.names())
     right_columns = set(right_schema.names())
 

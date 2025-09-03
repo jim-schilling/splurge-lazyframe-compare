@@ -223,6 +223,22 @@ python examples/tabulated_report_example.py
 python examples/auto_config_example.py
 ```
 
+### CLI Usage Examples
+
+After installing in editable mode, use the `slc` CLI:
+
+```bash
+# Show help
+slc --help
+
+# Compare with config and environment overrides
+export SPLURGE_ignore_case=true
+slc compare --config ./examples/sample_config.json --left ./data/left.parquet --right ./data/right.parquet
+
+# Export results to parquet
+slc export --config ./examples/sample_config.json --left ./data/left.parquet --right ./data/right.parquet --format parquet --output-dir comparison_results
+```
+
 ### Output
 - Console output with timing and performance metrics
 - CSV exports in `./comparison_results/` directory

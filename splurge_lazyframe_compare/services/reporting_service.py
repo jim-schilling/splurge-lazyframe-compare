@@ -1,4 +1,8 @@
-"""Reporting service for the comparison framework."""
+"""Reporting service for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 import json
 import os
@@ -31,6 +35,7 @@ from splurge_lazyframe_compare.utils.constants import (
     VALUE_DIFFERENCES_FILENAME,
     VALUE_DIFFERENCES_SECTION,
     ZERO_THRESHOLD,
+    SUMMARY_SCHEMA_VERSION,
 )
 from splurge_lazyframe_compare.utils.file_operations import FileOperationConstants, export_lazyframe
 from splurge_lazyframe_compare.utils.formatting import (
@@ -311,7 +316,10 @@ class ReportingService(BaseService):
         try:
             # Validate format
             if format not in FileOperationConstants.SUPPORTED_FORMATS:
-                raise ValueError(f"Unsupported format: {format}. Supported formats are: {', '.join(FileOperationConstants.SUPPORTED_FORMATS)}")
+                raise ValueError(
+                    f"Unsupported format: {format}. Supported formats are: "
+                    f"{', '.join(FileOperationConstants.SUPPORTED_FORMATS)}"
+                )
 
             output_path = Path(output_dir)
 
@@ -403,15 +411,10 @@ class ReportingService(BaseService):
             file_path: Path to save the summary file.
         """
         try:
-            summary = results.summary
+            # Versioned schema envelope for stability
             summary_dict = {
-                "total_left_records": summary.total_left_records,
-                "total_right_records": summary.total_right_records,
-                "matching_records": summary.matching_records,
-                "value_differences_count": summary.value_differences_count,
-                "left_only_count": summary.left_only_count,
-                "right_only_count": summary.right_only_count,
-                "comparison_timestamp": summary.comparison_timestamp,
+                "schema_version": SUMMARY_SCHEMA_VERSION,
+                "summary": results.summary.to_dict(),
             }
 
             with open(file_path, "w") as f:

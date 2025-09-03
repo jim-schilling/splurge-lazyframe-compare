@@ -1,4 +1,8 @@
-"""Base service class for the comparison framework."""
+"""Base service class for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -78,5 +82,7 @@ class BaseService(ABC):
             details=context
         )
 
-        # Re-raise the error with context
-        raise type(error)(error_msg) from error
+        # Re-raise the error with augmented context while preserving type and cause
+        context_str = f" in {context}" if context else ""
+        augmented_message = f"{self.service_name}: {error}{context_str}"
+        raise type(error)(augmented_message) from error

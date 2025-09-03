@@ -139,8 +139,8 @@ primary_keys = ["customer_id"]
 
 # Generate ComparisonConfig automatically (keyword-only parameters)
 config = create_comparison_config_from_lazyframes(
-    left_df=left_df,
-    right_df=right_df,
+    left=left_df,
+    right=right_df,
     pk_columns=primary_keys
 )
 
@@ -393,14 +393,13 @@ The framework includes comprehensive logging and monitoring capabilities using P
 ### Logger Configuration
 
 ```python
-import logging
-from splurge_lazyframe_compare.utils.logging_helpers import get_logger
-
-# Configure logging (typically done once at application startup)
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s'
+from splurge_lazyframe_compare.utils.logging_helpers import (
+    get_logger,
+    configure_logging,
 )
+
+# Configure logging at application startup (no side-effects on import)
+configure_logging(level="INFO", fmt='[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s')
 
 # Get a logger for your module
 logger = get_logger(__name__)
@@ -440,6 +439,62 @@ log_service_operation("ComparisonService", "compare", "success", "Comparison com
 ```
 [2025-01-29 10:30:45,123] [INFO] [splurge_lazyframe_compare.ComparisonService] [initialization] Service initialized successfully Details: config={'version': '1.0'}
 [2025-01-29 10:30:45,234] [WARNING] [splurge_lazyframe_compare.ComparisonService] [find_differences] SLOW OPERATION: 150.50ms (150.50ms) Details: records=1000
+```
+
+### Interpreting Validation Errors
+
+- SchemaValidationError: indicates schema mismatches (missing columns, wrong dtypes, nullability, or unmapped PKs). Inspect the message substrings for actionable details such as missing columns or dtype mismatches. Primary key violations surface as duplicates or missing mappings.
+- PrimaryKeyViolationError: raised when primary key constraints are violated. Ensure all PKs exist and are unique in input LazyFrames.
+
+Exception types and original tracebacks are preserved by services; messages include service name and operation context for clarity.
+
+## CLI Usage
+
+The package provides a `slc` CLI.
+
+```bash
+slc --help
+slc compare --dry-run
+slc report --dry-run
+slc export --dry-run
+```
+
+The dry-run subcommands validate inputs and demonstrate execution without running a full comparison.
+
+### CLI Errors and Exit Codes
+
+- The CLI surfaces domain errors using custom exceptions and stable exit codes:
+  - Configuration issues (e.g., invalid JSON, failed validation) raise `ConfigError` and exit with code `2`.
+  - Data source issues (e.g., missing files, unsupported extensions) raise `DataSourceError` and exit with code `2`.
+  - Unexpected errors exit with code `1` and include a brief message; enable debug logging for full tracebacks.
+
+Example messages:
+```
+Configuration error: Invalid configuration: <details>
+Compare failed: Unsupported file extension: .txt
+Export failed: Data file not found: <path>
+```
+
+## Large-data Export Tips
+
+- Prefer parquet format for performance and compression. CSV is human-friendly but slower for large datasets.
+- Ensure sufficient temporary disk space when exporting large LazyFrames; parquet writes may buffer data.
+- For JSON summaries we export a compact, versioned envelope:
+
+```json
+{
+  "schema_version": "1.0",
+  "summary": {
+    "total_left_records": 123,
+    "total_right_records": 123,
+    "matching_records": 120,
+    "value_differences_count": 3,
+    "left_only_count": 0,
+    "right_only_count": 0,
+    "comparison_timestamp": "2025-01-01T00:00:00"
+  }
+}
+```
 [2025-01-29 10:30:45,345] [ERROR] [splurge_lazyframe_compare.ValidationService] [validate_schema] Schema validation failed: Invalid column type
 ```
 
@@ -647,9 +702,9 @@ from splurge_lazyframe_compare.utils import create_comparison_config_from_lazyfr
 
 # Auto-generate ComparisonConfig from LazyFrames
 config = create_comparison_config_from_lazyframes(
-    left_df=left_lf,           # Left LazyFrame
-    right_df=right_lf,         # Right LazyFrame
-    pk_columns=["id"]          # Primary key columns
+    left=left_lf,           # Left LazyFrame
+    right=right_lf,         # Right LazyFrame
+    pk_columns=["id"]      # Primary key columns
 )
 
 # Returns: ComparisonConfig ready for use
@@ -801,6 +856,8 @@ from splurge_lazyframe_compare.exceptions import (
     SchemaValidationError,
     PrimaryKeyViolationError,
     ColumnMappingError,
+    ConfigError,
+    DataSourceError,
 )
 
 try:
@@ -819,6 +876,10 @@ except ColumnMappingError as e:
     if hasattr(e, 'mapping_errors'):
         for error in e.mapping_errors:
             print(f"  - {error}")
+except ConfigError as e:
+    print(f"Configuration error: {e}")
+except DataSourceError as e:
+    print(f"Data source error: {e}")
 ```
 
 ## Examples
@@ -921,6 +982,18 @@ ruff format .
 mypy splurge_lazyframe_compare
 ```
 
+## CLI Usage
+
+After installation, a `slc` command is available:
+
+```bash
+# Show help
+slc --help
+
+# Dry run for compare (validates CLI wiring)
+slc compare --dry-run
+```
+
 ### Recent Improvements
 
 - **Production-ready logging**: Replaced all `print()` statements with proper Python logging module
@@ -966,6 +1039,17 @@ pip install -e .
 ```
 
 ## Changelog
+
+### 2025.2.0 (2025-09-03)
+- Added domain exceptions at CLI boundary: `ConfigError`, `DataSourceError`.
+- Standardized CLI exit codes: `2` for domain errors, `1` for unexpected errors.
+- CLI now catches `ComparisonError` first, preserving clear user-facing messages.
+- Services error handling preserves exception type and chains the original cause; messages now include service name and context.
+- Documentation updates: README now documents CLI errors/exit codes and new exceptions.
+- New CLI capabilities and flags: `compare`, `report`, `export`, `--dry-run`, `--format`, `--output-dir`, `--log-level`.
+- Logging improvements: introduced `configure_logging()`; removed import-time handler side-effects; consistent log formatting.
+- Packaging/entrypoints: ensured `slc` console script and `__main__.py` entry for `python -m splurge_lazyframe_compare`.
+- Docs: added CLI usage, logging configuration, and large-data export guidance.
 
 ### 2025.1.1 (2025-08-29)
 - Removed extraneous folders and plan documents.

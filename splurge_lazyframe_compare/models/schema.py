@@ -1,4 +1,8 @@
-"""Schema definition models for the comparison framework."""
+"""Schema definition models for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 from dataclasses import dataclass
 
@@ -65,7 +69,10 @@ class ColumnDefinition:
         # Check for problematic characters in column names
         problematic_chars = {".", "[", "]", "(", ")", "{", "}", "*", "+", "?", "^", "$", "|", "\\"}
         if any(char in self.name for char in problematic_chars):
-            raise ValueError(f"ColumnDefinition.name '{self.name}' contains problematic characters that may cause issues with regex or other operations")
+            raise ValueError(
+                f"ColumnDefinition.name '{self.name}' contains problematic characters "
+                "that may cause issues with regex or other operations"
+            )
 
         if isinstance(self.datatype, str):
             self.datatype = get_polars_datatype_type(self.datatype)
@@ -108,7 +115,11 @@ class ColumnDefinition:
                     if type_name == 'List' and hasattr(self.datatype, 'inner'):
                         # This is a parameterized List, so the error is not about parameterization
                         pass
-                    elif type_name == 'Struct' and hasattr(self.datatype, 'fields') and self.datatype.fields is not None:
+                    elif (
+                        type_name == 'Struct'
+                        and hasattr(self.datatype, 'fields')
+                        and self.datatype.fields is not None
+                    ):
                         # This is a parameterized Struct, so the error is not about parameterization
                         pass
                     else:

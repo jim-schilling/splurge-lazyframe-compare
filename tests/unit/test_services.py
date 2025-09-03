@@ -781,7 +781,7 @@ class TestConfigHelpers:
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         config = create_comparison_config_from_lazyframes(
-            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+            left=left_df, right=right_df, pk_columns=["customer_id"]
         )
 
         # Verify config structure
@@ -843,7 +843,7 @@ class TestConfigHelpers:
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         config = create_comparison_config_from_lazyframes(
-            left_df=left_df, right_df=right_df, pk_columns=["store_id", "product_id"]
+            left=left_df, right=right_df, pk_columns=["store_id", "product_id"]
         )
 
         assert len(config.pk_columns) == 2
@@ -866,7 +866,7 @@ class TestConfigHelpers:
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         with pytest.raises(ValueError) as exc_info:
-            create_comparison_config_from_lazyframes(left_df=left_df, right_df=right_df, pk_columns=["customer_id"])
+            create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
         assert "missing from left LazyFrame" in str(exc_info.value)
         assert "customer_id" in str(exc_info.value)
@@ -886,7 +886,7 @@ class TestConfigHelpers:
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         with pytest.raises(ValueError) as exc_info:
-            create_comparison_config_from_lazyframes(left_df=left_df, right_df=right_df, pk_columns=["customer_id"])
+            create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
         assert "missing from right LazyFrame" in str(exc_info.value)
         assert "customer_id" in str(exc_info.value)
@@ -908,7 +908,7 @@ class TestConfigHelpers:
 
         # Empty PK list is caught by ComparisonConfig validation
         with pytest.raises(SchemaValidationError) as exc_info:
-            create_comparison_config_from_lazyframes(left_df=left_df, right_df=right_df, pk_columns=[])
+            create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=[])
 
         assert "No primary key columns defined" in str(exc_info.value)
 
@@ -932,7 +932,7 @@ class TestConfigHelpers:
 
         # This should work for common columns only
         config = create_comparison_config_from_lazyframes(
-            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+            left=left_df, right=right_df, pk_columns=["customer_id"]
         )
 
         # Should include only common columns in mappings
@@ -968,7 +968,7 @@ class TestConfigHelpers:
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         config = create_comparison_config_from_lazyframes(
-            left_df=left_df, right_df=right_df, pk_columns=["id"]
+            left=left_df, right=right_df, pk_columns=["id"]
         )
 
         # Verify data types are correctly inferred
@@ -994,7 +994,7 @@ class TestConfigHelpers:
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
         config = create_comparison_config_from_lazyframes(
-            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+            left=left_df, right=right_df, pk_columns=["customer_id"]
         )
 
         # Should still create config even with empty DataFrames
@@ -1022,7 +1022,7 @@ class TestConfigHelpers:
 
         # Create config automatically
         config = create_comparison_config_from_lazyframes(
-            left_df=left_df, right_df=right_df, pk_columns=["customer_id"]
+            left=left_df, right=right_df, pk_columns=["customer_id"]
         )
 
         # Use with comparison service

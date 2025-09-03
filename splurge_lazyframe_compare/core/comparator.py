@@ -1,6 +1,11 @@
-"""Service-based comparator interface for the comparison framework."""
+"""Service-based comparator interface for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 import polars as pl
+from splurge_lazyframe_compare.utils.constants import DEFAULT_FORMAT
 
 from splurge_lazyframe_compare.models.comparison import ComparisonResult
 from splurge_lazyframe_compare.models.schema import ComparisonConfig
@@ -84,7 +89,7 @@ class LazyFrameComparator:
         left: pl.LazyFrame,
         right: pl.LazyFrame,
         output_dir: str = ".",
-        format: str = "parquet"
+        format: str = DEFAULT_FORMAT
     ) -> dict[str, str]:
         """Compare DataFrames and export results to files.
 

@@ -1,4 +1,8 @@
-"""Type helper functions for the comparison framework."""
+"""Type helper functions for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 import polars as pl
 

@@ -1,4 +1,8 @@
-"""Comparison result models for the comparison framework."""
+"""Comparison result models for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -79,6 +83,18 @@ class ComparisonSummary:
         """Calculate the percentage of right-only records."""
         return (self.right_only_count / max(self.total_right_records, 1)) * 100
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize summary to a stable dict for JSON export."""
+        return {
+            "total_left_records": self.total_left_records,
+            "total_right_records": self.total_right_records,
+            "matching_records": self.matching_records,
+            "value_differences_count": self.value_differences_count,
+            "left_only_count": self.left_only_count,
+            "right_only_count": self.right_only_count,
+            "comparison_timestamp": self.comparison_timestamp,
+        }
+
     @classmethod
     def create(
         cls,
@@ -155,3 +171,12 @@ class ComparisonResult:
     left_only_records: pl.LazyFrame
     right_only_records: pl.LazyFrame
     config: "ComparisonConfig"  # Forward reference to avoid circular import
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize result metadata to a dict (excludes full LazyFrames)."""
+        return {
+            "summary": self.summary.to_dict(),
+            "has_value_differences": self.value_differences.select(pl.len()).collect().item() > 0,
+            "has_left_only": self.left_only_records.select(pl.len()).collect().item() > 0,
+            "has_right_only": self.right_only_records.select(pl.len()).collect().item() > 0,
+        }

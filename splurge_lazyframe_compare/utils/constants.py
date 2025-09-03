@@ -2,6 +2,9 @@
 
 This module contains constants used across the framework,
 organized by category and following naming conventions.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
 """
 
 from typing import Final
@@ -25,6 +28,9 @@ DEFAULT_MAX_SAMPLES: Final[int] = 10
 PERCENTAGE_MULTIPLIER: Final[int] = 100
 PERCENTAGE_FORMAT: Final[str] = ".1f"
 JSON_INDENT: Final[int] = 2
+
+# Versioned schema for summary export
+SUMMARY_SCHEMA_VERSION: Final[str] = "1.0"
 
 # File and output constants
 DEFAULT_OUTPUT_DIR: Final[str] = "."

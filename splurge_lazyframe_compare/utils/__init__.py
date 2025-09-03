@@ -1,4 +1,8 @@
-"""Utility functions and helpers for the comparison framework."""
+"""Utility functions and helpers for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 from .config_helpers import (
     apply_environment_overrides,
