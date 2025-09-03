@@ -439,6 +439,48 @@ log_service_operation("ComparisonService", "compare", "success", "Comparison com
 ```
 [2025-01-29 10:30:45,123] [INFO] [splurge_lazyframe_compare.ComparisonService] [initialization] Service initialized successfully Details: config={'version': '1.0'}
 [2025-01-29 10:30:45,234] [WARNING] [splurge_lazyframe_compare.ComparisonService] [find_differences] SLOW OPERATION: 150.50ms (150.50ms) Details: records=1000
+```
+
+### Interpreting Validation Errors
+
+- SchemaValidationError: indicates schema mismatches (missing columns, wrong dtypes, nullability, or unmapped PKs). Inspect the message substrings for actionable details such as missing columns or dtype mismatches. Primary key violations surface as duplicates or missing mappings.
+- PrimaryKeyViolationError: raised when primary key constraints are violated. Ensure all PKs exist and are unique in input LazyFrames.
+
+Exception types and original tracebacks are preserved by services; messages include service name and operation context for clarity.
+
+## CLI Usage
+
+The package provides a `slc` CLI.
+
+```bash
+slc --help
+slc compare --dry-run
+slc report --dry-run
+slc export --dry-run
+```
+
+The dry-run subcommands validate inputs and demonstrate execution without running a full comparison.
+
+## Large-data Export Tips
+
+- Prefer parquet format for performance and compression. CSV is human-friendly but slower for large datasets.
+- Ensure sufficient temporary disk space when exporting large LazyFrames; parquet writes may buffer data.
+- For JSON summaries we export a compact, versioned envelope:
+
+```json
+{
+  "schema_version": "1.0",
+  "summary": {
+    "total_left_records": 123,
+    "total_right_records": 123,
+    "matching_records": 120,
+    "value_differences_count": 3,
+    "left_only_count": 0,
+    "right_only_count": 0,
+    "comparison_timestamp": "2025-01-01T00:00:00"
+  }
+}
+```
 [2025-01-29 10:30:45,345] [ERROR] [splurge_lazyframe_compare.ValidationService] [validate_schema] Schema validation failed: Invalid column type
 ```
 

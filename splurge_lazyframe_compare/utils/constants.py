@@ -26,6 +26,9 @@ PERCENTAGE_MULTIPLIER: Final[int] = 100
 PERCENTAGE_FORMAT: Final[str] = ".1f"
 JSON_INDENT: Final[int] = 2
 
+# Versioned schema for summary export
+SUMMARY_SCHEMA_VERSION: Final[str] = "1.0"
+
 # File and output constants
 DEFAULT_OUTPUT_DIR: Final[str] = "."
 DEFAULT_FORMAT: Final[str] = "parquet"
