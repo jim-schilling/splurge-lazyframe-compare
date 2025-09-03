@@ -461,6 +461,20 @@ slc export --dry-run
 
 The dry-run subcommands validate inputs and demonstrate execution without running a full comparison.
 
+### CLI Errors and Exit Codes
+
+- The CLI surfaces domain errors using custom exceptions and stable exit codes:
+  - Configuration issues (e.g., invalid JSON, failed validation) raise `ConfigError` and exit with code `2`.
+  - Data source issues (e.g., missing files, unsupported extensions) raise `DataSourceError` and exit with code `2`.
+  - Unexpected errors exit with code `1` and include a brief message; enable debug logging for full tracebacks.
+
+Example messages:
+```
+Configuration error: Invalid configuration: <details>
+Compare failed: Unsupported file extension: .txt
+Export failed: Data file not found: <path>
+```
+
 ## Large-data Export Tips
 
 - Prefer parquet format for performance and compression. CSV is human-friendly but slower for large datasets.
@@ -842,6 +856,8 @@ from splurge_lazyframe_compare.exceptions import (
     SchemaValidationError,
     PrimaryKeyViolationError,
     ColumnMappingError,
+    ConfigError,
+    DataSourceError,
 )
 
 try:
@@ -860,6 +876,10 @@ except ColumnMappingError as e:
     if hasattr(e, 'mapping_errors'):
         for error in e.mapping_errors:
             print(f"  - {error}")
+except ConfigError as e:
+    print(f"Configuration error: {e}")
+except DataSourceError as e:
+    print(f"Data source error: {e}")
 ```
 
 ## Examples
@@ -1021,6 +1041,11 @@ pip install -e .
 ## Changelog
 
 ### 2025.2.0 (2025-09-03)
+- Added domain exceptions at CLI boundary: `ConfigError`, `DataSourceError`.
+- Standardized CLI exit codes: `2` for domain errors, `1` for unexpected errors.
+- CLI now catches `ComparisonError` first, preserving clear user-facing messages.
+- Services error handling preserves exception type and chains the original cause; messages now include service name and context.
+- Documentation updates: README now documents CLI errors/exit codes and new exceptions.
 
 ### 2025.1.1 (2025-08-29)
 - Removed extraneous folders and plan documents.
