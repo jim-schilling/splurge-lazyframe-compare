@@ -331,7 +331,10 @@ def log_dataframe_stats(
     if not LoggingConstants.ENABLE_MEMORY_LOGGING:
         return
 
-    message = f"{stage.capitalize()} DataFrame: {df_info.get('row_count', 0)} rows, {df_info.get('column_count', 0)} cols"
+    message = (
+        f"{stage.capitalize()} DataFrame: {df_info.get('row_count', 0)} rows, "
+        f"{df_info.get('column_count', 0)} cols"
+    )
 
     details = {
         "stage": stage,

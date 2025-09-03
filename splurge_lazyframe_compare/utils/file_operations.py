@@ -132,7 +132,10 @@ def get_file_extension(format_name: str) -> str:
     }
 
     if format_name not in format_map:
-        raise ValueError(f"Unsupported format: {format_name}. Supported formats: {FileOperationConstants.SUPPORTED_FORMATS}")
+        raise ValueError(
+            f"Unsupported format: {format_name}. Supported formats: "
+            f"{FileOperationConstants.SUPPORTED_FORMATS}"
+        )
 
     return format_map[format_name]
 
@@ -241,7 +244,10 @@ def import_lazyframe(
         elif format_name == "json":
             return pl.scan_ndjson(file_path, **kwargs)
         else:
-            raise ValueError(f"Unsupported format: {format_name}. Supported formats: {list(FileOperationConstants.SUPPORTED_FORMATS)}")
+            raise ValueError(
+                f"Unsupported format: {format_name}. Supported formats: "
+                f"{list(FileOperationConstants.SUPPORTED_FORMATS)}"
+            )
     except ValueError:
         # Re-raise ValueError as-is for format validation errors
         raise

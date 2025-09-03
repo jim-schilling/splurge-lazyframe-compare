@@ -311,7 +311,10 @@ class ReportingService(BaseService):
         try:
             # Validate format
             if format not in FileOperationConstants.SUPPORTED_FORMATS:
-                raise ValueError(f"Unsupported format: {format}. Supported formats are: {', '.join(FileOperationConstants.SUPPORTED_FORMATS)}")
+                raise ValueError(
+                    f"Unsupported format: {format}. Supported formats are: "
+                    f"{', '.join(FileOperationConstants.SUPPORTED_FORMATS)}"
+                )
 
             output_path = Path(output_dir)
 
