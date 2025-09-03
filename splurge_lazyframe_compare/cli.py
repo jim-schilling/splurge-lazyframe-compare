@@ -5,6 +5,11 @@ from pathlib import Path
 import polars as pl
 
 from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
+from splurge_lazyframe_compare.exceptions import (
+    ComparisonError,
+    ConfigError,
+    DataSourceError,
+)
 from splurge_lazyframe_compare.utils.config_helpers import (
     apply_environment_overrides,
     load_config_from_file,
@@ -52,10 +57,15 @@ def _build_parser() -> argparse.ArgumentParser:
 def _load_and_validate_config(config_path: str | None) -> dict:
     base_cfg: dict = {}
     if config_path:
-        base_cfg = load_config_from_file(config_path)
+        try:
+            base_cfg = load_config_from_file(config_path)
+        except FileNotFoundError as e:
+            raise ConfigError(f"Configuration file not found: {config_path}") from e
+        except Exception as e:  # noqa: BLE001
+            raise ConfigError(f"Invalid configuration file: {e}") from e
         errors = validate_config(base_cfg)
         if errors:
-            raise ValueError("Invalid configuration: " + "; ".join(errors))
+            raise ConfigError("Invalid configuration: " + "; ".join(errors))
     # Apply environment overrides (supports SPLURGE_ prefix)
     return apply_environment_overrides(base_cfg or {})
 
@@ -65,7 +75,7 @@ def _scan_lazyframe(path_str: str | None) -> pl.LazyFrame | None:
         return None
     p = Path(path_str)
     if not p.exists():
-        raise FileNotFoundError(f"Data file not found: {p}")
+        raise DataSourceError("Data file not found", path=str(p))
     suffix = p.suffix.lower()
     if suffix == ".parquet":
         return pl.scan_parquet(p)
@@ -73,7 +83,7 @@ def _scan_lazyframe(path_str: str | None) -> pl.LazyFrame | None:
         return pl.scan_csv(p)
     if suffix in (".json", ".ndjson"):
         return pl.scan_ndjson(p)
-    raise ValueError(f"Unsupported file extension: {suffix}")
+    raise DataSourceError(f"Unsupported file extension: {suffix}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -85,9 +95,12 @@ def main(argv: list[str] | None = None) -> int:
     # Load config + environment overrides
     try:
         cfg = _load_and_validate_config(args.config)
-    except Exception as e:  # noqa: BLE001
+    except ComparisonError as e:
         print(f"Configuration error: {e}")
         return 2
+    except Exception as e:  # noqa: BLE001
+        print(f"Unexpected error: {e}")
+        return 1
 
     if args.command == "compare":
         if args.dry_run:
@@ -141,9 +154,12 @@ def main(argv: list[str] | None = None) -> int:
             report = orch.generate_report_from_result(result=result, report_type="summary")
             print(report)
             return 0
-        except Exception as e:  # noqa: BLE001
+        except ComparisonError as e:
             print(f"Compare failed: {e}")
             return 2
+        except Exception as e:  # noqa: BLE001
+            print(f"Unexpected error: {e}")
+            return 1
     if args.command == "report":
         if args.dry_run:
             print("Dry run: report would generate summary/detailed report")
@@ -202,9 +218,12 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(json.dumps(exported, indent=2))
             return 0
-        except Exception as e:  # noqa: BLE001
+        except ComparisonError as e:
             print(f"Export failed: {e}")
             return 2
+        except Exception as e:  # noqa: BLE001
+            print(f"Unexpected error: {e}")
+            return 1
 
     return 0
 
