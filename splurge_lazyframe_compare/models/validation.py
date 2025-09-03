@@ -1,4 +1,8 @@
-"""Validation result models for the comparison framework."""
+"""Validation result models for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 from dataclasses import dataclass
 from typing import Any

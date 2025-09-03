@@ -1,4 +1,8 @@
-"""Data manipulation helpers for the comparison framework."""
+"""Data manipulation helpers for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 from typing import Any
 

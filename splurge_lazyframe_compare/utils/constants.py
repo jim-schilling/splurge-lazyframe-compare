@@ -2,6 +2,9 @@
 
 This module contains constants used across the framework,
 organized by category and following naming conventions.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
 """
 
 from typing import Final

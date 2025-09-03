@@ -1,3 +1,9 @@
+"""Splurge LazyFrame Compare CLI
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
+
 import argparse
 import json
 from pathlib import Path

@@ -2,6 +2,9 @@
 
 This package contains service classes that implement the business logic
 of the framework, following the single responsibility principle.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
 """
 
 from .base_service import BaseService, ServiceConstants

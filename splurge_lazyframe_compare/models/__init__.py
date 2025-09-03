@@ -2,6 +2,9 @@
 
 This package contains pure data models and dataclasses that represent
 the core data structures used throughout the framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
 """
 
 from .comparison import ComparisonResult, ComparisonSummary

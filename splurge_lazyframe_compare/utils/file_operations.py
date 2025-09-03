@@ -1,4 +1,8 @@
-"""File operation utilities for the comparison framework."""
+"""File operation utilities for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 import os
 import tempfile

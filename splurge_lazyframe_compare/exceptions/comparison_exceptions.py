@@ -1,4 +1,8 @@
-"""Custom exceptions for the Polars LazyFrame comparison framework."""
+"""Custom exceptions for the Polars LazyFrame comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 
 class ComparisonError(Exception):

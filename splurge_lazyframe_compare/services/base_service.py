@@ -1,4 +1,8 @@
-"""Base service class for the comparison framework."""
+"""Base service class for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
 
 from abc import ABC, abstractmethod
 from typing import Any

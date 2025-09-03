@@ -2,6 +2,9 @@
 
 A comprehensive Python framework for comparing two Polars LazyFrames with
 configurable schemas, primary keys, and column mappings.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
 """
 
 # Service-based architecture
@@ -22,7 +25,7 @@ from .services import (
 )
 from .services.orchestrator import ComparisonOrchestrator
 
-__version__ = "2025.1.0"
+__version__ = "2025.2.0"
 
 __all__ = [
     # Service-based architecture
