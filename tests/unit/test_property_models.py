@@ -7,12 +7,12 @@ from splurge_lazyframe_compare.models.comparison import ComparisonSummary
     total_left=st.integers(min_value=0, max_value=10_000),
     total_right=st.integers(min_value=0, max_value=10_000),
     left_only=st.integers(min_value=0, max_value=10_000),
-    diffs=st.integers(min_value=0, max_value=10_000),
+    diff_count=st.integers(min_value=0, max_value=10_000),
     right_only=st.integers(min_value=0, max_value=10_000),
 )
-def test_summary_invariants(total_left: int, total_right: int, left_only: int, diffs: int, right_only: int) -> None:
+def test_summary_invariants(total_left: int, total_right: int, left_only: int, diff_count: int, right_only: int) -> None:
     # We assume counts are consistent with a feasible left dataset
-    assume(left_only + diffs <= total_left)
+    assume(left_only + diff_count <= total_left)
 
     import polars as pl
 
@@ -22,7 +22,7 @@ def test_summary_invariants(total_left: int, total_right: int, left_only: int, d
     summary = ComparisonSummary.create(
         total_left_records=total_left,
         total_right_records=total_right,
-        value_differences=make_len(diffs),
+        value_differences=make_len(diff_count),
         left_only_records=make_len(left_only),
         right_only_records=make_len(right_only),
     )
