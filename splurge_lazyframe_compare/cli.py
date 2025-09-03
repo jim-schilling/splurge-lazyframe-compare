@@ -25,6 +25,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # compare subcommand
     compare = sub.add_parser("compare", help="Compare two LazyFrames")
+    compare.add_argument("--config", help="Path to JSON configuration file")
     compare.add_argument("--left", required=False, help="Path to left dataset (parquet/csv/ndjson)")
     compare.add_argument("--right", required=False, help="Path to right dataset (parquet/csv/ndjson)")
     compare.add_argument("--format", default="parquet", choices=["parquet", "csv", "json"], help="Export format")
@@ -33,10 +34,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # report subcommand
     report = sub.add_parser("report", help="Generate report from comparison results")
+    report.add_argument("--config", help="Path to JSON configuration file")
     report.add_argument("--dry-run", action="store_true", help="Validate inputs and exit")
 
     # export subcommand
     export = sub.add_parser("export", help="Export comparison results to files")
+    export.add_argument("--config", help="Path to JSON configuration file")
     export.add_argument("--left", required=False, help="Path to left dataset (parquet/csv/ndjson)")
     export.add_argument("--right", required=False, help="Path to right dataset (parquet/csv/ndjson)")
     export.add_argument("--format", default="parquet", choices=["parquet", "csv", "json"], help="Export format")
