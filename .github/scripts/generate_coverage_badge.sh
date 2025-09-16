@@ -60,15 +60,85 @@ EOF
 # Git operations: create/update fixed branch and open or update PR
 git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
-BRANCH="coverage-badge-update"
-git checkout -B "$BRANCH"
+
+# Fetch remote state and decide branch strategy. Some repos prevent pushes
+# to a fixed branch if there are pending PRs or branch protections. In that
+# case, use a timestamped branch to avoid failures and still create a PR.
+git fetch origin --prune
+REMOTE_BRANCH_EXISTS=0
+if git ls-remote --heads origin coverage-badge-update | grep -q refs/heads/coverage-badge-update; then
+  REMOTE_BRANCH_EXISTS=1
+fi
+
+if [ "$REMOTE_BRANCH_EXISTS" -eq 0 ]; then
+  BRANCH="coverage-badge-update"
+  git checkout -B "$BRANCH"
+else
+  # Create a unique branch name to avoid protected-branch or pending-PR issues
+  TS=$(date -u +%Y%m%d%H%M%S)
+  BRANCH="coverage-badge-update-${TS}"
+  git checkout -b "$BRANCH"
+fi
+
+# Add only the badge file and percent file to avoid committing unrelated changes
 git add docs/coverage-badge.svg coverage-percent.txt || true
 if git diff --staged --quiet; then
   echo "No changes to commit"
-  git push -u origin "$BRANCH" || true
+  echo "Attempting to push branch (if it exists remotely)"
+  if ! git push -u origin "$BRANCH"; then
+    echo "git push failed (no staged changes). Printing git status and remote info for debugging."
+    git status --porcelain --untracked-files=all || true
+    git branch -vv || true
+    git remote show origin || true
+    echo "Continuing to PR creation step (push may have failed)."
+  fi
 else
-  git commit -m "chore(ci): update coverage badge"
-  git push -u origin "$BRANCH"
+  echo "Committing staged badge changes"
+  if ! git commit -m "chore(ci): update coverage badge"; then
+    echo "git commit failed. Showing git status and staged diffs for debugging:" >&2
+    git status --porcelain --untracked-files=all || true
+    echo "--- Staged diff ---"
+    git diff --staged || true
+    echo "--- End staged diff ---"
+    # Do not exit; continue to attempt push and PR creation
+  fi
+
+  # Try pushing with a few retries to handle transient remote errors
+  MAX_RETRIES=3
+  n=0
+  until [ $n -ge $MAX_RETRIES ]
+  do
+    echo "git push attempt $((n+1))"
+    if git push -u origin "$BRANCH"; then
+      echo "git push succeeded"
+      break
+    else
+      echo "git push failed on attempt $((n+1))" >&2
+      n=$((n+1))
+      sleep $((n*2))
+    fi
+  done
+  if [ $n -ge $MAX_RETRIES ]; then
+    echo "git push failed after $MAX_RETRIES attempts; printing remote diagnostics" >&2
+    git remote show origin || true
+    echo "Continuing to PR creation step (push may have failed)."
+  fi
+fi
+
+# If push failed after retries, create a timestamped branch and push it so PR creation
+# can proceed from a unique branch (avoids non-fast-forward rejection on protected refs).
+if [ ${n:-0} -ge $MAX_RETRIES ]; then
+  TS=$(date -u +%Y%m%d%H%M%S)
+  NEWBRANCH="${BRANCH}-${TS}"
+  echo "Attempting fallback: creating new branch $NEWBRANCH and pushing it"
+  # Create the new branch at current HEAD and push it
+  git checkout -B "$NEWBRANCH"
+  if git push -u origin "$NEWBRANCH"; then
+    echo "Fallback push succeeded to $NEWBRANCH"
+    BRANCH="$NEWBRANCH"
+  else
+    echo "Fallback push to $NEWBRANCH also failed. PR creation may fail." >&2
+  fi
 fi
 
 # Use API to find existing PR for the branch
