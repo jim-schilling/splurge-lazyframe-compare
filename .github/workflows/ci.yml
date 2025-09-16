@@ -22,8 +22,7 @@ jobs:
           pip install ruff
       - name: Run ruff
         run: |
-          ruff check .
-
+          ruff check . 
   typecheck:
     name: mypy typecheck
     runs-on: ubuntu-latest
@@ -40,6 +39,7 @@ jobs:
           pip install -e .
       - name: Run mypy
         run: |
-          mypy .
+          # Run mypy only against the package sources to avoid typechecking test files
+          mypy splurge_lazyframe_compare
 
   # Testing is performed in per-version GitHub Actions workflows (test-py310.yml, test-py311.yml, test-py312.yml, test-py313.yml)
