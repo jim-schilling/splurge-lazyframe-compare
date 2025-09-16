@@ -16,6 +16,7 @@ All notable changes to this project are documented in this file.
 - Misc: improved packaging metadata, pre-commit config, and general code cleanups across modules and examples.
 - Renamed tests using splurge-test-namer tool.
 - Added DOMAINS list to each code module.
+- Replaced inline coverage parsing in the coverage-badge workflow with a committed script `tools/generate_coverage_badge.py` for robustness.
 
 ### 2025.2.0 (2025-09-03)
 - Added domain exceptions at CLI boundary: `ConfigError`, `DataSourceError`.
