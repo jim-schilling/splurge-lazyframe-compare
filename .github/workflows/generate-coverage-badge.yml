@@ -26,21 +26,8 @@ jobs:
       - name: Run tests and produce coverage
         run: |
           pytest --cov=splurge_lazyframe_compare --cov-report=xml -q || true
-          python - <<PY
-            import xml.etree.ElementTree as ET
-            try:
-                tree = ET.parse('coverage.xml')
-                root = tree.getroot()
-                coverage = root.attrib.get('line-rate')
-                if coverage is None:
-                    coverage = '0.0'
-                percent = float(coverage) * 100
-                open('coverage-percent.txt','w').write(f'{percent:.1f}')
-                print(f'Coverage percent: {percent:.1f}')
-            except Exception:
-                open('coverage-percent.txt','w').write('unknown')
-                print('Failed to parse coverage.xml; wrote unknown')
-          PY
+          # Parse coverage.xml using a small committed script to avoid YAML heredoc
+          python tools/generate_coverage_badge.py
       - name: Smoke check coverage
         run: |
           if [ ! -f coverage-percent.txt ]; then
