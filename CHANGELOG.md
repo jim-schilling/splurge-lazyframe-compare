@@ -3,6 +3,10 @@
 
 All notable changes to this project are documented in this file.
 
+### 2025.3.1 (2025-09-16) - release
+- Small documentation and packaging fixes; updated README badge to point at raw GitHub URL so PyPI can render the in-repo coverage badge.
+ 
+
 ### 2025.3.0 (2025-09-16) - chore/update-tests & feature work
 - Added per-Python-version CI workflows and badges (3.10–3.13) and updated the central `ci.yml` lint/typecheck workflow.
 - Implemented an in-repo coverage badge generator workflow and accompanying script that creates `docs/coverage-badge.svg` and opens/updates an idempotent PR (`coverage-badge-update`).
@@ -17,6 +21,7 @@ All notable changes to this project are documented in this file.
 - Renamed tests using splurge-test-namer tool.
 - Added DOMAINS list to each code module.
 - Replaced inline coverage parsing in the coverage-badge workflow with a committed script `tools/generate_coverage_badge.py` for robustness.
+
 
 ### 2025.2.0 (2025-09-03)
 - Added domain exceptions at CLI boundary: `ConfigError`, `DataSourceError`.
