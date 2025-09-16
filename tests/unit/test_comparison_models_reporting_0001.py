@@ -49,4 +49,3 @@ def test_result_to_dict_includes_flags_and_summary() -> None:
     assert d["has_value_differences"] is True
     assert d["has_left_only"] is False
     assert d["has_right_only"] is False
-

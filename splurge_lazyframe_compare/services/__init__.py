@@ -24,4 +24,5 @@ __all__ = [
     "ValidationService",
 ]
 
+
 DOMAINS: list[str] = ["services", "comparison", "orchestration"]

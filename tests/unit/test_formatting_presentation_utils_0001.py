@@ -39,7 +39,7 @@ def test_dataframe_sample_and_column_list():
 def test_validation_errors_formatting():
     assert format_validation_errors([]) == "No errors found"
     assert format_validation_errors(["only one"]) == "only one"
-    multi = format_validation_errors(["e1", "e2"]) 
+    multi = format_validation_errors(["e1", "e2"])
     assert "Multiple errors" in multi and "e1" in multi and "e2" in multi
 
 
@@ -47,5 +47,3 @@ def test_create_summary_table_simple():
     table = create_summary_table({"Left": 10, "Right": 12})
     assert isinstance(table, str)
     assert "Left" in table and "Right" in table
-
-

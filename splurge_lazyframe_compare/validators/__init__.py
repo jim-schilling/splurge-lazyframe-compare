@@ -10,6 +10,6 @@ Licensed under the MIT License. See the LICENSE file for details.
 # This package is kept for potential future validation extensions
 # Main validation functionality is now in services.ValidationService
 
-__all__ = []
+__all__: list[str] = []
 
 DOMAINS: list[str] = ["validation", "services"]

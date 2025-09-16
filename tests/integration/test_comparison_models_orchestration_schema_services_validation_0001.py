@@ -1,26 +1,30 @@
 import polars as pl
 import pytest
 
-from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
 from splurge_lazyframe_compare.models.schema import (
-    ComparisonConfig,
-    ComparisonSchema,
     ColumnDefinition,
     ColumnMapping,
+    ComparisonConfig,
+    ComparisonSchema,
 )
+from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
 
 
 @pytest.mark.perf
 def test_medium_dataset_smoke() -> None:
     num = 50_000
-    left = pl.LazyFrame({
-        "id": list(range(num)),
-        "value": [i % 5 for i in range(num)],
-    })
-    right = pl.LazyFrame({
-        "cust_id": list(range(num)),
-        "val": [i % 5 for i in range(num)],
-    })
+    left = pl.LazyFrame(
+        {
+            "id": list(range(num)),
+            "value": [i % 5 for i in range(num)],
+        }
+    )
+    right = pl.LazyFrame(
+        {
+            "cust_id": list(range(num)),
+            "val": [i % 5 for i in range(num)],
+        }
+    )
 
     left_schema = ComparisonSchema(
         columns={
@@ -50,4 +54,3 @@ def test_medium_dataset_smoke() -> None:
     orchestrator = ComparisonOrchestrator()
     result = orchestrator.compare_dataframes(config=config, left=left, right=right)
     assert result.summary.matching_records == num
-

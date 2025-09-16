@@ -25,11 +25,7 @@ def test_create_comparison_config_from_lazyframes_missing_pk_raises() -> None:
     right_df = pl.LazyFrame({"id": [1, 3], "name": ["a", "c"]})
 
     with pytest.raises(ValueError) as exc_info:
-        create_comparison_config_from_lazyframes(
-            left=left_df,
-            right=right_df,
-            pk_columns=["missing"]
-        )
+        create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["missing"])
 
     msg = str(exc_info.value)
     assert "missing from left LazyFrame" in msg

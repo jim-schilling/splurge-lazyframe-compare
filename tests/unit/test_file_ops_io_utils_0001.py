@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import polars as pl
@@ -76,5 +75,3 @@ def test_get_export_file_paths_map(tmp_path: Path):
     assert paths["parquet"].name.endswith(".parquet")
     assert paths["csv"].name.endswith(".csv")
     assert paths["json"].name.endswith(".json")
-
-

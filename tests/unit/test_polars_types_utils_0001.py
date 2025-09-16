@@ -178,8 +178,16 @@ class TestGetPolarsDatatypeType:
     def test_round_trip_conversion(self) -> None:
         """Test that name -> type -> name conversion works correctly."""
         test_types = [
-            pl.Int8, pl.Int64, pl.Float32, pl.Utf8, pl.Boolean,
-            pl.Date, pl.Datetime, pl.Categorical, pl.List, pl.Null
+            pl.Int8,
+            pl.Int64,
+            pl.Float32,
+            pl.Utf8,
+            pl.Boolean,
+            pl.Date,
+            pl.Datetime,
+            pl.Categorical,
+            pl.List,
+            pl.Null,
         ]
 
         for dtype in test_types:
@@ -250,12 +258,14 @@ class TestTypeHelpersIntegration:
 
     def test_schema_integration(self) -> None:
         """Test integration with Polars Schema."""
-        schema = pl.Schema({
-            "id": pl.Int64,
-            "name": pl.Utf8,
-            "active": pl.Boolean,
-            "score": pl.Float32,
-        })
+        schema = pl.Schema(
+            {
+                "id": pl.Int64,
+                "name": pl.Utf8,
+                "active": pl.Boolean,
+                "score": pl.Float32,
+            }
+        )
 
         for _col_name, dtype in schema.items():
             # Get name from schema dtype
@@ -274,11 +284,13 @@ class TestTypeHelpersIntegration:
 
     def test_lazyframe_integration(self) -> None:
         """Test integration with LazyFrame."""
-        df = pl.LazyFrame({
-            "int_col": [1, 2, 3],
-            "str_col": ["a", "b", "c"],
-            "bool_col": [True, False, True],
-        })
+        df = pl.LazyFrame(
+            {
+                "int_col": [1, 2, 3],
+                "str_col": ["a", "b", "c"],
+                "bool_col": [True, False, True],
+            }
+        )
 
         schema = df.collect_schema()
 
@@ -315,6 +327,7 @@ class TestTypeHelpersIntegration:
 
     def test_numeric_detection_edge_cases(self) -> None:
         """Test numeric detection with various edge cases."""
+
         # Test with custom objects that might have is_numeric
         class CustomNumericType:
             def is_numeric(self):

@@ -26,11 +26,7 @@ from splurge_lazyframe_compare import (
 
 
 def generate_mixed_data(
-    *,
-    num_records: int,
-    start_id: int = 1,
-    include_differences: bool = True,
-    difference_rate: float = 0.01
+    *, num_records: int, start_id: int = 1, include_differences: bool = True, difference_rate: float = 0.01
 ) -> dict[str, list[Any]]:
     """Generate mixed data with 75 columns of various types.
 
@@ -47,21 +43,46 @@ def generate_mixed_data(
 
     # Primary key columns (3 columns)
     data["id"] = list(range(start_id, start_id + num_records))
-    data["batch_date"] = [
-        date(2024, 1, 1) + timedelta(days=i % 365)
-        for i in range(num_records)
-    ]
+    data["batch_date"] = [date(2024, 1, 1) + timedelta(days=i % 365) for i in range(num_records)]
     data["sequence_id"] = [i % 1000 for i in range(num_records)]
 
     # String columns (35 columns)
     string_columns = [
-        "name", "email", "category", "status", "region", "department", "title",
-        "first_name", "last_name", "middle_name", "nickname", "username",
-        "phone", "mobile", "address_line1", "address_line2", "city", "state",
-        "country", "postal_code", "timezone", "language", "currency",
-        "company_name", "division", "team", "role", "level", "grade",
-        "certification", "license", "membership", "affiliation", "preference",
-        "notes"
+        "name",
+        "email",
+        "category",
+        "status",
+        "region",
+        "department",
+        "title",
+        "first_name",
+        "last_name",
+        "middle_name",
+        "nickname",
+        "username",
+        "phone",
+        "mobile",
+        "address_line1",
+        "address_line2",
+        "city",
+        "state",
+        "country",
+        "postal_code",
+        "timezone",
+        "language",
+        "currency",
+        "company_name",
+        "division",
+        "team",
+        "role",
+        "level",
+        "grade",
+        "certification",
+        "license",
+        "membership",
+        "affiliation",
+        "preference",
+        "notes",
     ]
 
     for i, col in enumerate(string_columns):
@@ -72,7 +93,9 @@ def generate_mixed_data(
         elif col == "category":
             data[col] = [f"Category_{i % 10}" for i in range(num_records)]
         elif col == "status":
-            data[col] = ["active" if i % 3 == 0 else "inactive" if i % 3 == 1 else "pending" for i in range(num_records)]
+            data[col] = [
+                "active" if i % 3 == 0 else "inactive" if i % 3 == 1 else "pending" for i in range(num_records)
+            ]
         elif col == "region":
             data[col] = [f"Region_{chr(65 + (i % 26))}" for i in range(num_records)]
         elif col == "department":
@@ -138,12 +161,31 @@ def generate_mixed_data(
 
     # Integer columns (25 columns)
     int_columns = [
-        "age", "experience_years", "projects_count", "team_size", "salary_grade",
-        "employee_id", "manager_id", "department_id", "location_id", "skill_level",
-        "years_employed", "vacation_days", "sick_days", "overtime_hours",
-        "meetings_attended", "trainings_completed", "certifications_count",
-        "languages_known", "timezone_offset", "security_level", "access_level",
-        "priority_level", "performance_rating", "satisfaction_score", "tenure_months"
+        "age",
+        "experience_years",
+        "projects_count",
+        "team_size",
+        "salary_grade",
+        "employee_id",
+        "manager_id",
+        "department_id",
+        "location_id",
+        "skill_level",
+        "years_employed",
+        "vacation_days",
+        "sick_days",
+        "overtime_hours",
+        "meetings_attended",
+        "trainings_completed",
+        "certifications_count",
+        "languages_known",
+        "timezone_offset",
+        "security_level",
+        "access_level",
+        "priority_level",
+        "performance_rating",
+        "satisfaction_score",
+        "tenure_months",
     ]
 
     for i, col in enumerate(int_columns):
@@ -200,9 +242,18 @@ def generate_mixed_data(
 
     # Float columns (12 columns)
     float_columns = [
-        "salary", "bonus", "performance_score", "efficiency_ratio", "cost_per_hour",
-        "hourly_rate", "commission_rate", "tax_rate", "discount_rate", "interest_rate",
-        "exchange_rate", "conversion_rate"
+        "salary",
+        "bonus",
+        "performance_score",
+        "efficiency_ratio",
+        "cost_per_hour",
+        "hourly_rate",
+        "commission_rate",
+        "tax_rate",
+        "discount_rate",
+        "interest_rate",
+        "exchange_rate",
+        "conversion_rate",
     ]
 
     for i, col in enumerate(float_columns):
@@ -232,24 +283,12 @@ def generate_mixed_data(
             data[col] = [0.02 + (i % 5) * 0.005 for i in range(num_records)]
 
     # Date columns (2 columns)
-    data["hire_date"] = [
-        date(2020, 1, 1) + timedelta(days=i % 365)
-        for i in range(num_records)
-    ]
-    data["last_review_date"] = [
-        date(2023, 1, 1) + timedelta(days=i % 365)
-        for i in range(num_records)
-    ]
+    data["hire_date"] = [date(2020, 1, 1) + timedelta(days=i % 365) for i in range(num_records)]
+    data["last_review_date"] = [date(2023, 1, 1) + timedelta(days=i % 365) for i in range(num_records)]
 
     # Datetime columns (2 columns)
-    data["created_at"] = [
-        datetime(2024, 1, 1) + timedelta(hours=i)
-        for i in range(num_records)
-    ]
-    data["updated_at"] = [
-        datetime(2024, 6, 1) + timedelta(hours=i * 2)
-        for i in range(num_records)
-    ]
+    data["created_at"] = [datetime(2024, 1, 1) + timedelta(hours=i) for i in range(num_records)]
+    data["updated_at"] = [datetime(2024, 6, 1) + timedelta(hours=i * 2) for i in range(num_records)]
 
     # Introduce some differences if requested
     if include_differences:
@@ -267,10 +306,7 @@ def generate_mixed_data(
 
 
 def create_test_datasets(
-    *,
-    left_size: int,
-    right_size: int,
-    difference_rate: float = 0.01
+    *, left_size: int, right_size: int, difference_rate: float = 0.01
 ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """Create test datasets with specified characteristics.
 
@@ -283,19 +319,12 @@ def create_test_datasets(
         Tuple of (left_df, right_df) with test data.
     """
     print(f"  Generating left dataset ({left_size:,} records)...")
-    left_data = generate_mixed_data(
-        num_records=left_size,
-        start_id=1,
-        include_differences=False
-    )
+    left_data = generate_mixed_data(num_records=left_size, start_id=1, include_differences=False)
     left_df = pl.LazyFrame(left_data)
 
     print(f"  Generating right dataset ({right_size:,} records)...")
     right_data = generate_mixed_data(
-        num_records=right_size,
-        start_id=1,
-        include_differences=True,
-        difference_rate=difference_rate
+        num_records=right_size, start_id=1, include_differences=True, difference_rate=difference_rate
     )
     right_df = pl.LazyFrame(right_data)
 
@@ -314,7 +343,6 @@ def define_test_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "id": ColumnDefinition(name="id", alias="Employee ID", datatype=pl.Int64, nullable=False),
         "batch_date": ColumnDefinition(name="batch_date", alias="Batch Date", datatype=pl.Date, nullable=False),
         "sequence_id": ColumnDefinition(name="sequence_id", alias="Sequence ID", datatype=pl.Int64, nullable=False),
-
         # String columns (35 columns)
         "name": ColumnDefinition(name="name", alias="Employee Name", datatype=pl.Utf8, nullable=False),
         "email": ColumnDefinition(name="email", alias="Email Address", datatype=pl.Utf8, nullable=False),
@@ -330,8 +358,12 @@ def define_test_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "username": ColumnDefinition(name="username", alias="Username", datatype=pl.Utf8, nullable=False),
         "phone": ColumnDefinition(name="phone", alias="Phone", datatype=pl.Utf8, nullable=False),
         "mobile": ColumnDefinition(name="mobile", alias="Mobile", datatype=pl.Utf8, nullable=False),
-        "address_line1": ColumnDefinition(name="address_line1", alias="Address Line 1", datatype=pl.Utf8, nullable=False),
-        "address_line2": ColumnDefinition(name="address_line2", alias="Address Line 2", datatype=pl.Utf8, nullable=False),
+        "address_line1": ColumnDefinition(
+            name="address_line1", alias="Address Line 1", datatype=pl.Utf8, nullable=False
+        ),
+        "address_line2": ColumnDefinition(
+            name="address_line2", alias="Address Line 2", datatype=pl.Utf8, nullable=False
+        ),
         "city": ColumnDefinition(name="city", alias="City", datatype=pl.Utf8, nullable=False),
         "state": ColumnDefinition(name="state", alias="State", datatype=pl.Utf8, nullable=False),
         "country": ColumnDefinition(name="country", alias="Country", datatype=pl.Utf8, nullable=False),
@@ -345,61 +377,115 @@ def define_test_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         "role": ColumnDefinition(name="role", alias="Role", datatype=pl.Utf8, nullable=False),
         "level": ColumnDefinition(name="level", alias="Level", datatype=pl.Utf8, nullable=False),
         "grade": ColumnDefinition(name="grade", alias="Grade", datatype=pl.Utf8, nullable=False),
-        "certification": ColumnDefinition(name="certification", alias="Certification", datatype=pl.Utf8, nullable=False),
+        "certification": ColumnDefinition(
+            name="certification", alias="Certification", datatype=pl.Utf8, nullable=False
+        ),
         "license": ColumnDefinition(name="license", alias="License", datatype=pl.Utf8, nullable=False),
         "membership": ColumnDefinition(name="membership", alias="Membership", datatype=pl.Utf8, nullable=False),
         "affiliation": ColumnDefinition(name="affiliation", alias="Affiliation", datatype=pl.Utf8, nullable=False),
         "preference": ColumnDefinition(name="preference", alias="Preference", datatype=pl.Utf8, nullable=False),
         "notes": ColumnDefinition(name="notes", alias="Notes", datatype=pl.Utf8, nullable=False),
-
         # Integer columns (25 columns)
         "age": ColumnDefinition(name="age", alias="Age", datatype=pl.Int64, nullable=False),
-        "experience_years": ColumnDefinition(name="experience_years", alias="Experience Years", datatype=pl.Int64, nullable=False),
-        "projects_count": ColumnDefinition(name="projects_count", alias="Projects Count", datatype=pl.Int64, nullable=False),
+        "experience_years": ColumnDefinition(
+            name="experience_years", alias="Experience Years", datatype=pl.Int64, nullable=False
+        ),
+        "projects_count": ColumnDefinition(
+            name="projects_count", alias="Projects Count", datatype=pl.Int64, nullable=False
+        ),
         "team_size": ColumnDefinition(name="team_size", alias="Team Size", datatype=pl.Int64, nullable=False),
         "salary_grade": ColumnDefinition(name="salary_grade", alias="Salary Grade", datatype=pl.Int64, nullable=False),
-        "employee_id": ColumnDefinition(name="employee_id", alias="Secondary Employee ID", datatype=pl.Int64, nullable=False),
+        "employee_id": ColumnDefinition(
+            name="employee_id", alias="Secondary Employee ID", datatype=pl.Int64, nullable=False
+        ),
         "manager_id": ColumnDefinition(name="manager_id", alias="Manager ID", datatype=pl.Int64, nullable=False),
-        "department_id": ColumnDefinition(name="department_id", alias="Department ID", datatype=pl.Int64, nullable=False),
+        "department_id": ColumnDefinition(
+            name="department_id", alias="Department ID", datatype=pl.Int64, nullable=False
+        ),
         "location_id": ColumnDefinition(name="location_id", alias="Location ID", datatype=pl.Int64, nullable=False),
         "skill_level": ColumnDefinition(name="skill_level", alias="Skill Level", datatype=pl.Int64, nullable=False),
-        "years_employed": ColumnDefinition(name="years_employed", alias="Years Employed", datatype=pl.Int64, nullable=False),
-        "vacation_days": ColumnDefinition(name="vacation_days", alias="Vacation Days", datatype=pl.Int64, nullable=False),
+        "years_employed": ColumnDefinition(
+            name="years_employed", alias="Years Employed", datatype=pl.Int64, nullable=False
+        ),
+        "vacation_days": ColumnDefinition(
+            name="vacation_days", alias="Vacation Days", datatype=pl.Int64, nullable=False
+        ),
         "sick_days": ColumnDefinition(name="sick_days", alias="Sick Days", datatype=pl.Int64, nullable=False),
-        "overtime_hours": ColumnDefinition(name="overtime_hours", alias="Overtime Hours", datatype=pl.Int64, nullable=False),
-        "meetings_attended": ColumnDefinition(name="meetings_attended", alias="Meetings Attended", datatype=pl.Int64, nullable=False),
-        "trainings_completed": ColumnDefinition(name="trainings_completed", alias="Trainings Completed", datatype=pl.Int64, nullable=False),
-        "certifications_count": ColumnDefinition(name="certifications_count", alias="Certifications Count", datatype=pl.Int64, nullable=False),
-        "languages_known": ColumnDefinition(name="languages_known", alias="Languages Known", datatype=pl.Int64, nullable=False),
-        "timezone_offset": ColumnDefinition(name="timezone_offset", alias="Timezone Offset", datatype=pl.Int64, nullable=False),
-        "security_level": ColumnDefinition(name="security_level", alias="Security Level", datatype=pl.Int64, nullable=False),
+        "overtime_hours": ColumnDefinition(
+            name="overtime_hours", alias="Overtime Hours", datatype=pl.Int64, nullable=False
+        ),
+        "meetings_attended": ColumnDefinition(
+            name="meetings_attended", alias="Meetings Attended", datatype=pl.Int64, nullable=False
+        ),
+        "trainings_completed": ColumnDefinition(
+            name="trainings_completed", alias="Trainings Completed", datatype=pl.Int64, nullable=False
+        ),
+        "certifications_count": ColumnDefinition(
+            name="certifications_count", alias="Certifications Count", datatype=pl.Int64, nullable=False
+        ),
+        "languages_known": ColumnDefinition(
+            name="languages_known", alias="Languages Known", datatype=pl.Int64, nullable=False
+        ),
+        "timezone_offset": ColumnDefinition(
+            name="timezone_offset", alias="Timezone Offset", datatype=pl.Int64, nullable=False
+        ),
+        "security_level": ColumnDefinition(
+            name="security_level", alias="Security Level", datatype=pl.Int64, nullable=False
+        ),
         "access_level": ColumnDefinition(name="access_level", alias="Access Level", datatype=pl.Int64, nullable=False),
-        "priority_level": ColumnDefinition(name="priority_level", alias="Priority Level", datatype=pl.Int64, nullable=False),
-        "performance_rating": ColumnDefinition(name="performance_rating", alias="Performance Rating", datatype=pl.Int64, nullable=False),
-        "satisfaction_score": ColumnDefinition(name="satisfaction_score", alias="Satisfaction Score", datatype=pl.Int64, nullable=False),
-        "tenure_months": ColumnDefinition(name="tenure_months", alias="Tenure Months", datatype=pl.Int64, nullable=False),
-
+        "priority_level": ColumnDefinition(
+            name="priority_level", alias="Priority Level", datatype=pl.Int64, nullable=False
+        ),
+        "performance_rating": ColumnDefinition(
+            name="performance_rating", alias="Performance Rating", datatype=pl.Int64, nullable=False
+        ),
+        "satisfaction_score": ColumnDefinition(
+            name="satisfaction_score", alias="Satisfaction Score", datatype=pl.Int64, nullable=False
+        ),
+        "tenure_months": ColumnDefinition(
+            name="tenure_months", alias="Tenure Months", datatype=pl.Int64, nullable=False
+        ),
         # Float columns (12 columns)
         "salary": ColumnDefinition(name="salary", alias="Salary", datatype=pl.Float64, nullable=False),
         "bonus": ColumnDefinition(name="bonus", alias="Bonus", datatype=pl.Float64, nullable=False),
-        "performance_score": ColumnDefinition(name="performance_score", alias="Performance Score", datatype=pl.Float64, nullable=False),
-        "efficiency_ratio": ColumnDefinition(name="efficiency_ratio", alias="Efficiency Ratio", datatype=pl.Float64, nullable=False),
-        "cost_per_hour": ColumnDefinition(name="cost_per_hour", alias="Cost Per Hour", datatype=pl.Float64, nullable=False),
+        "performance_score": ColumnDefinition(
+            name="performance_score", alias="Performance Score", datatype=pl.Float64, nullable=False
+        ),
+        "efficiency_ratio": ColumnDefinition(
+            name="efficiency_ratio", alias="Efficiency Ratio", datatype=pl.Float64, nullable=False
+        ),
+        "cost_per_hour": ColumnDefinition(
+            name="cost_per_hour", alias="Cost Per Hour", datatype=pl.Float64, nullable=False
+        ),
         "hourly_rate": ColumnDefinition(name="hourly_rate", alias="Hourly Rate", datatype=pl.Float64, nullable=False),
-        "commission_rate": ColumnDefinition(name="commission_rate", alias="Commission Rate", datatype=pl.Float64, nullable=False),
+        "commission_rate": ColumnDefinition(
+            name="commission_rate", alias="Commission Rate", datatype=pl.Float64, nullable=False
+        ),
         "tax_rate": ColumnDefinition(name="tax_rate", alias="Tax Rate", datatype=pl.Float64, nullable=False),
-        "discount_rate": ColumnDefinition(name="discount_rate", alias="Discount Rate", datatype=pl.Float64, nullable=False),
-        "interest_rate": ColumnDefinition(name="interest_rate", alias="Interest Rate", datatype=pl.Float64, nullable=False),
-        "exchange_rate": ColumnDefinition(name="exchange_rate", alias="Exchange Rate", datatype=pl.Float64, nullable=False),
-        "conversion_rate": ColumnDefinition(name="conversion_rate", alias="Conversion Rate", datatype=pl.Float64, nullable=False),
-
+        "discount_rate": ColumnDefinition(
+            name="discount_rate", alias="Discount Rate", datatype=pl.Float64, nullable=False
+        ),
+        "interest_rate": ColumnDefinition(
+            name="interest_rate", alias="Interest Rate", datatype=pl.Float64, nullable=False
+        ),
+        "exchange_rate": ColumnDefinition(
+            name="exchange_rate", alias="Exchange Rate", datatype=pl.Float64, nullable=False
+        ),
+        "conversion_rate": ColumnDefinition(
+            name="conversion_rate", alias="Conversion Rate", datatype=pl.Float64, nullable=False
+        ),
         # Date columns (2 columns)
         "hire_date": ColumnDefinition(name="hire_date", alias="Hire Date", datatype=pl.Date, nullable=False),
-        "last_review_date": ColumnDefinition(name="last_review_date", alias="Last Review Date", datatype=pl.Date, nullable=False),
-
+        "last_review_date": ColumnDefinition(
+            name="last_review_date", alias="Last Review Date", datatype=pl.Date, nullable=False
+        ),
         # Datetime columns (2 columns)
-        "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype=pl.Datetime(time_unit='us'), nullable=False),
-        "updated_at": ColumnDefinition(name="updated_at", alias="Updated At", datatype=pl.Datetime(time_unit='us'), nullable=False),
+        "created_at": ColumnDefinition(
+            name="created_at", alias="Created At", datatype=pl.Datetime(time_unit="us"), nullable=False
+        ),
+        "updated_at": ColumnDefinition(
+            name="updated_at", alias="Updated At", datatype=pl.Datetime(time_unit="us"), nullable=False
+        ),
     }
 
     # Both schemas are identical for this test
@@ -425,48 +511,97 @@ def create_column_mappings() -> list[ColumnMapping]:
     # All columns map to themselves since both datasets have identical schemas
     column_names = [
         # Primary key columns (3 columns)
-        "id", "batch_date", "sequence_id",
-
+        "id",
+        "batch_date",
+        "sequence_id",
         # String columns (35 columns)
-        "name", "email", "category", "status", "region", "department", "title",
-        "first_name", "last_name", "middle_name", "nickname", "username",
-        "phone", "mobile", "address_line1", "address_line2", "city", "state",
-        "country", "postal_code", "timezone", "language", "currency",
-        "company_name", "division", "team", "role", "level", "grade",
-        "certification", "license", "membership", "affiliation", "preference",
+        "name",
+        "email",
+        "category",
+        "status",
+        "region",
+        "department",
+        "title",
+        "first_name",
+        "last_name",
+        "middle_name",
+        "nickname",
+        "username",
+        "phone",
+        "mobile",
+        "address_line1",
+        "address_line2",
+        "city",
+        "state",
+        "country",
+        "postal_code",
+        "timezone",
+        "language",
+        "currency",
+        "company_name",
+        "division",
+        "team",
+        "role",
+        "level",
+        "grade",
+        "certification",
+        "license",
+        "membership",
+        "affiliation",
+        "preference",
         "notes",
-
         # Integer columns (25 columns)
-        "age", "experience_years", "projects_count", "team_size", "salary_grade",
-        "employee_id", "manager_id", "department_id", "location_id", "skill_level",
-        "years_employed", "vacation_days", "sick_days", "overtime_hours",
-        "meetings_attended", "trainings_completed", "certifications_count",
-        "languages_known", "timezone_offset", "security_level", "access_level",
-        "priority_level", "performance_rating", "satisfaction_score", "tenure_months",
-
+        "age",
+        "experience_years",
+        "projects_count",
+        "team_size",
+        "salary_grade",
+        "employee_id",
+        "manager_id",
+        "department_id",
+        "location_id",
+        "skill_level",
+        "years_employed",
+        "vacation_days",
+        "sick_days",
+        "overtime_hours",
+        "meetings_attended",
+        "trainings_completed",
+        "certifications_count",
+        "languages_known",
+        "timezone_offset",
+        "security_level",
+        "access_level",
+        "priority_level",
+        "performance_rating",
+        "satisfaction_score",
+        "tenure_months",
         # Float columns (12 columns)
-        "salary", "bonus", "performance_score", "efficiency_ratio", "cost_per_hour",
-        "hourly_rate", "commission_rate", "tax_rate", "discount_rate", "interest_rate",
-        "exchange_rate", "conversion_rate",
-
+        "salary",
+        "bonus",
+        "performance_score",
+        "efficiency_ratio",
+        "cost_per_hour",
+        "hourly_rate",
+        "commission_rate",
+        "tax_rate",
+        "discount_rate",
+        "interest_rate",
+        "exchange_rate",
+        "conversion_rate",
         # Date columns (2 columns)
-        "hire_date", "last_review_date",
-
+        "hire_date",
+        "last_review_date",
         # Datetime columns (2 columns)
-        "created_at", "updated_at"
+        "created_at",
+        "updated_at",
     ]
 
-    return [
-        ColumnMapping(left=col, right=col, name=col) for col in column_names
-    ]
+    return [ColumnMapping(left=col, right=col, name=col) for col in column_names]
 
 
 def run_single_benchmark(
-    *,
-    left_df: pl.LazyFrame,
-    right_df: pl.LazyFrame,
-    config: ComparisonConfig,
-    iteration: int
+    *, left_df: pl.LazyFrame, right_df: pl.LazyFrame, config: ComparisonConfig, iteration: int
 ) -> dict[str, float]:
     """Run a single benchmark iteration.
 
@@ -508,11 +643,7 @@ def run_single_benchmark(
 
 
 def run_benchmark_suite(
-    *,
-    left_size: int,
-    right_size: int,
-    iterations: int = 5,
-    difference_rate: float = 0.01
+    *, left_size: int, right_size: int, iterations: int = 5, difference_rate: float = 0.01
 ) -> dict[str, Any]:
     """Run a complete benchmark suite with multiple iterations.
 
@@ -533,9 +664,7 @@ def run_benchmark_suite(
 
     # Create test data
     left_df, right_df = create_test_datasets(
-        left_size=left_size,
-        right_size=right_size,
-        difference_rate=difference_rate
+        left_size=left_size, right_size=right_size, difference_rate=difference_rate
     )
 
     # Define schemas and mappings
@@ -558,12 +687,7 @@ def run_benchmark_suite(
         # Force garbage collection before each iteration
         gc.collect()
 
-        iteration_result = run_single_benchmark(
-            left_df=left_df,
-            right_df=right_df,
-            config=config,
-            iteration=i + 1
-        )
+        iteration_result = run_single_benchmark(left_df=left_df, right_df=right_df, config=config, iteration=i + 1)
         results.append(iteration_result)
 
     # Calculate statistics
@@ -670,24 +794,24 @@ def main() -> None:
     all_results = []
 
     for scenario in test_scenarios:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"SCENARIO: {scenario['left_size']:,} vs {scenario['right_size']:,} records")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         result = run_benchmark_suite(
             left_size=scenario["left_size"],
             right_size=scenario["right_size"],
             iterations=scenario["iterations"],
-            difference_rate=0.01
+            difference_rate=0.01,
         )
 
         print_benchmark_results(result)
         all_results.append(result)
 
     # Print summary comparison
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("PERFORMANCE SUMMARY COMPARISON")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     print(f"\n{'Size':<15} {'Records/sec':<15} {'ms/record':<12} {'Total Time':<12}")
     print("-" * 60)
@@ -704,9 +828,9 @@ def main() -> None:
 
         print(f"{size_str:<15} {records_per_sec:<15} {ms_per_record:<12} {total_time:<12}")
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("DETAILED BENCHMARK COMPLETED!")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":

@@ -41,7 +41,7 @@ def _make_basic_config(tmp_path) -> str:
 
 def test_cli_compare_requires_paths_or_config(capsys: pytest.CaptureFixture[str]) -> None:
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
 
     code = main(["compare"])  # missing left/right
     out = capsys.readouterr().out
@@ -59,7 +59,7 @@ def test_cli_compare_with_config_and_parquet(tmp_path, capsys: pytest.CaptureFix
     cfg_path = _make_basic_config(tmp_path)
 
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
     code = main(["compare", "--config", cfg_path, "--left", str(left_path), "--right", str(right_path)])
     out = capsys.readouterr().out
 
@@ -78,20 +78,22 @@ def test_cli_export_writes_files_and_prints_paths(tmp_path, capsys: pytest.Captu
     cfg_path = _make_basic_config(tmp_path)
 
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
-    code = main([
-        "export",
-        "--config",
-        cfg_path,
-        "--left",
-        str(left_path),
-        "--right",
-        str(right_path),
-        "--format",
-        "parquet",
-        "--output-dir",
-        str(out_dir),
-    ])
+    main = main_mod.main
+    code = main(
+        [
+            "export",
+            "--config",
+            cfg_path,
+            "--left",
+            str(left_path),
+            "--right",
+            str(right_path),
+            "--format",
+            "parquet",
+            "--output-dir",
+            str(out_dir),
+        ]
+    )
     out = capsys.readouterr().out
     assert code == 0
 
@@ -110,7 +112,7 @@ def test_cli_invalid_config_fails_gracefully(tmp_path, capsys: pytest.CaptureFix
     bad_cfg.write_text("{not json}")
 
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
     code = main(["compare", "--config", str(bad_cfg)])
     out = capsys.readouterr().out
     assert code == 2
@@ -123,9 +125,8 @@ def test_cli_unsupported_extension_returns_error(tmp_path, capsys: pytest.Captur
     cfg_path = _make_basic_config(tmp_path)
 
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
     code = main(["compare", "--config", cfg_path, "--left", str(data), "--right", str(data)])
     out = capsys.readouterr().out
     assert code == 2
     assert "unsupported file extension" in out.lower()
-

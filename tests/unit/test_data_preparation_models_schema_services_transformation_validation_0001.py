@@ -61,5 +61,3 @@ def test_prepare_dataframes_with_ignore_case():
 
     assert df_left["L_name"][0] == "alice"
     assert df_right["R_name"][0] == "alice"
-
-

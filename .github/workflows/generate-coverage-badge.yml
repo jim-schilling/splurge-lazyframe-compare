@@ -1,0 +1,76 @@
+name: Generate coverage badge
+      - name: Generate badge and open PR (idempotent)
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x .github/scripts/generate_coverage_badge.sh
+          ./.github/scripts/generate_coverage_badge.sh
+            DISPLAY_TEXT='unknown'
+          else
+            # Numeric percent -> choose color and display as integer
+            if (( $(echo "$PERCENT >= 90" | bc -l) )); then COLOR=4c1; elif (( $(echo "$PERCENT >= 75" | bc -l) )); then COLOR=f77f00; else COLOR=e05d44; fi
+            DISPLAY_TEXT="$(printf '%.1f' "$PERCENT")%"
+          fi
+          cat > docs/coverage-badge.svg <<SVG_EOF
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
+  <rect width="120" height="20" fill="#555"/>
+  <rect x="60" width="60" height="20" fill="#${COLOR}"/>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="30" y="14">coverage</text>
+    <text x="90" y="14">${DISPLAY_TEXT}</text>
+  </g>
+</svg>
+SVG_EOF
+      - name: Commit badge (create branch + PR)
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # If smoke-check flagged to skip, do nothing
+          if [ -f skip_badge_update.txt ] && [ "$(cat skip_badge_update.txt)" -eq 1 ]; then
+            echo "Skipping commit because smoke check failed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Use a fixed branch name so updates are idempotent
+          BRANCH="coverage-badge-update"
+          git checkout -B "$BRANCH"
+          git add docs/coverage-badge.svg coverage-percent.txt || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            # Still push branch in case it doesn't exist remotely
+            git push -u origin "$BRANCH" || true
+            # Check for existing PR and exit
+            OWNER=${GITHUB_REPOSITORY%%/*}
+            EXISTING_PR_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls?state=open&head=$OWNER:$BRANCH")
+            PR_NUMBER=$(echo "$EXISTING_PR_JSON" | grep -Po '"number":\s*\K[0-9]+' | head -n1 || true)
+            if [ -n "$PR_NUMBER" ]; then
+              echo "Found existing PR #$PR_NUMBER - nothing to update"
+              exit 0
+            else
+              echo "No existing PR and no changes to commit"
+              exit 0
+            fi
+          fi
+          git commit -m "chore(ci): update coverage badge"
+          # Push the branch using the GITHUB_TOKEN auth configured by actions/checkout
+          git push -u origin "$BRANCH"
+          # Check for an existing open PR for this branch
+          OWNER=${GITHUB_REPOSITORY%%/*}
+          EXISTING_PR_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls?state=open&head=$OWNER:$BRANCH")
+          PR_NUMBER=$(echo "$EXISTING_PR_JSON" | grep -Po '"number":\s*\K[0-9]+' | head -n1 || true)
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Found existing PR #$PR_NUMBER - updating PR body"
+            PAYLOAD=$(printf '{"title":"chore(ci): update coverage badge","body":"Automated coverage badge update: %s"}' "$DISPLAY_TEXT")
+            curl -s -X PATCH -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER \
+              -d "$PAYLOAD" || echo "PR update may have failed"
+          else
+            # Create a PR using the REST API (build JSON payload safely)
+            PAYLOAD=$(printf '{"title":"chore(ci): update coverage badge","head":"%s","base":"main","body":"Automated coverage badge update: %s"}' "$BRANCH" "$DISPLAY_TEXT")
+            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/$GITHUB_REPOSITORY/pulls \
+              -d "$PAYLOAD" || echo "PR creation may have failed"
+          fi

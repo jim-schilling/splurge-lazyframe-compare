@@ -4,9 +4,6 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
-DOMAINS: list[str] = ["services", "validation", "data_quality"]
-
-
 import polars as pl
 
 from splurge_lazyframe_compare.exceptions.comparison_exceptions import (
@@ -34,6 +31,8 @@ from splurge_lazyframe_compare.utils.constants import (
     ZERO_THRESHOLD,
 )
 from splurge_lazyframe_compare.utils.type_helpers import is_numeric_datatype
+
+DOMAINS: list[str] = ["services", "validation", "data_quality"]
 
 
 class ValidationService(BaseService):
@@ -73,19 +72,12 @@ class ValidationService(BaseService):
         try:
             errors = schema.validate_schema(df)
             if errors:
-                raise SchemaValidationError(
-                    f"{df_name} validation failed", validation_errors=errors
-                )
+                raise SchemaValidationError(f"{df_name} validation failed", validation_errors=errors)
         except Exception as e:
             self._handle_error(e, {"operation": "schema_validation", "df_name": df_name})
+            raise
 
-    def validate_primary_key_uniqueness(
-        self,
-        *,
-        df: pl.LazyFrame,
-        config: ComparisonConfig,
-        df_name: str
-    ) -> None:
+    def validate_primary_key_uniqueness(self, *, df: pl.LazyFrame, config: ComparisonConfig, df_name: str) -> None:
         """Validate that primary key columns are unique.
 
         Args:
@@ -99,41 +91,23 @@ class ValidationService(BaseService):
         try:
             # Get the actual primary key columns for this DataFrame
             if df_name == LEFT_DF_NAME:
-                pk_columns = [
-                    mapping.left
-                    for mapping in config.column_mappings
-                    if mapping.name in config.pk_columns
-                ]
+                pk_columns = [mapping.left for mapping in config.column_mappings if mapping.name in config.pk_columns]
             else:
-                pk_columns = [
-                    mapping.right
-                    for mapping in config.column_mappings
-                    if mapping.name in config.pk_columns
-                ]
+                pk_columns = [mapping.right for mapping in config.column_mappings if mapping.name in config.pk_columns]
 
             # Check for duplicates
-            duplicates = (
-                df.group_by(pk_columns)
-                .len()
-                .filter(pl.col(LEN_COLUMN) > DUPLICATE_THRESHOLD)
-            )
+            duplicates = df.group_by(pk_columns).len().filter(pl.col(LEN_COLUMN) > DUPLICATE_THRESHOLD)
 
             duplicate_count = duplicates.select(pl.len()).collect().item()
 
             if duplicate_count > 0:
-                raise PrimaryKeyViolationError(
-                    DUPLICATE_PK_MSG.format(df_name, duplicate_count)
-                )
+                raise PrimaryKeyViolationError(DUPLICATE_PK_MSG.format(df_name, duplicate_count))
 
         except Exception as e:
             self._handle_error(e, {"operation": "primary_key_validation", "df_name": df_name})
+            raise
 
-    def validate_completeness(
-        self,
-        *,
-        df: pl.LazyFrame,
-        required_columns: list[str]
-    ) -> ValidationResult:
+    def validate_completeness(self, *, df: pl.LazyFrame, required_columns: list[str]) -> ValidationResult:
         """Validate that required columns are present and not entirely null.
 
         Args:
@@ -183,13 +157,9 @@ class ValidationService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "completeness_validation"})
+            raise
 
-    def validate_data_types(
-        self,
-        *,
-        df: pl.LazyFrame,
-        expected_types: dict[str, pl.DataType]
-    ) -> ValidationResult:
+    def validate_data_types(self, *, df: pl.LazyFrame, expected_types: dict[str, pl.DataType]) -> ValidationResult:
         """Validate that columns have expected data types.
 
         Args:
@@ -211,11 +181,13 @@ class ValidationService(BaseService):
                     col_index = schema_names.index(col_name)
                     actual_type = schema_dtypes[col_index]
                     if actual_type != expected_type:
-                        type_mismatches.append({
-                            "column": col_name,
-                            "expected": str(expected_type),
-                            "actual": str(actual_type),
-                        })
+                        type_mismatches.append(
+                            {
+                                "column": col_name,
+                                "expected": str(expected_type),
+                                "actual": str(actual_type),
+                            }
+                        )
 
             if type_mismatches:
                 details = {"type_mismatches": type_mismatches}
@@ -229,12 +201,10 @@ class ValidationService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "data_type_validation"})
+            raise
 
     def validate_numeric_ranges(
-        self,
-        *,
-        df: pl.LazyFrame,
-        column_ranges: dict[str, dict[str, float]]
+        self, *, df: pl.LazyFrame, column_ranges: dict[str, dict[str, float]]
     ) -> ValidationResult:
         """Validate that numeric columns fall within expected ranges.
 
@@ -264,22 +234,26 @@ class ValidationService(BaseService):
                     min_value = range_constraints["min"]
                     below_min = df.filter(pl.col(col_name) < min_value).select(pl.len()).collect().item()
                     if below_min > ZERO_THRESHOLD:
-                        range_violations.append({
-                            "column": col_name,
-                            "constraint": f"min >= {min_value}",
-                            "violations": below_min,
-                        })
+                        range_violations.append(
+                            {
+                                "column": col_name,
+                                "constraint": f"min >= {min_value}",
+                                "violations": below_min,
+                            }
+                        )
 
                 # Check maximum value
                 if "max" in range_constraints:
                     max_value = range_constraints["max"]
                     above_max = df.filter(pl.col(col_name) > max_value).select(pl.len()).collect().item()
                     if above_max > ZERO_THRESHOLD:
-                        range_violations.append({
-                            "column": col_name,
-                            "constraint": f"max <= {max_value}",
-                            "violations": above_max,
-                        })
+                        range_violations.append(
+                            {
+                                "column": col_name,
+                                "constraint": f"max <= {max_value}",
+                                "violations": above_max,
+                            }
+                        )
 
             if range_violations:
                 details = {"range_violations": range_violations}
@@ -294,12 +268,7 @@ class ValidationService(BaseService):
         except Exception as e:
             self._handle_error(e, {"operation": "range_validation"})
 
-    def validate_string_patterns(
-        self,
-        *,
-        df: pl.LazyFrame,
-        column_patterns: dict[str, str]
-    ) -> ValidationResult:
+    def validate_string_patterns(self, *, df: pl.LazyFrame, column_patterns: dict[str, str]) -> ValidationResult:
         """Validate that string columns match expected patterns.
 
         Args:
@@ -323,19 +292,16 @@ class ValidationService(BaseService):
                     continue
 
                 # Count rows that don't match the pattern
-                non_matching = (
-                    df.filter(~pl.col(col_name).str.contains(pattern))
-                    .select(pl.len())
-                    .collect()
-                    .item()
-                )
+                non_matching = df.filter(~pl.col(col_name).str.contains(pattern)).select(pl.len()).collect().item()
 
                 if non_matching > ZERO_THRESHOLD:
-                    pattern_violations.append({
-                        "column": col_name,
-                        "pattern": pattern,
-                        "violations": non_matching,
-                    })
+                    pattern_violations.append(
+                        {
+                            "column": col_name,
+                            "pattern": pattern,
+                            "violations": non_matching,
+                        }
+                    )
 
             if pattern_violations:
                 details = {"pattern_violations": pattern_violations}
@@ -350,12 +316,7 @@ class ValidationService(BaseService):
         except Exception as e:
             self._handle_error(e, {"operation": "pattern_validation"})
 
-    def validate_uniqueness(
-        self,
-        *,
-        df: pl.LazyFrame,
-        unique_columns: list[str]
-    ) -> ValidationResult:
+    def validate_uniqueness(self, *, df: pl.LazyFrame, unique_columns: list[str]) -> ValidationResult:
         """Validate that specified columns contain unique values.
 
         Args:
@@ -384,10 +345,12 @@ class ValidationService(BaseService):
                 )
 
                 if duplicates > ZERO_THRESHOLD:
-                    uniqueness_violations.append({
-                        "column": col_name,
-                        "duplicate_groups": duplicates,
-                    })
+                    uniqueness_violations.append(
+                        {
+                            "column": col_name,
+                            "duplicate_groups": duplicates,
+                        }
+                    )
 
             if uniqueness_violations:
                 details = {"uniqueness_violations": uniqueness_violations}

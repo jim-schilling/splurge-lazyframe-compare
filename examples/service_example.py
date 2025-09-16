@@ -33,7 +33,13 @@ def create_sample_data():
         ],
         "amount": [100.0, 200.0, 300.0, 400.0, 500.0],
         "tags": [["urgent", "premium"], ["standard"], ["express", "gift"], ["bulk"], ["repeat"]],
-        "metadata": [{"source": "web"}, {"source": "mobile"}, {"source": "api"}, {"source": "batch"}, {"source": "web"}],
+        "metadata": [
+            {"source": "web"},
+            {"source": "mobile"},
+            {"source": "api"},
+            {"source": "batch"},
+            {"source": "web"},
+        ],
         "status": ["pending", "completed", "pending", "cancelled", "completed"],
         "created_at": [
             datetime(2023, 1, 1, 10, 0, 0),
@@ -68,9 +74,7 @@ def create_sample_data():
     }
 
     left_df = pl.LazyFrame(left_data)
-    right_df = pl.LazyFrame(right_data).with_columns(
-        pl.col("category").cast(pl.Categorical)
-    )
+    right_df = pl.LazyFrame(right_data).with_columns(pl.col("category").cast(pl.Categorical))
 
     return left_df, right_df
 
@@ -85,7 +89,9 @@ def define_schemas():
         "amount": ColumnDefinition(name="amount", alias="Order Amount", datatype="Float64", nullable=False),
         # Complex datatypes using direct Polars types
         "tags": ColumnDefinition(name="tags", alias="Tags", datatype=pl.List(pl.Utf8), nullable=True),
-        "metadata": ColumnDefinition(name="metadata", alias="Metadata", datatype=pl.Struct({"source": pl.Utf8}), nullable=True),
+        "metadata": ColumnDefinition(
+            name="metadata", alias="Metadata", datatype=pl.Struct({"source": pl.Utf8}), nullable=True
+        ),
         "status": ColumnDefinition(name="status", alias="Order Status", datatype="String", nullable=True),
         "created_at": ColumnDefinition(name="created_at", alias="Created At", datatype="Datetime", nullable=False),
     }
@@ -99,7 +105,9 @@ def define_schemas():
         # Using direct Polars datatypes
         "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
         "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
-        "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+        "total_amount": ColumnDefinition(
+            name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False
+        ),
         # Using string names for complex types
         "category": ColumnDefinition(name="category", alias="Category", datatype="Categorical", nullable=False),
         "tags": ColumnDefinition(name="tags", alias="Tags", datatype=pl.List(pl.Utf8), nullable=True),
@@ -156,11 +164,7 @@ def demonstrate_orchestrator():
 
     # Method 1: Direct comparison
     print("\n1. Executing direct comparison...")
-    result = orchestrator.compare_dataframes(
-        config=config,
-        left=left_df,
-        right=right_df
-    )
+    result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
     print(f"   Results: {result.summary.total_left_records} left, {result.summary.total_right_records} right")
     print(f"   Matching: {result.summary.matching_records}")
@@ -171,17 +175,13 @@ def demonstrate_orchestrator():
     # Method 2: Compare and report
     print("\n2. Generating comparison report...")
     report = orchestrator.compare_and_report(
-        config=config,
-        left=left_df,
-        right=right_df,
-        include_samples=True,
-        max_samples=3
+        config=config, left=left_df, right=right_df, include_samples=True, max_samples=3
     )
 
     print("   Report generated successfully!")
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("SAMPLE REPORT:")
-    print("="*50)
+    print("=" * 50)
     print(report[:500] + "..." if len(report) > 500 else report)
 
 
@@ -214,21 +214,14 @@ def demonstrate_new_comparator():
 
     # Method 2: Compare and report in one step
     print("\n2. Generating report...")
-    comparator.compare_and_report(
-        left=left_df,
-        right=right_df,
-        include_samples=False
-    )
+    comparator.compare_and_report(left=left_df, right=right_df, include_samples=False)
 
     print("   Report generated successfully!")
 
     # Method 3: Export results
     print("\n3. Exporting results...")
     exported_files = comparator.compare_and_export(
-        left=left_df,
-        right=right_df,
-        output_dir="./service_example_output",
-        format="parquet"
+        left=left_df, right=right_df, output_dir="./service_example_output", format="parquet"
     )
 
     print(f"   Exported files: {list(exported_files.keys())}")
@@ -254,15 +247,11 @@ def demonstrate_service_injection():
 
     # Create comparison service with injected dependencies
     comparison_service = ComparisonService(
-        validation_service=validation_service,
-        preparation_service=preparation_service
+        validation_service=validation_service, preparation_service=preparation_service
     )
 
     # Create orchestrator with custom services
-    orchestrator = ComparisonOrchestrator(
-        comparison_service=comparison_service,
-        reporting_service=reporting_service
-    )
+    orchestrator = ComparisonOrchestrator(comparison_service=comparison_service, reporting_service=reporting_service)
 
     # Create sample data and configuration
     left_df, right_df = create_sample_data()
@@ -277,11 +266,7 @@ def demonstrate_service_injection():
     )
 
     print("\n1. Using orchestrator with injected services...")
-    result = orchestrator.compare_dataframes(
-        config=config,
-        left=left_df,
-        right=right_df
-    )
+    result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
     print(f"   Custom services working: {result.summary.matching_records} matches found")
 

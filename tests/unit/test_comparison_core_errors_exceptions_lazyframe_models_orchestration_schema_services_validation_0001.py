@@ -31,8 +31,12 @@ class TestLazyFrameComparator:
         self.right_columns = {
             "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
             "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
-            "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
-            "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True),
+            "total_amount": ColumnDefinition(
+                name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False
+            ),
+            "order_status": ColumnDefinition(
+                name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True
+            ),
         }
 
         self.left_schema = ComparisonSchema(
@@ -129,9 +133,12 @@ class TestLazyFrameComparator:
 
         # Check that columns are in the correct alternating order
         expected_columns = [
-            "PK_customer_id", "PK_order_date",  # Primary key columns first
-            "L_amount", "R_amount",             # Then alternating Left/Right
-            "L_status", "R_status"
+            "PK_customer_id",
+            "PK_order_date",  # Primary key columns first
+            "L_amount",
+            "R_amount",  # Then alternating Left/Right
+            "L_status",
+            "R_status",
         ]
 
         assert list(value_diff_df.columns) == expected_columns
@@ -167,8 +174,10 @@ class TestLazyFrameComparator:
 
         # Check that columns are clean (no right columns)
         expected_columns = [
-            "PK_customer_id", "PK_order_date",  # Primary key columns first
-            "L_amount", "L_status"              # Then left columns only
+            "PK_customer_id",
+            "PK_order_date",  # Primary key columns first
+            "L_amount",
+            "L_status",  # Then left columns only
         ]
 
         assert list(left_only_df.columns) == expected_columns
@@ -204,8 +213,10 @@ class TestLazyFrameComparator:
 
         # Check that columns are clean (no left columns)
         expected_columns = [
-            "PK_customer_id", "PK_order_date",  # Primary key columns first
-            "R_amount", "R_status"              # Then right columns only
+            "PK_customer_id",
+            "PK_order_date",  # Primary key columns first
+            "R_amount",
+            "R_status",  # Then right columns only
         ]
 
         assert list(right_only_df.columns) == expected_columns
@@ -495,12 +506,8 @@ class TestLazyFrameComparator:
             "order_status": ["pending", "completed", "pending"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Test with default parameters
         report = self.comparator.compare_and_report(left=left_df, right=right_df)
@@ -509,11 +516,7 @@ class TestLazyFrameComparator:
 
         # Test with custom parameters
         report_custom = self.comparator.compare_and_report(
-            left=left_df,
-            right=right_df,
-            include_samples=False,
-            max_samples=5,
-            table_format="simple"
+            left=left_df, right=right_df, include_samples=False, max_samples=5, table_format="simple"
         )
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report_custom
         assert "3" in report_custom
@@ -533,12 +536,8 @@ class TestLazyFrameComparator:
             "order_status": ["pending", "completed", "shipped"],  # Different status
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         report = self.comparator.compare_and_report(left=left_df, right=right_df)
         assert "VALUE DIFFERENCES" in report
@@ -566,20 +565,12 @@ class TestLazyFrameComparator:
             "order_status": ["pending", "completed", "shipped"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test parquet export (default)
-            exported_files = self.comparator.compare_and_export(
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir
-            )
+            exported_files = self.comparator.compare_and_export(left=left_df, right=right_df, output_dir=temp_dir)
 
             # Should export 4 files: value_differences, left_only, right_only, summary
             assert len(exported_files) == 4
@@ -587,26 +578,23 @@ class TestLazyFrameComparator:
                 assert Path(file_path).exists()
                 assert Path(file_path).stat().st_size > 0
                 # Summary is always JSON, others are parquet
-                if 'summary' in file_path:
-                    assert file_path.endswith('.json')
+                if "summary" in file_path:
+                    assert file_path.endswith(".json")
                 else:
-                    assert file_path.endswith('.parquet')
+                    assert file_path.endswith(".parquet")
 
             # Test CSV export
             exported_csv = self.comparator.compare_and_export(
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="csv"
+                left=left_df, right=right_df, output_dir=temp_dir, format="csv"
             )
 
             for file_path in exported_csv.values():
                 assert Path(file_path).exists()
                 # Summary is always JSON, others are csv
-                if 'summary' in file_path:
-                    assert file_path.endswith('.json')
+                if "summary" in file_path:
+                    assert file_path.endswith(".json")
                 else:
-                    assert file_path.endswith('.csv')
+                    assert file_path.endswith(".csv")
 
     def test_compare_and_export_empty_results(self) -> None:
         """Test compare_and_export with empty results."""
@@ -621,9 +609,7 @@ class TestLazyFrameComparator:
             "status": ["pending", "completed", "pending"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right data with correct column names
         right_data = {
@@ -633,23 +619,18 @@ class TestLazyFrameComparator:
             "order_status": ["pending", "completed", "pending"],
         }
 
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         with tempfile.TemporaryDirectory() as temp_dir:
             exported_files = self.comparator.compare_and_export(
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="csv"
+                left=left_df, right=right_df, output_dir=temp_dir, format="csv"
             )
 
             # Should export summary file (no differences so other files are not created)
             assert len(exported_files) == 1  # Only summary file
             for file_path in exported_files.values():
                 assert Path(file_path).exists()
-                assert file_path.endswith('.json')  # Summary is always exported as JSON
+                assert file_path.endswith(".json")  # Summary is always exported as JSON
 
     def test_to_report_method(self) -> None:
         """Test to_report method returns ComparisonReport instance."""
@@ -708,11 +689,7 @@ class TestLazyFrameComparator:
 
         # Test with negative max_samples
         with pytest.raises((ValueError, TypeError)):
-            simple_comparator.compare_and_report(
-                left=valid_df,
-                right=valid_df,
-                max_samples=-1
-            )
+            simple_comparator.compare_and_report(left=valid_df, right=valid_df, max_samples=-1)
 
     def test_compare_and_export_parameter_validation(self) -> None:
         """Test compare_and_export parameter validation."""
@@ -741,41 +718,35 @@ class TestLazyFrameComparator:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test with invalid output directory (try to create in a file location)
             import os
+
             invalid_path = os.path.join(temp_dir, "not_a_directory.txt")
             with open(invalid_path, "w") as f:
                 f.write("this is a file, not a directory")
 
             with pytest.raises((ValueError, TypeError, OSError)):
-                self.comparator.compare_and_export(
-                    left=left_df,
-                    right=right_df,
-                    output_dir=invalid_path
-                )
+                self.comparator.compare_and_export(left=left_df, right=right_df, output_dir=invalid_path)
 
             # Test with invalid dataframe
             with pytest.raises(ValueError, match="left must be a polars LazyFrame"):
-                self.comparator.compare_and_export(
-                    left=invalid_df,
-                    right=right_df,
-                    output_dir=temp_dir
-                )
+                self.comparator.compare_and_export(left=invalid_df, right=right_df, output_dir=temp_dir)
 
     def test_compare_with_mismatched_schema(self) -> None:
         """Test compare method with mismatched schema."""
         # Create dataframes with different schemas
-        left_df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        left_df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],  # Different column name
-            "full_name": ["Alice", "Bob", "Charlie"]  # Different column name
-        })
+        right_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],  # Different column name
+                "full_name": ["Alice", "Bob", "Charlie"],  # Different column name
+            }
+        )
 
         # This should raise a SchemaValidationError due to missing columns
         with pytest.raises(SchemaValidationError):
             self.comparator.compare(left=left_df, right=right_df)
+
+
 class TestComparisonReport:
     """Test ComparisonReport class functionality."""
 
@@ -793,8 +764,12 @@ class TestComparisonReport:
         right_columns = {
             "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
             "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
-            "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
-            "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True),
+            "total_amount": ColumnDefinition(
+                name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False
+            ),
+            "order_status": ColumnDefinition(
+                name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True
+            ),
         }
 
         left_schema = ComparisonSchema(
@@ -853,19 +828,11 @@ class TestComparisonReport:
             "order_status": ["pending", "completed", "shipped"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Create report and generate from result
         report = ComparisonReport(self.orchestrator, self.config)
@@ -890,9 +857,7 @@ class TestComparisonReport:
             "status": ["pending", "completed", "pending"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right data with correct column names for schema
         right_data = {
@@ -902,16 +867,10 @@ class TestComparisonReport:
             "order_status": ["pending", "completed", "pending"],
         }
 
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Create report and generate from result first
         report = ComparisonReport(self.orchestrator, self.config)
@@ -935,9 +894,7 @@ class TestComparisonReport:
             "status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right data with correct column names for schema
         right_data = {
@@ -947,16 +904,10 @@ class TestComparisonReport:
             "order_status": ["pending", "completed"],
         }
 
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Create report and generate summary with explicit result
         report = ComparisonReport(self.orchestrator, self.config)
@@ -992,19 +943,11 @@ class TestComparisonReport:
             "order_status": ["pending", "completed", "shipped"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Create report
         report = ComparisonReport(self.orchestrator, self.config)
@@ -1015,11 +958,7 @@ class TestComparisonReport:
         assert "VALUE DIFFERENCES" in detailed_report
 
         # Test with custom parameters
-        detailed_report_custom = report.generate_detailed_report(
-            result=result,
-            max_samples=2,
-            table_format="simple"
-        )
+        detailed_report_custom = report.generate_detailed_report(result=result, max_samples=2, table_format="simple")
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in detailed_report_custom
 
     def test_generate_detailed_report_no_result_error(self) -> None:
@@ -1043,9 +982,7 @@ class TestComparisonReport:
             "status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right data with correct column names for schema
         right_data = {
@@ -1055,16 +992,10 @@ class TestComparisonReport:
             "order_status": ["pending", "completed"],
         }
 
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Create report and generate summary table
         report = ComparisonReport(self.orchestrator, self.config)
@@ -1072,6 +1003,7 @@ class TestComparisonReport:
 
         assert "Left DataFrame" in table_report
         assert "2" in table_report  # Record counts
+
     def test_report_state_management(self) -> None:
         """Test that report properly manages internal state."""
         from splurge_lazyframe_compare.core.comparator import ComparisonReport
@@ -1092,32 +1024,18 @@ class TestComparisonReport:
             "order_status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute two different comparisons
-        result1 = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result1 = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Modify data for second comparison
         right_data2 = right_data.copy()
         right_data2["total_amount"] = [100.0, 250.0]  # Change one amount
-        right_df2 = pl.LazyFrame(right_data2).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df2 = pl.LazyFrame(right_data2).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
-        result2 = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df2
-        )
+        result2 = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df2)
 
         # Create report and test state management
         report = ComparisonReport(self.orchestrator, self.config)

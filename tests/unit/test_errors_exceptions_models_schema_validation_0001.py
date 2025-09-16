@@ -1,6 +1,5 @@
 """Tests for the schema module."""
 
-
 import polars as pl
 import pytest
 
@@ -67,6 +66,8 @@ class TestColumnDefinition:
         # Test with missing column
         df = pl.LazyFrame({"other_col": [1, 2, 3]})
         assert col_def.validate_data_type(df) is False
+
+
 class TestColumnMapping:
     """Test ColumnMapping class."""
 
@@ -81,6 +82,8 @@ class TestColumnMapping:
         assert mapping.left == "left_col"
         assert mapping.right == "right_col"
         assert mapping.name == "standard_name"
+
+
 class TestComparisonSchema:
     """Test ComparisonSchema class."""
 
@@ -111,10 +114,12 @@ class TestComparisonSchema:
             pk_columns=["id"],
         )
 
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-        })
+        df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+            }
+        )
 
         errors = schema.validate_schema(df)
         assert len(errors) == 0
@@ -147,10 +152,12 @@ class TestComparisonSchema:
             pk_columns=["id"],
         )
 
-        df = pl.LazyFrame({
-            "id": ["1", "2", "3"],  # Wrong type (string instead of int)
-            "name": ["Alice", "Bob", "Charlie"],
-        })
+        df = pl.LazyFrame(
+            {
+                "id": ["1", "2", "3"],  # Wrong type (string instead of int)
+                "name": ["Alice", "Bob", "Charlie"],
+            }
+        )
 
         errors = schema.validate_schema(df)
         assert len(errors) == 1
@@ -167,10 +174,12 @@ class TestComparisonSchema:
             pk_columns=["id"],
         )
 
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", None, "Charlie"],  # Contains null
-        })
+        df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", None, "Charlie"],  # Contains null
+            }
+        )
 
         errors = schema.validate_schema(df)
         assert len(errors) == 1
@@ -224,6 +233,8 @@ class TestComparisonSchema:
         assert "name" in compare_cols
         assert "age" in compare_cols
         assert "id" not in compare_cols
+
+
 class TestComparisonConfig:
     """Test ComparisonConfig class."""
 

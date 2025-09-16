@@ -85,16 +85,16 @@ class ColumnDefinition:
         # Check for unparameterized complex types and provide helpful error messages
         try:
             type_name = get_polars_datatype_name(self.datatype)
-            if type_name == 'List':
+            if type_name == "List":
                 # Check if this is an unparameterized List by seeing if it has an inner type
-                if not hasattr(self.datatype, 'inner'):
+                if not hasattr(self.datatype, "inner"):
                     raise ValueError(
                         f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
                         f"Use pl.List(inner_type) instead, e.g., pl.List(pl.Utf8) for a list of strings."
                     )
-            elif type_name == 'Struct':
+            elif type_name == "Struct":
                 # Check if this is an unparameterized Struct by seeing if it has fields
-                if not hasattr(self.datatype, 'fields') or self.datatype.fields is None:
+                if not hasattr(self.datatype, "fields") or self.datatype.fields is None:
                     raise ValueError(
                         f"ColumnDefinition.datatype cannot be unparameterized {type_name}. "
                         f"Use pl.Struct(fields) instead, e.g., pl.Struct([]) for an empty struct "
@@ -112,15 +112,13 @@ class ColumnDefinition:
             # Provide more specific error message for complex types
             try:
                 type_name = get_polars_datatype_name(self.datatype)
-                if type_name in ['List', 'Struct']:
+                if type_name in ["List", "Struct"]:
                     # Check if this is actually parameterized
-                    if type_name == 'List' and hasattr(self.datatype, 'inner'):
+                    if type_name == "List" and hasattr(self.datatype, "inner"):
                         # This is a parameterized List, so the error is not about parameterization
                         pass
                     elif (
-                        type_name == 'Struct'
-                        and hasattr(self.datatype, 'fields')
-                        and self.datatype.fields is not None
+                        type_name == "Struct" and hasattr(self.datatype, "fields") and self.datatype.fields is not None
                     ):
                         # This is a parameterized Struct, so the error is not about parameterization
                         pass
@@ -208,10 +206,7 @@ class ComparisonSchema:
     columns: dict[str, ColumnDefinition]
     pk_columns: list[str]
 
-    def validate_schema(
-        self,
-        df: pl.LazyFrame
-    ) -> list[str]:
+    def validate_schema(self, df: pl.LazyFrame) -> list[str]:
         """Validate DataFrame against schema, return validation errors.
 
         Args:
@@ -259,22 +254,18 @@ class ComparisonSchema:
                 actual_dtype = df_dtypes[df_column_names.index(col_name)]
                 # Allow Null dtype for empty DataFrames
                 if actual_dtype != col_def.datatype and actual_dtype != pl.Null:
-                    errors.append(
-                        SchemaConstants.WRONG_DTYPE_MSG.format(col_name, col_def.datatype, actual_dtype)
-                    )
+                    errors.append(SchemaConstants.WRONG_DTYPE_MSG.format(col_name, col_def.datatype, actual_dtype))
 
         # Validate nullable constraints - optimized to collect once
         non_nullable_columns = [
-            col_name for col_name, col_def in self.columns.items()
-            if col_name in df_columns and not col_def.nullable
+            col_name for col_name, col_def in self.columns.items() if col_name in df_columns and not col_def.nullable
         ]
 
         if non_nullable_columns:
             # Collect null counts for all non-nullable columns in one operation
-            null_counts_df = df.select([
-                pl.col(col).is_null().sum().alias(col)
-                for col in non_nullable_columns
-            ]).collect()
+            null_counts_df = df.select(
+                [pl.col(col).is_null().sum().alias(col) for col in non_nullable_columns]
+            ).collect()
 
             # Check each column for null violations
             for col_name in non_nullable_columns:
@@ -417,6 +408,9 @@ class ComparisonConfig:
                 # Check that tolerance makes sense for the data type
                 if col_name in self.left_schema.columns:
                     left_dtype = self.left_schema.columns[col_name].datatype
+                    # ColumnDefinition.datatype can be a string or a Polars DataType; coerce to DataType
+                    if isinstance(left_dtype, str):
+                        left_dtype = get_polars_datatype_type(left_dtype)
                     if not self._is_numeric_dtype(left_dtype):
                         errors.append(f"Tolerance specified for non-numeric column '{col_name}' with type {left_dtype}")
 
@@ -439,9 +433,7 @@ class ComparisonConfig:
             errors.append(f"Right schema has duplicate column references: {duplicates}")
 
         if errors:
-            raise SchemaValidationError(
-                "Configuration validation failed", validation_errors=errors
-            )
+            raise SchemaValidationError("Configuration validation failed", validation_errors=errors)
 
     def _is_numeric_dtype(self, dtype: pl.DataType) -> bool:
         """Check if a Polars data type is numeric and supports tolerance comparisons.
@@ -453,9 +445,16 @@ class ComparisonConfig:
             True if the data type supports numeric tolerance comparisons
         """
         numeric_types = {
-            pl.Int8, pl.Int16, pl.Int32, pl.Int64,
-            pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
-            pl.Float32, pl.Float64,
-            pl.Decimal
+            pl.Int8,
+            pl.Int16,
+            pl.Int32,
+            pl.Int64,
+            pl.UInt8,
+            pl.UInt16,
+            pl.UInt32,
+            pl.UInt64,
+            pl.Float32,
+            pl.Float64,
+            pl.Decimal,
         }
         return dtype in numeric_types
