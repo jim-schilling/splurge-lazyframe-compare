@@ -4,8 +4,8 @@ from pathlib import Path
 
 import polars as pl
 
-from splurge_lazyframe_compare.services.reporting_service import ReportingService
 from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
+from splurge_lazyframe_compare.services.reporting_service import ReportingService
 from splurge_lazyframe_compare.utils.constants import SUMMARY_SCHEMA_VERSION
 
 
@@ -50,4 +50,3 @@ def test_export_summary_envelope_has_version_and_summary() -> None:
             "right_only_count",
             "comparison_timestamp",
         }
-

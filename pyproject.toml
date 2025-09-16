@@ -35,14 +35,16 @@ dependencies = [
 
 [project.scripts]
 slc = "splurge_lazyframe_compare.cli:main"
+splurge-lazyframe-compare = "splurge_lazyframe_compare.cli:main"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-xdist>=3.0.0",
-    "hypothesis>=6.0.0",
     "ruff>=0.1.0",
+    "pre-commit>=2.20.0",
+    "mypy>=1.0.0",
 ]
 
 [tool.ruff]

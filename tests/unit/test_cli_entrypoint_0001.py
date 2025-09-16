@@ -14,7 +14,7 @@ def load_main_module() -> ModuleType:
 
 def test_cli_help_displays_usage_and_exits() -> None:
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
 
     with pytest.raises(SystemExit) as exc:
         main(["--help"])  # Argparse help should exit
@@ -24,7 +24,7 @@ def test_cli_help_displays_usage_and_exits() -> None:
 
 def test_cli_compare_dry_run_succeeds_and_outputs_message(capsys: pytest.CaptureFixture[str]) -> None:
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
 
     exit_code = main(["compare", "--dry-run"])  # Should not require dataframes
     captured = capsys.readouterr()
@@ -35,7 +35,7 @@ def test_cli_compare_dry_run_succeeds_and_outputs_message(capsys: pytest.Capture
 
 def test_cli_namespace_and_program_name_in_help(capsys: pytest.CaptureFixture[str]) -> None:
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
 
     with pytest.raises(SystemExit):
         main(["-h"])  # triggers help
@@ -46,7 +46,7 @@ def test_cli_namespace_and_program_name_in_help(capsys: pytest.CaptureFixture[st
 
 def test_cli_report_and_export_help() -> None:
     main_mod = load_main_module()
-    main = getattr(main_mod, "main")
+    main = main_mod.main
 
     with pytest.raises(SystemExit):
         main(["report", "-h"])  # subcommand help exits

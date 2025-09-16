@@ -62,16 +62,9 @@ class TestEdgeCasesEmptyDataFrames:
     def test_empty_left_dataframe(self) -> None:
         """Test comparison with empty left DataFrame."""
         left_df = pl.LazyFrame(schema={"id": pl.Int64, "name": pl.Utf8})
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "full_name": ["Alice", "Bob"]
-        })
+        right_df = pl.LazyFrame({"customer_id": [1, 2], "full_name": ["Alice", "Bob"]})
 
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         assert result.summary.total_left_records == 0
         assert result.summary.total_right_records == 2
@@ -81,17 +74,10 @@ class TestEdgeCasesEmptyDataFrames:
 
     def test_empty_right_dataframe(self) -> None:
         """Test comparison with empty right DataFrame."""
-        left_df = pl.LazyFrame({
-            "id": [1, 2],
-            "name": ["Alice", "Bob"]
-        })
+        left_df = pl.LazyFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
         right_df = pl.LazyFrame(schema={"customer_id": pl.Int64, "full_name": pl.Utf8})
 
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         assert result.summary.total_left_records == 2
         assert result.summary.total_right_records == 0
@@ -104,11 +90,7 @@ class TestEdgeCasesEmptyDataFrames:
         left_df = pl.LazyFrame(schema={"id": pl.Int64, "name": pl.Utf8})
         right_df = pl.LazyFrame(schema={"customer_id": pl.Int64, "full_name": pl.Utf8})
 
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         assert result.summary.total_left_records == 0
         assert result.summary.total_right_records == 0
@@ -123,11 +105,7 @@ class TestEdgeCasesEmptyDataFrames:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             exported_files = self.orchestrator.compare_and_export(
-                config=self.config,
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="csv"
+                config=self.config, left=left_df, right=right_df, output_dir=temp_dir, format="csv"
             )
 
             # Should export summary file even when dataframes are empty
@@ -135,21 +113,19 @@ class TestEdgeCasesEmptyDataFrames:
             assert len(exported_files) == 1  # Only summary file
             for file_path in exported_files.values():
                 assert Path(file_path).exists()
-                assert file_path.endswith('.json')  # Summary is always exported as JSON
+                assert file_path.endswith(".json")  # Summary is always exported as JSON
 
     def test_empty_dataframe_report(self) -> None:
         """Test generating reports with empty DataFrames."""
         left_df = pl.LazyFrame(schema={"id": pl.Int64, "name": pl.Utf8})
         right_df = pl.LazyFrame(schema={"customer_id": pl.Int64, "full_name": pl.Utf8})
 
-        report = self.orchestrator.compare_and_report(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        report = self.orchestrator.compare_and_report(config=self.config, left=left_df, right=right_df)
 
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report
         assert "0" in report  # Record counts should be 0
+
+
 class TestDataTypeEdgeCases:
     """Test edge cases with various Polars data types."""
 
@@ -174,14 +150,20 @@ class TestDataTypeEdgeCases:
         left_schema = ComparisonSchema(
             columns={
                 "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
-                "timestamp": ColumnDefinition(name="timestamp", alias="Timestamp", datatype=pl.Datetime(time_unit="us"), nullable=False),
+                "timestamp": ColumnDefinition(
+                    name="timestamp", alias="Timestamp", datatype=pl.Datetime(time_unit="us"), nullable=False
+                ),
             },
             pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
-                "event_time": ColumnDefinition(name="event_time", alias="Event Time", datatype=pl.Datetime(time_unit="us"), nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
+                "event_time": ColumnDefinition(
+                    name="event_time", alias="Event Time", datatype=pl.Datetime(time_unit="us"), nullable=False
+                ),
             },
             pk_columns=["customer_id"],
         )
@@ -197,11 +179,7 @@ class TestDataTypeEdgeCases:
         )
 
         orchestrator = ComparisonOrchestrator()
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         assert result.summary.matching_records == 2
 
@@ -228,8 +206,12 @@ class TestDataTypeEdgeCases:
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
-                "categories": ColumnDefinition(name="categories", alias="Categories", datatype=pl.List(pl.Utf8), nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
+                "categories": ColumnDefinition(
+                    name="categories", alias="Categories", datatype=pl.List(pl.Utf8), nullable=False
+                ),
             },
             pk_columns=["customer_id"],
         )
@@ -245,11 +227,7 @@ class TestDataTypeEdgeCases:
         )
 
         orchestrator = ComparisonOrchestrator()
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         assert result.summary.matching_records == 2
 
@@ -257,17 +235,11 @@ class TestDataTypeEdgeCases:
         """Test columns containing struct/nested data."""
         left_data = {
             "id": [1, 2],
-            "address": [
-                {"street": "123 Main St", "city": "Anytown"},
-                {"street": "456 Oak Ave", "city": "Somewhere"}
-            ],
+            "address": [{"street": "123 Main St", "city": "Anytown"}, {"street": "456 Oak Ave", "city": "Somewhere"}],
         }
         right_data = {
             "customer_id": [1, 2],
-            "location": [
-                {"street": "123 Main St", "city": "Anytown"},
-                {"street": "456 Oak Ave", "city": "Somewhere"}
-            ],
+            "location": [{"street": "123 Main St", "city": "Anytown"}, {"street": "456 Oak Ave", "city": "Somewhere"}],
         }
 
         left_df = pl.LazyFrame(left_data)
@@ -279,14 +251,20 @@ class TestDataTypeEdgeCases:
         left_schema = ComparisonSchema(
             columns={
                 "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
-                "address": ColumnDefinition(name="address", alias="Address", datatype=pl.Struct(address_schema), nullable=False),
+                "address": ColumnDefinition(
+                    name="address", alias="Address", datatype=pl.Struct(address_schema), nullable=False
+                ),
             },
             pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
-                "location": ColumnDefinition(name="location", alias="Location", datatype=pl.Struct(address_schema), nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
+                "location": ColumnDefinition(
+                    name="location", alias="Location", datatype=pl.Struct(address_schema), nullable=False
+                ),
             },
             pk_columns=["customer_id"],
         )
@@ -302,11 +280,7 @@ class TestDataTypeEdgeCases:
         )
 
         orchestrator = ComparisonOrchestrator()
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         assert result.summary.matching_records == 2
 
@@ -327,14 +301,20 @@ class TestDataTypeEdgeCases:
         left_schema = ComparisonSchema(
             columns={
                 "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
-                "optional_field": ColumnDefinition(name="optional_field", alias="Optional Field", datatype=pl.Utf8, nullable=True),
+                "optional_field": ColumnDefinition(
+                    name="optional_field", alias="Optional Field", datatype=pl.Utf8, nullable=True
+                ),
             },
             pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
-                "optional_data": ColumnDefinition(name="optional_data", alias="Optional Data", datatype=pl.Utf8, nullable=True),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
+                "optional_data": ColumnDefinition(
+                    name="optional_data", alias="Optional Data", datatype=pl.Utf8, nullable=True
+                ),
             },
             pk_columns=["customer_id"],
         )
@@ -351,11 +331,7 @@ class TestDataTypeEdgeCases:
         )
 
         orchestrator = ComparisonOrchestrator()
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         assert result.summary.matching_records == 3  # All should match including null values
 
@@ -382,7 +358,9 @@ class TestDataTypeEdgeCases:
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
                 "amount": ColumnDefinition(name="amount", alias="Amount", datatype=pl.Float64, nullable=False),
             },
             pk_columns=["customer_id"],
@@ -400,15 +378,13 @@ class TestDataTypeEdgeCases:
         )
 
         orchestrator = ComparisonOrchestrator()
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         # With small tolerance, these should match
         assert result.summary.matching_records == 3
         assert result.summary.value_differences_count == 0
+
+
 class TestConfigurationValidationEdgeCases:
     """Test edge cases in configuration validation."""
 
@@ -423,7 +399,9 @@ class TestConfigurationValidationEdgeCases:
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
                 "full_name": ColumnDefinition(name="full_name", alias="Full Name", datatype=pl.Utf8, nullable=False),
             },
             pk_columns=["customer_id"],
@@ -448,7 +426,9 @@ class TestConfigurationValidationEdgeCases:
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
                 "full_name": ColumnDefinition(name="full_name", alias="Full Name", datatype=pl.Utf8, nullable=False),
             },
             pk_columns=["customer_id"],
@@ -477,9 +457,13 @@ class TestConfigurationValidationEdgeCases:
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
                 "full_name": ColumnDefinition(name="full_name", alias="Full Name", datatype=pl.Utf8, nullable=False),
-                "email_addr": ColumnDefinition(name="email_addr", alias="Email Address", datatype=pl.Utf8, nullable=False),
+                "email_addr": ColumnDefinition(
+                    name="email_addr", alias="Email Address", datatype=pl.Utf8, nullable=False
+                ),
             },
             pk_columns=["customer_id"],
         )
@@ -501,6 +485,8 @@ class TestConfigurationValidationEdgeCases:
         error_msg = str(exc_info.value)
         assert "duplicate column mapping names" in error_msg.lower()
         assert "name" in error_msg
+
+
 class TestPerformanceAndScalability:
     """Test performance and scalability scenarios."""
 
@@ -520,7 +506,9 @@ class TestPerformanceAndScalability:
 
         # Create right data with some differences (within tolerance)
         right_data = left_data.copy()
-        right_data["value"] = [v + random.uniform(-2, 2) for v in right_data["value"]]  # Small variation within tolerance
+        right_data["value"] = [
+            v + random.uniform(-2, 2) for v in right_data["value"]
+        ]  # Small variation within tolerance
 
         left_df = pl.LazyFrame(left_data)
         right_df = pl.LazyFrame(right_data)
@@ -559,11 +547,7 @@ class TestPerformanceAndScalability:
         )
 
         orchestrator = ComparisonOrchestrator()
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         assert result.summary.total_left_records == num_records
         assert result.summary.total_right_records == num_records
@@ -607,28 +591,22 @@ class TestPerformanceAndScalability:
         orchestrator = ComparisonOrchestrator()
 
         # Test that comparison completes without memory issues
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         assert result.summary.matching_records == num_records
 
         # Test export functionality with large data
         with tempfile.TemporaryDirectory() as temp_dir:
             exported_files = orchestrator.compare_and_export(
-                config=config,
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="parquet"
+                config=config, left=left_df, right=right_df, output_dir=temp_dir, format="parquet"
             )
 
             assert len(exported_files) == 1  # Only summary file when data is identical
             for file_path in exported_files.values():
                 assert Path(file_path).exists()
-                assert file_path.endswith('.json')  # Summary is always JSON
+                assert file_path.endswith(".json")  # Summary is always JSON
+
+
 class TestRealWorldUsagePatterns:
     """Test real-world usage patterns and scenarios."""
 
@@ -639,7 +617,13 @@ class TestRealWorldUsagePatterns:
             "customer_id": [1001, 1002, 1003, 1004, 1005],
             "first_name": ["John", "Jane", "Bob", "Alice", "Charlie"],
             "last_name": ["Doe", "Smith", "Johnson", "Williams", "Brown"],
-            "email": ["john.doe@email.com", "jane.smith@email.com", "bob.johnson@email.com", "alice.w@email.com", "charlie.brown@email.com"],
+            "email": [
+                "john.doe@email.com",
+                "jane.smith@email.com",
+                "bob.johnson@email.com",
+                "alice.w@email.com",
+                "charlie.brown@email.com",
+            ],
             "phone": ["555-0101", "555-0102", "555-0103", "555-0104", "555-0105"],
             "signup_date": ["2023-01-15", "2023-02-20", "2023-03-10", "2023-04-05", "2023-05-12"],
             "last_login": ["2024-01-10", "2024-01-08", "2024-01-12", "2024-01-05", "2024-01-11"],
@@ -652,32 +636,48 @@ class TestRealWorldUsagePatterns:
             "cust_id": [1001, 1002, 1003, 1006, 1007],  # Different ID format, missing 1004, extra customers
             "fname": ["John", "Jane", "Bob", "David", "Eve"],  # Different column names
             "lname": ["Doe", "Smith", "Johnson", "Miller", "Davis"],
-            "email_addr": ["john.doe@email.com", "jane.smith@email.com", "bob.johnson@email.com", "david.m@email.com", "eve.davis@email.com"],
+            "email_addr": [
+                "john.doe@email.com",
+                "jane.smith@email.com",
+                "bob.johnson@email.com",
+                "david.m@email.com",
+                "eve.davis@email.com",
+            ],
             "contact_phone": ["555-0101", "555-0102", "555-0103", "555-0106", "555-0107"],  # Different column name
-            "registration_date": ["2023-01-15", "2023-02-20", "2023-03-10", "2023-06-01", "2023-07-15"],  # Different column name
+            "registration_date": [
+                "2023-01-15",
+                "2023-02-20",
+                "2023-03-10",
+                "2023-06-01",
+                "2023-07-15",
+            ],  # Different column name
             "balance": [1250.50, 950.25, 2100.75, 1800.00, 750.00],  # Different column name, different balance for Jane
             "status": ["active", "active", "inactive", "active", "active"],  # Different representation
         }
 
         left_df = pl.LazyFrame(left_data).with_columns(
             pl.col("signup_date").str.strptime(pl.Date, "%Y-%m-%d"),
-            pl.col("last_login").str.strptime(pl.Date, "%Y-%m-%d")
+            pl.col("last_login").str.strptime(pl.Date, "%Y-%m-%d"),
         )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("registration_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("registration_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Define schemas
         left_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
                 "first_name": ColumnDefinition(name="first_name", alias="First Name", datatype=pl.Utf8, nullable=False),
                 "last_name": ColumnDefinition(name="last_name", alias="Last Name", datatype=pl.Utf8, nullable=False),
                 "email": ColumnDefinition(name="email", alias="Email", datatype=pl.Utf8, nullable=False),
                 "phone": ColumnDefinition(name="phone", alias="Phone", datatype=pl.Utf8, nullable=False),
-                "signup_date": ColumnDefinition(name="signup_date", alias="Signup Date", datatype=pl.Date, nullable=False),
+                "signup_date": ColumnDefinition(
+                    name="signup_date", alias="Signup Date", datatype=pl.Date, nullable=False
+                ),
                 "last_login": ColumnDefinition(name="last_login", alias="Last Login", datatype=pl.Date, nullable=False),
-                "account_balance": ColumnDefinition(name="account_balance", alias="Account Balance", datatype=pl.Float64, nullable=False),
+                "account_balance": ColumnDefinition(
+                    name="account_balance", alias="Account Balance", datatype=pl.Float64, nullable=False
+                ),
                 "is_active": ColumnDefinition(name="is_active", alias="Is Active", datatype=pl.Utf8, nullable=False),
             },
             pk_columns=["customer_id"],
@@ -689,8 +689,12 @@ class TestRealWorldUsagePatterns:
                 "fname": ColumnDefinition(name="fname", alias="First Name", datatype=pl.Utf8, nullable=False),
                 "lname": ColumnDefinition(name="lname", alias="Last Name", datatype=pl.Utf8, nullable=False),
                 "email_addr": ColumnDefinition(name="email_addr", alias="Email", datatype=pl.Utf8, nullable=False),
-                "contact_phone": ColumnDefinition(name="contact_phone", alias="Phone", datatype=pl.Utf8, nullable=False),
-                "registration_date": ColumnDefinition(name="registration_date", alias="Registration Date", datatype=pl.Date, nullable=False),
+                "contact_phone": ColumnDefinition(
+                    name="contact_phone", alias="Phone", datatype=pl.Utf8, nullable=False
+                ),
+                "registration_date": ColumnDefinition(
+                    name="registration_date", alias="Registration Date", datatype=pl.Date, nullable=False
+                ),
                 "balance": ColumnDefinition(name="balance", alias="Balance", datatype=pl.Float64, nullable=False),
                 "status": ColumnDefinition(name="status", alias="Status", datatype=pl.Utf8, nullable=False),
             },
@@ -720,11 +724,7 @@ class TestRealWorldUsagePatterns:
         orchestrator = ComparisonOrchestrator()
 
         # 1. Compare dataframes
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         # Validate results
         assert result.summary.total_left_records == 5
@@ -736,11 +736,7 @@ class TestRealWorldUsagePatterns:
 
         # 2. Generate comprehensive report
         report = orchestrator.compare_and_report(
-            config=config,
-            left=left_df,
-            right=right_df,
-            include_samples=True,
-            max_samples=3
+            config=config, left=left_df, right=right_df, include_samples=True, max_samples=3
         )
 
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report
@@ -751,11 +747,7 @@ class TestRealWorldUsagePatterns:
         # 3. Export results
         with tempfile.TemporaryDirectory() as temp_dir:
             exported_files = orchestrator.compare_and_export(
-                config=config,
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="csv"
+                config=config, left=left_df, right=right_df, output_dir=temp_dir, format="csv"
             )
 
             assert len(exported_files) == 4
@@ -763,10 +755,7 @@ class TestRealWorldUsagePatterns:
                 assert Path(file_path).exists()
 
         # 4. Test report generation from result
-        detailed_report = orchestrator.generate_report_from_result(
-            result=result,
-            report_type="detailed"
-        )
+        detailed_report = orchestrator.generate_report_from_result(result=result, report_type="detailed")
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in detailed_report
 
         # 5. Test summary generation
@@ -813,11 +802,7 @@ class TestRealWorldUsagePatterns:
         left_df1 = pl.LazyFrame(base_left)
         right_df1 = pl.LazyFrame(base_right)
 
-        result1 = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df1,
-            right=right_df1
-        )
+        result1 = orchestrator.compare_dataframes(config=config, left=left_df1, right=right_df1)
 
         assert result1.summary.matching_records == 3
 
@@ -834,11 +819,7 @@ class TestRealWorldUsagePatterns:
         left_df2 = pl.LazyFrame(updated_left)
         right_df2 = pl.LazyFrame(updated_right)
 
-        result2 = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df2,
-            right=right_df2
-        )
+        result2 = orchestrator.compare_dataframes(config=config, left=left_df2, right=right_df2)
 
         assert result2.summary.total_left_records == 5
         assert result2.summary.total_right_records == 4
@@ -850,25 +831,24 @@ class TestRealWorldUsagePatterns:
     def test_error_recovery_and_reporting(self) -> None:
         """Test error recovery and comprehensive error reporting."""
         # Create invalid data that will cause schema validation errors
-        left_df = pl.LazyFrame({
-            "wrong_column": [1, 2, 3]
-        })
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        left_df = pl.LazyFrame({"wrong_column": [1, 2, 3]})
+        right_df = pl.LazyFrame({"customer_id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
         # Create config that expects different columns
         left_schema = ComparisonSchema(
             columns={
-                "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),  # This column doesn't exist
+                "id": ColumnDefinition(
+                    name="id", alias="ID", datatype=pl.Int64, nullable=False
+                ),  # This column doesn't exist
                 "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
             },
             pk_columns=["id"],
         )
         right_schema = ComparisonSchema(
             columns={
-                "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
+                "customer_id": ColumnDefinition(
+                    name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False
+                ),
                 "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
             },
             pk_columns=["customer_id"],
@@ -888,11 +868,7 @@ class TestRealWorldUsagePatterns:
 
         # Test that schema validation errors are properly caught and reported
         with pytest.raises(SchemaValidationError) as exc_info:
-            orchestrator.compare_dataframes(
-                config=config,
-                left=left_df,
-                right=right_df
-            )
+            orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         # Verify error message contains useful information
         error_msg = str(exc_info.value)
@@ -900,11 +876,7 @@ class TestRealWorldUsagePatterns:
 
         # Test that other operations handle errors gracefully
         try:
-            orchestrator.compare_and_report(
-                config=config,
-                left=left_df,
-                right=right_df
-            )
+            orchestrator.compare_and_report(config=config, left=left_df, right=right_df)
             raise AssertionError("Should have raised an exception")
         except SchemaValidationError:
             pass  # Expected behavior
@@ -966,25 +938,20 @@ class TestRealWorldUsagePatterns:
         orchestrator = ComparisonOrchestrator()
 
         # Case sensitive comparison - should find differences
-        result_sensitive = orchestrator.compare_dataframes(
-            config=config_case_sensitive,
-            left=left_df,
-            right=right_df
-        )
+        result_sensitive = orchestrator.compare_dataframes(config=config_case_sensitive, left=left_df, right=right_df)
 
         # Should find differences in string case and number precision
         assert result_sensitive.summary.value_differences_count >= 2
 
         # Case insensitive comparison with tolerance - should match more
         result_insensitive = orchestrator.compare_dataframes(
-            config=config_case_insensitive,
-            left=left_df,
-            right=right_df
+            config=config_case_insensitive, left=left_df, right=right_df
         )
 
         # Should match all records due to ignore_case and tolerance
         assert result_insensitive.summary.matching_records == 3
         assert result_insensitive.summary.value_differences_count == 0
+
 
 class TestToleranceNullLogicFix:
     """Test the fix for tolerance + null comparison logic bug.
@@ -1032,7 +999,7 @@ class TestToleranceNullLogicFix:
             column_mappings=mappings,
             pk_columns=["id"],
             null_equals_null=True,  # Nulls should be considered equal
-            tolerance={"amount": 1.0}  # 1.0 tolerance for amount
+            tolerance={"amount": 1.0},  # 1.0 tolerance for amount
         )
 
         comparator = LazyFrameComparator(config)
@@ -1085,7 +1052,7 @@ class TestToleranceNullLogicFix:
             column_mappings=mappings,
             pk_columns=["id"],
             null_equals_null=False,  # Nulls should be considered different
-            tolerance={"amount": 1.0}  # 1.0 tolerance for amount
+            tolerance={"amount": 1.0},  # 1.0 tolerance for amount
         )
 
         comparator = LazyFrameComparator(config)
@@ -1141,7 +1108,7 @@ class TestNullHandlingWithoutTolerance:
             right_schema=right_schema,
             column_mappings=mappings,
             pk_columns=["id"],
-            null_equals_null=True  # Nulls should be considered equal
+            null_equals_null=True,  # Nulls should be considered equal
         )
 
         comparator = LazyFrameComparator(config)
@@ -1153,5 +1120,3 @@ class TestNullHandlingWithoutTolerance:
         # - Record 3: 300.0 != 350.0 → Difference
         assert result.summary.matching_records == 2
         assert result.summary.value_differences_count == 1
-
-

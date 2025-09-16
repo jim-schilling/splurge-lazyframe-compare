@@ -57,16 +57,21 @@ def create_sample_data() -> tuple[pl.LazyFrame, pl.LazyFrame]:
             date(2023, 1, 10),
         ],
         "total_amount": [100.0, 250.0, 300.0, 400.0, 650.0, 700.0, 900.0, 1000.0],  # Some amounts different
-        "order_status": ["pending", "completed", "shipped", "cancelled", "shipped", "pending", "completed", "pending"],  # Some status different
+        "order_status": [
+            "pending",
+            "completed",
+            "shipped",
+            "cancelled",
+            "shipped",
+            "pending",
+            "completed",
+            "pending",
+        ],  # Some status different
         "priority_level": ["low", "medium", "high", "low", "high", "low", "medium", "high"],  # Some priority different
     }
 
-    left_df = pl.LazyFrame(left_data).with_columns(
-        pl.col("priority").cast(pl.Categorical)
-    )
-    right_df = pl.LazyFrame(right_data).with_columns(
-        pl.col("priority_level").cast(pl.Categorical)
-    )
+    left_df = pl.LazyFrame(left_data).with_columns(pl.col("priority").cast(pl.Categorical))
+    right_df = pl.LazyFrame(right_data).with_columns(pl.col("priority_level").cast(pl.Categorical))
 
     return left_df, right_df
 
@@ -96,9 +101,13 @@ def define_schemas() -> tuple[ComparisonSchema, ComparisonSchema]:
         # Using direct Polars datatypes
         "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
         "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
-        "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
+        "total_amount": ColumnDefinition(
+            name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False
+        ),
         "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype="String", nullable=True),
-        "priority_level": ColumnDefinition(name="priority_level", alias="Priority Level", datatype="Categorical", nullable=True),
+        "priority_level": ColumnDefinition(
+            name="priority_level", alias="Priority Level", datatype="Categorical", nullable=True
+        ),
     }
     right_schema = ComparisonSchema(
         columns=right_columns,
@@ -170,58 +179,40 @@ def main() -> None:
     print("\n" + "=" * 60)
     print("SUMMARY TABLE - GRID FORMAT")
     print("=" * 60)
-    summary_table_grid = reporter.generate_summary_table(
-        results=results,
-        table_format="grid"
-    )
+    summary_table_grid = reporter.generate_summary_table(results=results, table_format="grid")
     print(summary_table_grid)
 
     print("\n" + "=" * 60)
     print("SUMMARY TABLE - SIMPLE FORMAT")
     print("=" * 60)
-    summary_table_simple = reporter.generate_summary_table(
-        results=results,
-        table_format="simple"
-    )
+    summary_table_simple = reporter.generate_summary_table(results=results, table_format="simple")
     print(summary_table_simple)
 
     print("\n" + "=" * 60)
     print("SUMMARY TABLE - PIPE FORMAT")
     print("=" * 60)
-    summary_table_pipe = reporter.generate_summary_table(
-        results=results,
-        table_format="pipe"
-    )
+    summary_table_pipe = reporter.generate_summary_table(results=results, table_format="pipe")
     print(summary_table_pipe)
 
     # Show detailed report with grid format
     print("\n" + "=" * 60)
     print("DETAILED REPORT - GRID FORMAT")
     print("=" * 60)
-    detailed_report_grid = reporter.generate_detailed_report(
-        results=results,
-        max_samples=5
-    )
+    detailed_report_grid = reporter.generate_detailed_report(results=results, max_samples=5)
     print(detailed_report_grid)
 
     # Show summary table in orgtbl format
     print("\n" + "=" * 60)
     print("SUMMARY TABLE - ORGTBL FORMAT")
     print("=" * 60)
-    summary_table_orgtbl = reporter.generate_summary_table(
-        results=results,
-        table_format="orgtbl"
-    )
+    summary_table_orgtbl = reporter.generate_summary_table(results=results, table_format="orgtbl")
     print(summary_table_orgtbl)
 
     # Show original detailed report for comparison
     print("\n" + "=" * 60)
     print("ORIGINAL DETAILED REPORT (for comparison)")
     print("=" * 60)
-    detailed_report_original = reporter.generate_detailed_report(
-        results=results,
-        max_samples=3
-    )
+    detailed_report_original = reporter.generate_detailed_report(results=results, max_samples=3)
     print(detailed_report_original)
 
     print("\n" + "=" * 80)

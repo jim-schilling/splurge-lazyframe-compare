@@ -14,18 +14,30 @@ def main():
     left_data = {
         "customer_id": [1, 2, 3, 4, 5],
         "name": ["Alice", "Bob", "Charlie", "David", "Eve"],
-        "email": ["alice@example.com", "bob@example.com", "charlie@example.com", "david@example.com", "eve@example.com"],
+        "email": [
+            "alice@example.com",
+            "bob@example.com",
+            "charlie@example.com",
+            "david@example.com",
+            "eve@example.com",
+        ],
         "balance": [100.50, 250.00, 75.25, 300.00, 150.75],
-        "active": [True, True, False, True, True]
+        "active": [True, True, False, True, True],
     }
 
     # Create sample right DataFrame with some differences
     right_data = {
         "customer_id": [1, 2, 3, 4, 6],  # ID 5 missing, ID 6 added
         "name": ["Alice", "Bob", "Charlie", "Dave", "Frank"],  # David -> Dave, Eve -> Frank
-        "email": ["alice@example.com", "bob@example.com", "charlie@example.com", "dave@example.com", "frank@example.com"],
+        "email": [
+            "alice@example.com",
+            "bob@example.com",
+            "charlie@example.com",
+            "dave@example.com",
+            "frank@example.com",
+        ],
         "balance": [100.50, 250.00, 75.25, 320.00, 200.00],  # David's balance changed, new balance for Frank
-        "active": [True, True, False, True, False]  # Frank is inactive
+        "active": [True, True, False, True, False],  # Frank is inactive
     }
 
     # Create LazyFrames
@@ -44,11 +56,7 @@ def main():
 
     try:
         # Automatically generate ComparisonConfig
-        config = create_comparison_config_from_lazyframes(
-            left=left_lf,
-            right=right_lf,
-            pk_columns=primary_keys
-        )
+        config = create_comparison_config_from_lazyframes(left=left_lf, right=right_lf, pk_columns=primary_keys)
 
         print("\nComparisonConfig generated successfully!")
         print(f"Primary key columns: {config.pk_columns}")
@@ -60,11 +68,7 @@ def main():
         comparison_service = ComparisonService()
 
         print("\nPerforming comparison...")
-        results = comparison_service.execute_comparison(
-            left=left_lf,
-            right=right_lf,
-            config=config
-        )
+        results = comparison_service.execute_comparison(left=left_lf, right=right_lf, config=config)
 
         print("\nComparison completed!")
         print(f"Left-only records: {results.summary.left_only_count}")
@@ -73,9 +77,9 @@ def main():
         print(f"Matching records: {results.summary.matching_records}")
 
         # Display summary
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("COMPARISON SUMMARY")
-        print("="*50)
+        print("=" * 50)
         print(results.summary)
 
     except Exception as e:

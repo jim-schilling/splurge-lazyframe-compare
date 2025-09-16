@@ -90,5 +90,3 @@ def test_input_validation_errors():
 
     with pytest.raises(ValueError, match="config must be a ComparisonConfig"):
         orch.compare_dataframes(config="z", left=left, right=right)  # type: ignore[arg-type]
-
-

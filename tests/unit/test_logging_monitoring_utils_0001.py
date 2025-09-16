@@ -28,8 +28,8 @@ def test_import_has_no_module_level_handlers() -> None:
 def test_configure_logging_sets_level_and_format(capsys: pytest.CaptureFixture[str]) -> None:
     mod = reload_logging_helpers()
 
-    configure_logging = getattr(mod, "configure_logging")
-    get_logger = getattr(mod, "get_logger")
+    configure_logging = mod.configure_logging
+    get_logger = mod.get_logger
 
     # Configure logging to INFO with a simple format
     fmt = "[%(levelname)s] %(name)s: %(message)s"
@@ -47,8 +47,8 @@ def test_configure_logging_sets_level_and_format(capsys: pytest.CaptureFixture[s
 
 def test_configure_logging_honors_env_vars(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     mod = reload_logging_helpers()
-    configure_logging = getattr(mod, "configure_logging")
-    get_logger = getattr(mod, "get_logger")
+    configure_logging = mod.configure_logging
+    get_logger = mod.get_logger
 
     monkeypatch.setenv("SLC_LOG_LEVEL", "DEBUG")
     monkeypatch.setenv("SLC_LOG_FORMAT", "[%(levelname)s] %(message)s")

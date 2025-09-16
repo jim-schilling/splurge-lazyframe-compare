@@ -1,7 +1,5 @@
 """Configuration and settings helpers for the comparison framework."""
 
-DOMAINS: list[str] = ["utils", "config", "cli"]
-
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -10,6 +8,8 @@ if TYPE_CHECKING:
     from splurge_lazyframe_compare.models.schema import ColumnDefinition
 
 import polars as pl
+
+DOMAINS: list[str] = ["utils", "config", "cli"]
 
 
 class ConfigConstants:
@@ -54,6 +54,7 @@ def load_config_from_file(config_path: str | Path) -> dict[str, Any]:
 
     try:
         import json
+
         with open(config_path) as f:
             config = json.load(f)
         return config
@@ -73,7 +74,8 @@ def save_config_to_file(config: dict[str, Any], config_path: str | Path) -> None
 
     try:
         import json
-        with open(config_path, 'w') as f:
+
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2, default=str)
     except Exception as e:
         raise ValueError(f"Failed to save configuration: {e}") from e
@@ -111,24 +113,25 @@ def get_env_config(prefix: str = ConfigConstants.ENV_PREFIX) -> dict[str, Any]:
     Returns:
         Configuration dictionary from environment variables.
     """
-    config = {}
+    config: dict[str, Any] = {}
 
     for key, value in os.environ.items():
         if key.startswith(prefix):
             # Remove prefix and convert to lowercase with underscores
-            config_key = key[len(prefix):].lower().replace('_', '.')
+            config_key = key[len(prefix) :].lower().replace("_", ".")
 
             # Try to parse as JSON first, then as primitive types
             try:
                 import json
+
                 parsed_value = json.loads(value)
             except (json.JSONDecodeError, ValueError):
                 # Try to convert to appropriate type
-                if value.lower() in ('true', 'false'):
-                    parsed_value = value.lower() == 'true'
+                if value.lower() in ("true", "false"):
+                    parsed_value = value.lower() == "true"
                 elif value.isdigit():
                     parsed_value = int(value)
-                elif value.replace('.', '').isdigit():
+                elif value.replace(".", "").isdigit():
                     parsed_value = float(value)
                 else:
                     parsed_value = value
@@ -147,7 +150,7 @@ def set_nested_config_value(config: dict[str, Any], key_path: str, value: Any) -
         key_path: Dot-separated path to the configuration key.
         value: Value to set.
     """
-    keys = key_path.split('.')
+    keys = key_path.split(".")
     current = config
 
     # Navigate to the correct nested level
@@ -229,13 +232,7 @@ def create_default_config() -> dict[str, Any]:
     """
     return {
         "primary_key_columns": ["id"],
-        "column_mappings": [
-            {
-                "left": "id",
-                "right": "customer_id",
-                "name": "id"
-            }
-        ],
+        "column_mappings": [{"left": "id", "right": "customer_id", "name": "id"}],
         "ignore_case": False,
         "null_equals_null": True,
         "tolerance": {},
@@ -268,11 +265,7 @@ def apply_environment_overrides(config: dict[str, Any]) -> dict[str, Any]:
     return config
 
 
-def get_config_value(
-    config: dict[str, Any],
-    key_path: str,
-    default_value: Any = None
-) -> Any:
+def get_config_value(config: dict[str, Any], key_path: str, default_value: Any = None) -> Any:
     """Get a value from nested configuration using dot notation.
 
     Args:
@@ -283,7 +276,7 @@ def get_config_value(
     Returns:
         Configuration value or default value.
     """
-    keys = key_path.split('.')
+    keys = key_path.split(".")
     current = config
 
     try:
@@ -295,10 +288,7 @@ def get_config_value(
 
 
 def create_config_from_dataframes(
-    left_df: pl.LazyFrame,
-    right_df: pl.LazyFrame,
-    primary_keys: list[str],
-    auto_map_columns: bool = True
+    left_df: pl.LazyFrame, right_df: pl.LazyFrame, primary_keys: list[str], auto_map_columns: bool = True
 ) -> dict[str, Any]:
     """Create a configuration from DataFrame schemas.
 
@@ -323,27 +313,21 @@ def create_config_from_dataframes(
         # Auto-map columns with same names
         common_columns = left_columns & right_columns
         for col in common_columns:
-            mappings.append({
-                "left": col,
-                "right": col,
-                "name": col
-            })
+            mappings.append({"left": col, "right": col, "name": col})
 
         # Add remaining columns as separate mappings
         for col in left_columns - common_columns:
-            mappings.append({
-                "left": col,
-                "right": col,  # Same name for simplicity
-                "name": col
-            })
+            mappings.append(
+                {
+                    "left": col,
+                    "right": col,  # Same name for simplicity
+                    "name": col,
+                }
+            )
     else:
         # Use all columns from left as base
         for col in left_columns:
-            mappings.append({
-                "left": col,
-                "right": col,
-                "name": col
-            })
+            mappings.append({"left": col, "right": col, "name": col})
 
     return {
         "primary_key_columns": primary_keys,
@@ -384,6 +368,7 @@ def create_comparison_config_from_lazyframes(
         ComparisonConfig,
         ComparisonSchema,
     )
+
     # Validate that primary key columns exist in both LazyFrames
     left_schema = left.collect_schema()
     right_schema = right.collect_schema()
@@ -403,25 +388,15 @@ def create_comparison_config_from_lazyframes(
     right_column_definitions = _create_column_definitions_from_schema(right_schema)
 
     # Create ComparisonSchemas
-    left_comparison_schema = ComparisonSchema(
-        columns=left_column_definitions,
-        pk_columns=pk_columns
-    )
-    right_comparison_schema = ComparisonSchema(
-        columns=right_column_definitions,
-        pk_columns=pk_columns
-    )
+    left_comparison_schema = ComparisonSchema(columns=left_column_definitions, pk_columns=pk_columns)
+    right_comparison_schema = ComparisonSchema(columns=right_column_definitions, pk_columns=pk_columns)
 
     # Create ColumnMappings (only for common columns to ensure validity)
     column_mappings = []
     common_columns = left_columns & right_columns  # Intersection for valid mappings
 
     for col_name in common_columns:
-        column_mappings.append(ColumnMapping(
-            name=col_name,
-            left=col_name,
-            right=col_name
-        ))
+        column_mappings.append(ColumnMapping(name=col_name, left=col_name, right=col_name))
 
     # Create and return ComparisonConfig
     return ComparisonConfig(
@@ -443,6 +418,7 @@ def _create_column_definitions_from_schema(schema: pl.Schema) -> dict[str, "Colu
     """
     # Import here to avoid circular imports
     from splurge_lazyframe_compare.models.schema import ColumnDefinition
+
     column_definitions = {}
 
     for col_name, dtype in zip(schema.names(), schema.dtypes(), strict=False):
@@ -450,7 +426,7 @@ def _create_column_definitions_from_schema(schema: pl.Schema) -> dict[str, "Colu
             name=col_name,
             alias=col_name,  # Use column name as alias for simplicity
             datatype=dtype,
-            nullable=True  # Default to nullable for safety
+            nullable=True,  # Default to nullable for safety
         )
 
     return column_definitions

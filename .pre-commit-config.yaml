@@ -1,0 +1,25 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (venv)
+        # use the repository .venv so the installed ruff CLI there is used
+        entry: python scripts/run_in_venv.py ruff check --fix
+        language: system
+        files: "\\.py$"
+
+      - id: mypy
+        name: mypy (venv)
+        # Run mypy as a package check and avoid pre-commit appending filenames
+        entry: python scripts/run_in_venv.py mypy -p splurge_lazyframe_compare --ignore-missing-imports
+        language: system
+        files: "\\.py$"
+        pass_filenames: false
+
+      - id: pytest
+        name: pytest (venv)
+        # run pytest using the repository .venv so project runtime deps (polars) are available
+        entry: python scripts/run_in_venv.py pytest -q -p no:pytest_cov -c /dev/null
+        language: system
+        files: "^tests/"
+        pass_filenames: false

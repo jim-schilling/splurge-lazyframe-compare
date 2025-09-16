@@ -53,7 +53,9 @@ class TestEndToEndScenarios:
             "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
             "full_name": ColumnDefinition(name="full_name", alias="Customer Name", datatype=pl.Utf8, nullable=False),
             "email_addr": ColumnDefinition(name="email_addr", alias="Email Address", datatype=pl.Utf8, nullable=False),
-            "account_balance": ColumnDefinition(name="account_balance", alias="Account Balance", datatype=pl.Float64, nullable=False),
+            "account_balance": ColumnDefinition(
+                name="account_balance", alias="Account Balance", datatype=pl.Float64, nullable=False
+            ),
         }
         right_schema = ComparisonSchema(columns=right_columns, pk_columns=["cust_id"])
 
@@ -66,10 +68,7 @@ class TestEndToEndScenarios:
         ]
 
         config = ComparisonConfig(
-            left_schema=left_schema,
-            right_schema=right_schema,
-            column_mappings=mappings,
-            pk_columns=["customer_id"]
+            left_schema=left_schema, right_schema=right_schema, column_mappings=mappings, pk_columns=["customer_id"]
         )
 
         # Step 2: Execute comparison
@@ -92,10 +91,7 @@ class TestEndToEndScenarios:
         # Step 5: Export results
         with tempfile.TemporaryDirectory() as temp_dir:
             exported_files = comparator.compare_and_export(
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="csv"
+                left=left_df, right=right_df, output_dir=temp_dir, format="csv"
             )
 
             assert len(exported_files) == 4  # value_differences, left_only, right_only, summary
@@ -118,8 +114,8 @@ class TestEndToEndScenarios:
             "metadata": [
                 {"brand": "BrandA", "warranty": 12},
                 {"brand": "BrandB", "warranty": 24},
-                {"brand": "BrandC", "warranty": 6}
-            ]
+                {"brand": "BrandC", "warranty": 6},
+            ],
         }
 
         right_data = {
@@ -131,12 +127,8 @@ class TestEndToEndScenarios:
             "release_date": ["2024-01-15", "2024-02-20", "2024-04-01"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("created_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("release_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("created_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("release_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create configuration
         from splurge_lazyframe_compare import (
@@ -152,16 +144,22 @@ class TestEndToEndScenarios:
             "name": ColumnDefinition(name="name", alias="Product Name", datatype=pl.Utf8, nullable=False),
             "price": ColumnDefinition(name="price", alias="Price", datatype=pl.Float64, nullable=False),
             "in_stock": ColumnDefinition(name="in_stock", alias="In Stock", datatype=pl.Boolean, nullable=False),
-            "created_date": ColumnDefinition(name="created_date", alias="Created Date", datatype=pl.Date, nullable=False),
+            "created_date": ColumnDefinition(
+                name="created_date", alias="Created Date", datatype=pl.Date, nullable=False
+            ),
         }
         left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
 
         right_columns = {
             "product_id": ColumnDefinition(name="product_id", alias="Product ID", datatype=pl.Int64, nullable=False),
-            "product_name": ColumnDefinition(name="product_name", alias="Product Name", datatype=pl.Utf8, nullable=False),
+            "product_name": ColumnDefinition(
+                name="product_name", alias="Product Name", datatype=pl.Utf8, nullable=False
+            ),
             "cost": ColumnDefinition(name="cost", alias="Cost", datatype=pl.Float64, nullable=False),
             "available": ColumnDefinition(name="available", alias="Available", datatype=pl.Boolean, nullable=False),
-            "release_date": ColumnDefinition(name="release_date", alias="Release Date", datatype=pl.Date, nullable=False),
+            "release_date": ColumnDefinition(
+                name="release_date", alias="Release Date", datatype=pl.Date, nullable=False
+            ),
         }
         right_schema = ComparisonSchema(columns=right_columns, pk_columns=["product_id"])
 
@@ -174,10 +172,7 @@ class TestEndToEndScenarios:
         ]
 
         config = ComparisonConfig(
-            left_schema=left_schema,
-            right_schema=right_schema,
-            column_mappings=mappings,
-            pk_columns=["id"]
+            left_schema=left_schema, right_schema=right_schema, column_mappings=mappings, pk_columns=["id"]
         )
 
         # Execute comparison
@@ -251,10 +246,7 @@ class TestEndToEndScenarios:
         ]
 
         config = ComparisonConfig(
-            left_schema=left_schema,
-            right_schema=right_schema,
-            column_mappings=mappings,
-            pk_columns=["id"]
+            left_schema=left_schema, right_schema=right_schema, column_mappings=mappings, pk_columns=["id"]
         )
 
         # Execute comparison - should handle larger dataset efficiently
@@ -281,79 +273,82 @@ class TestEndToEndScenarios:
         )
 
         # Create test DataFrames
-        left_df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "score": [95.5, 87.2, 91.8]
-        })
+        left_df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "score": [95.5, 87.2, 91.8]})
 
-        right_df = pl.LazyFrame({
-            "student_id": [1, 2, 4],
-            "student_name": ["Alice", "Bob", "David"],
-            "grade": [95.5, 89.2, 88.5]  # Bob's grade changed
-        })
+        right_df = pl.LazyFrame(
+            {
+                "student_id": [1, 2, 4],
+                "student_name": ["Alice", "Bob", "David"],
+                "grade": [95.5, 89.2, 88.5],  # Bob's grade changed
+            }
+        )
 
         # Create schemas
         left_columns = {
-            'id': ColumnDefinition(name='id', alias='ID', datatype=pl.Int64, nullable=False),
-            'name': ColumnDefinition(name='name', alias='Name', datatype=pl.Utf8, nullable=False),
-            'score': ColumnDefinition(name='score', alias='Score', datatype=pl.Float64, nullable=False),
+            "id": ColumnDefinition(name="id", alias="ID", datatype=pl.Int64, nullable=False),
+            "name": ColumnDefinition(name="name", alias="Name", datatype=pl.Utf8, nullable=False),
+            "score": ColumnDefinition(name="score", alias="Score", datatype=pl.Float64, nullable=False),
         }
-        left_schema = ComparisonSchema(columns=left_columns, pk_columns=['id'])
+        left_schema = ComparisonSchema(columns=left_columns, pk_columns=["id"])
 
         right_columns = {
-            'student_id': ColumnDefinition(name='student_id', alias='Student ID', datatype=pl.Int64, nullable=False),
-            'student_name': ColumnDefinition(name='student_name', alias='Student Name', datatype=pl.Utf8, nullable=False),
-            'grade': ColumnDefinition(name='grade', alias='Grade', datatype=pl.Float64, nullable=False),
+            "student_id": ColumnDefinition(name="student_id", alias="Student ID", datatype=pl.Int64, nullable=False),
+            "student_name": ColumnDefinition(
+                name="student_name", alias="Student Name", datatype=pl.Utf8, nullable=False
+            ),
+            "grade": ColumnDefinition(name="grade", alias="Grade", datatype=pl.Float64, nullable=False),
         }
-        right_schema = ComparisonSchema(columns=right_columns, pk_columns=['student_id'])
+        right_schema = ComparisonSchema(columns=right_columns, pk_columns=["student_id"])
 
         # Create column mappings
         column_mappings = [
-            ColumnMapping(left='id', right='student_id', name='id'),
-            ColumnMapping(left='name', right='student_name', name='name'),
-            ColumnMapping(left='score', right='grade', name='score'),
+            ColumnMapping(left="id", right="student_id", name="id"),
+            ColumnMapping(left="name", right="student_name", name="name"),
+            ColumnMapping(left="score", right="grade", name="score"),
         ]
 
         config = ComparisonConfig(
             left_schema=left_schema,
             right_schema=right_schema,
             column_mappings=column_mappings,
-            pk_columns=['id'],
-            tolerance={}
+            pk_columns=["id"],
+            tolerance={},
         )
 
         # Convert config to dictionary for JSON serialization
         config_dict = {
-            'primary_key_columns': config.pk_columns,
-            'column_mappings': [mapping.__dict__ for mapping in config.column_mappings],
-            'ignore_case': config.ignore_case,
-            'null_equals_null': config.null_equals_null,
-            'tolerance': config.tolerance
+            "primary_key_columns": config.pk_columns,
+            "column_mappings": [mapping.__dict__ for mapping in config.column_mappings],
+            "ignore_case": config.ignore_case,
+            "null_equals_null": config.null_equals_null,
+            "tolerance": config.tolerance,
         }
 
         # Step 2: Validate configuration
         from splurge_lazyframe_compare.utils import validate_config
+
         # Convert config to dictionary for validation
         config_for_validation = {
-            'primary_key_columns': config.pk_columns,
-            'column_mappings': [mapping.__dict__ for mapping in config.column_mappings],
-            'ignore_case': config.ignore_case,
-            'null_equals_null': config.null_equals_null,
-            'tolerance': config.tolerance
+            "primary_key_columns": config.pk_columns,
+            "column_mappings": [mapping.__dict__ for mapping in config.column_mappings],
+            "ignore_case": config.ignore_case,
+            "null_equals_null": config.null_equals_null,
+            "tolerance": config.tolerance,
         }
         errors = validate_config(config_for_validation)
         assert len(errors) == 0
 
         # Step 3: Save configuration
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             import json
+
             json.dump(config_dict, f)
             config_file = f.name
 
         # Step 4: Load configuration
         try:
             from splurge_lazyframe_compare.utils import load_config_from_file
+
             loaded_config = load_config_from_file(config_file)
 
             # Verify config was loaded correctly
@@ -378,7 +373,7 @@ class TestEndToEndScenarios:
                     col: ColumnDefinition(name=col, alias=col, datatype=dtype, nullable=True)
                     for col, dtype in zip(left_schema_obj.names(), left_schema_obj.dtypes(), strict=False)
                 },
-                pk_columns=['id']
+                pk_columns=["id"],
             )
 
             right_schema = ComparisonSchema(
@@ -386,28 +381,24 @@ class TestEndToEndScenarios:
                     col: ColumnDefinition(name=col, alias=col, datatype=dtype, nullable=True)
                     for col, dtype in zip(right_schema_obj.names(), right_schema_obj.dtypes(), strict=False)
                 },
-                pk_columns=['student_id']
+                pk_columns=["student_id"],
             )
 
             # Reconstruct column mappings from loaded config
-            column_mappings = [ColumnMapping(**mapping) for mapping in loaded_config['column_mappings']]
+            column_mappings = [ColumnMapping(**mapping) for mapping in loaded_config["column_mappings"]]
 
             loaded_comparison_config = ComparisonConfig(
                 left_schema=left_schema,
                 right_schema=right_schema,
                 column_mappings=column_mappings,
-                pk_columns=loaded_config['primary_key_columns'],
-                ignore_case=loaded_config.get('ignore_case', False),
-                null_equals_null=loaded_config.get('null_equals_null', True),
-                tolerance=loaded_config.get('tolerance', {})
+                pk_columns=loaded_config["primary_key_columns"],
+                ignore_case=loaded_config.get("ignore_case", False),
+                null_equals_null=loaded_config.get("null_equals_null", True),
+                tolerance=loaded_config.get("tolerance", {}),
             )
 
             orchestrator = ComparisonOrchestrator()
-            result = orchestrator.compare_dataframes(
-                config=loaded_comparison_config,
-                left=left_df,
-                right=right_df
-            )
+            result = orchestrator.compare_dataframes(config=loaded_comparison_config, left=left_df, right=right_df)
 
             assert result.summary.total_left_records == 3
             assert result.summary.total_right_records == 3
@@ -419,20 +410,26 @@ class TestEndToEndScenarios:
     def test_error_recovery_scenario(self):
         """Test error handling and recovery in complete workflow."""
         # Create DataFrame with issues
-        bad_df = pl.LazyFrame({
-            "id": [1, 2, None],  # NULL in primary key
-            "name": ["Alice", "Bob", None],  # NULL in required field
-        })
+        bad_df = pl.LazyFrame(
+            {
+                "id": [1, 2, None],  # NULL in primary key
+                "name": ["Alice", "Bob", None],  # NULL in required field
+            }
+        )
 
-        left_good_df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-        })
+        left_good_df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+            }
+        )
 
-        right_good_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "customer_name": ["Alice", "Bob", "Charlie"],
-        })
+        right_good_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],
+                "customer_name": ["Alice", "Bob", "Charlie"],
+            }
+        )
 
         # Create configuration
         from splurge_lazyframe_compare import (
@@ -451,7 +448,9 @@ class TestEndToEndScenarios:
 
         right_columns = {
             "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
-            "customer_name": ColumnDefinition(name="customer_name", alias="Customer Name", datatype=pl.Utf8, nullable=False),
+            "customer_name": ColumnDefinition(
+                name="customer_name", alias="Customer Name", datatype=pl.Utf8, nullable=False
+            ),
         }
         right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
 
@@ -461,10 +460,7 @@ class TestEndToEndScenarios:
         ]
 
         config = ComparisonConfig(
-            left_schema=left_schema,
-            right_schema=right_schema,
-            column_mappings=mappings,
-            pk_columns=["id"]
+            left_schema=left_schema, right_schema=right_schema, column_mappings=mappings, pk_columns=["id"]
         )
 
         # Test error handling
@@ -472,34 +468,26 @@ class TestEndToEndScenarios:
 
         # Should raise validation error due to NULL values
         from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
+
         with pytest.raises(SchemaValidationError):
-            orchestrator.compare_dataframes(
-                config=config,
-                left=bad_df,
-                right=right_good_df
-            )
+            orchestrator.compare_dataframes(config=config, left=bad_df, right=right_good_df)
 
         # Should work with valid data
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_good_df,
-            right=right_good_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_good_df, right=right_good_df)
 
         assert result.summary.matching_records == 3  # All should match
 
     def test_custom_service_integration_scenario(self):
         """Test integrating custom services into the workflow."""
         # Create test data
-        left_df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "value": [100, 200, 300]
-        })
+        left_df = pl.LazyFrame({"id": [1, 2, 3], "value": [100, 200, 300]})
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "amount": [100, 250, 300]  # Second value different
-        })
+        right_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],
+                "amount": [100, 250, 300],  # Second value different
+            }
+        )
 
         # Create configuration
         from splurge_lazyframe_compare import ColumnDefinition, ColumnMapping, ComparisonConfig, ComparisonSchema
@@ -522,10 +510,7 @@ class TestEndToEndScenarios:
         ]
 
         config = ComparisonConfig(
-            left_schema=left_schema,
-            right_schema=right_schema,
-            column_mappings=mappings,
-            pk_columns=["id"]
+            left_schema=left_schema, right_schema=right_schema, column_mappings=mappings, pk_columns=["id"]
         )
 
         # Create custom services
@@ -555,23 +540,15 @@ class TestEndToEndScenarios:
         custom_preparation = DataPreparationService()
 
         comparison_service = ComparisonService(
-            validation_service=custom_validation,
-            preparation_service=custom_preparation
+            validation_service=custom_validation, preparation_service=custom_preparation
         )
 
         from splurge_lazyframe_compare import ComparisonOrchestrator
 
-        orchestrator = ComparisonOrchestrator(
-            comparison_service=comparison_service,
-            reporting_service=custom_reporting
-        )
+        orchestrator = ComparisonOrchestrator(comparison_service=comparison_service, reporting_service=custom_reporting)
 
         # Execute with custom services
-        result = orchestrator.compare_dataframes(
-            config=config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=config, left=left_df, right=right_df)
 
         # Generate custom report
         report = orchestrator.generate_report_from_result(result=result, report_type="summary")

@@ -40,8 +40,14 @@ def complex_dataframes():
         "customer_id": [1, 2, 3, 4, 5, 6],
         "first_name": ["Alice", "Bob", "Charlie", "David", "Eve", "Frank"],
         "last_name": ["Smith", "Johnson", "Brown", "Wilson", "Davis", "Miller"],
-        "email": ["alice@example.com", "bob@example.com", "charlie@example.com",
-                 "david@example.com", "eve@example.com", "frank@example.com"],
+        "email": [
+            "alice@example.com",
+            "bob@example.com",
+            "charlie@example.com",
+            "david@example.com",
+            "eve@example.com",
+            "frank@example.com",
+        ],
         "balance": [1000.50, 2500.75, 750.25, 3200.00, 1800.90, 950.60],
         "active": [True, True, False, True, True, False],
         "signup_date": ["2023-01-15", "2023-02-20", "2023-03-10", "2023-04-05", "2023-05-12", "2023-06-08"],
@@ -52,19 +58,20 @@ def complex_dataframes():
         "cust_id": [1, 2, 3, 4, 7],  # Missing customer 5, 6, added customer 7
         "fname": ["Alice", "Bob", "Chuck", "David", "Grace"],  # Charlie -> Chuck, added Grace
         "lname": ["Smith", "Johnson", "Brown", "Wilson", "Parker"],  # Eve -> Grace Parker
-        "email_addr": ["alice@example.com", "bob@example.com", "chuck@example.com",
-                      "david@example.com", "grace@example.com"],  # Charlie email updated
+        "email_addr": [
+            "alice@example.com",
+            "bob@example.com",
+            "chuck@example.com",
+            "david@example.com",
+            "grace@example.com",
+        ],  # Charlie email updated
         "account_balance": [1000.50, 2750.75, 750.25, 3200.00, 2100.00],  # Bob balance changed, added Grace
         "is_active": [True, True, False, True, True],  # No Frank (customer 6)
         "registration_date": ["2023-01-15", "2023-02-20", "2023-03-10", "2023-04-05", "2023-07-01"],
     }
 
-    left_df = pl.LazyFrame(left_data).with_columns(
-        pl.col("signup_date").str.strptime(pl.Date, "%Y-%m-%d")
-    )
-    right_df = pl.LazyFrame(right_data).with_columns(
-        pl.col("registration_date").str.strptime(pl.Date, "%Y-%m-%d")
-    )
+    left_df = pl.LazyFrame(left_data).with_columns(pl.col("signup_date").str.strptime(pl.Date, "%Y-%m-%d"))
+    right_df = pl.LazyFrame(right_data).with_columns(pl.col("registration_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
     return left_df, right_df
 
@@ -84,10 +91,7 @@ def complex_config(complex_dataframes):
         "active": ColumnDefinition(name="active", alias="Active Status", datatype=pl.Boolean, nullable=False),
         "signup_date": ColumnDefinition(name="signup_date", alias="Signup Date", datatype=pl.Date, nullable=False),
     }
-    left_schema = ComparisonSchema(
-        columns=left_columns,
-        pk_columns=["customer_id"]
-    )
+    left_schema = ComparisonSchema(columns=left_columns, pk_columns=["customer_id"])
 
     # Define right schema
     right_columns = {
@@ -95,14 +99,15 @@ def complex_config(complex_dataframes):
         "fname": ColumnDefinition(name="fname", alias="First Name", datatype=pl.Utf8, nullable=False),
         "lname": ColumnDefinition(name="lname", alias="Last Name", datatype=pl.Utf8, nullable=False),
         "email_addr": ColumnDefinition(name="email_addr", alias="Email", datatype=pl.Utf8, nullable=False),
-        "account_balance": ColumnDefinition(name="account_balance", alias="Balance", datatype=pl.Float64, nullable=False),
+        "account_balance": ColumnDefinition(
+            name="account_balance", alias="Balance", datatype=pl.Float64, nullable=False
+        ),
         "is_active": ColumnDefinition(name="is_active", alias="Active Status", datatype=pl.Boolean, nullable=False),
-        "registration_date": ColumnDefinition(name="registration_date", alias="Registration Date", datatype=pl.Date, nullable=False),
+        "registration_date": ColumnDefinition(
+            name="registration_date", alias="Registration Date", datatype=pl.Date, nullable=False
+        ),
     }
-    right_schema = ComparisonSchema(
-        columns=right_columns,
-        pk_columns=["cust_id"]
-    )
+    right_schema = ComparisonSchema(columns=right_columns, pk_columns=["cust_id"])
 
     # Define column mappings
     mappings = [
@@ -125,6 +130,8 @@ def complex_config(complex_dataframes):
     )
 
     return config
+
+
 class TestCompleteWorkflow:
     """Test complete comparison workflows."""
 
@@ -159,22 +166,14 @@ class TestCompleteWorkflow:
         orchestrator = ComparisonOrchestrator()
 
         # Execute comparison
-        result = orchestrator.compare_dataframes(
-            config=complex_config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=complex_config, left=left_df, right=right_df)
 
         # Validate results
         assert result.summary.total_left_records == 6
         assert result.summary.total_right_records == 5
 
         # Generate detailed report
-        report = orchestrator.generate_report_from_result(
-            result=result,
-            report_type="detailed",
-            max_samples=3
-        )
+        report = orchestrator.generate_report_from_result(result=result, report_type="detailed", max_samples=3)
 
         assert "VALUE DIFFERENCES" in report or "No value differences" in report
         assert "LEFT-ONLY RECORDS" in report or "No left-only records" in report
@@ -188,11 +187,7 @@ class TestCompleteWorkflow:
 
             # Compare and export
             exported_files = orchestrator.compare_and_export(
-                config=complex_config,
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="csv"
+                config=complex_config, left=left_df, right=right_df, output_dir=temp_dir, format="csv"
             )
 
             # Check that files were created
@@ -212,10 +207,7 @@ class TestCompleteWorkflow:
 
         # Create config from DataFrames
         config = create_config_from_dataframes(
-            left_df=left_df,
-            right_df=right_df,
-            primary_keys=["customer_id"],
-            auto_map_columns=True
+            left_df=left_df, right_df=right_df, primary_keys=["customer_id"], auto_map_columns=True
         )
 
         # Validate configuration
@@ -236,11 +228,7 @@ class TestCompleteWorkflow:
 
         # Should handle errors gracefully
         with pytest.raises(SchemaValidationError):  # Should raise validation error
-            orchestrator.compare_dataframes(
-                config=complex_config,
-                left=invalid_df,
-                right=invalid_df
-            )
+            orchestrator.compare_dataframes(config=complex_config, left=invalid_df, right=invalid_df)
 
     def test_service_customization_workflow(self, complex_dataframes, complex_config):
         """Test workflow with customized services."""
@@ -252,19 +240,14 @@ class TestCompleteWorkflow:
 
         # Create comparison service with custom validation
         comparison_service = ComparisonService(
-            validation_service=validation_service,
-            preparation_service=preparation_service
+            validation_service=validation_service, preparation_service=preparation_service
         )
 
         # Create orchestrator with custom services
         orchestrator = ComparisonOrchestrator(comparison_service=comparison_service)
 
         # Execute workflow
-        result = orchestrator.compare_dataframes(
-            config=complex_config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=complex_config, left=left_df, right=right_df)
 
         # Verify it works with custom services
         assert result.summary.total_left_records == 6
@@ -278,14 +261,12 @@ class TestCompleteWorkflow:
 
         # The comparison should include performance monitoring
         # We can't easily test the log output, but we can ensure it doesn't crash
-        result = orchestrator.compare_dataframes(
-            config=complex_config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=complex_config, left=left_df, right=right_df)
 
         assert result is not None
         assert result.summary is not None
+
+
 class TestDataQualityWorkflow:
     """Test data quality validation workflows."""
 
@@ -296,22 +277,12 @@ class TestDataQualityWorkflow:
         service = ValidationService()
 
         # Test completeness validation
-        result = service.validate_completeness(
-            df=left_df,
-            required_columns=["customer_id", "first_name", "balance"]
-        )
+        result = service.validate_completeness(df=left_df, required_columns=["customer_id", "first_name", "balance"])
         assert result.is_valid
 
         # Test data type validation
-        expected_types = {
-            "customer_id": pl.Int64,
-            "first_name": pl.Utf8,
-            "balance": pl.Float64
-        }
-        result = service.validate_data_types(
-            df=left_df,
-            expected_types=expected_types
-        )
+        expected_types = {"customer_id": pl.Int64, "first_name": pl.Utf8, "balance": pl.Float64}
+        result = service.validate_data_types(df=left_df, expected_types=expected_types)
         assert result.is_valid
 
     def test_comprehensive_validation_workflow(self, complex_dataframes):
@@ -332,8 +303,10 @@ class TestDataQualityWorkflow:
 
         # All results should be validation results
         for result in results:
-            assert hasattr(result, 'is_valid')
-            assert hasattr(result, 'message')
+            assert hasattr(result, "is_valid")
+            assert hasattr(result, "message")
+
+
 class TestUtilityIntegrationWorkflow:
     """Test utility integration in complete workflows."""
 
@@ -365,11 +338,7 @@ class TestUtilityIntegrationWorkflow:
 
         # Generate report (uses formatting utilities internally)
         report = orchestrator.compare_and_report(
-            config=complex_config,
-            left=left_df,
-            right=right_df,
-            include_samples=True,
-            max_samples=2
+            config=complex_config, left=left_df, right=right_df, include_samples=True, max_samples=2
         )
 
         # Report should contain formatted numbers
@@ -384,7 +353,7 @@ class TestUtilityIntegrationWorkflow:
             value_differences_count=2,
             left_only_count=1,
             right_only_count=1,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -392,7 +361,7 @@ class TestUtilityIntegrationWorkflow:
             value_differences=left_df.limit(0),
             left_only_records=left_df.limit(0),
             right_only_records=left_df.limit(0),
-            config=complex_config
+            config=complex_config,
         )
 
         table = orchestrator.generate_report_from_result(result=result, report_type="table")

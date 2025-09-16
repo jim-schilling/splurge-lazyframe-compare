@@ -54,7 +54,9 @@ def sample_config(sample_dataframes):
 
     right_columns = {
         "customer_id": ColumnDefinition(name="customer_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
-        "customer_name": ColumnDefinition(name="customer_name", alias="Customer Name", datatype=pl.Utf8, nullable=False),
+        "customer_name": ColumnDefinition(
+            name="customer_name", alias="Customer Name", datatype=pl.Utf8, nullable=False
+        ),
         "total_amount": ColumnDefinition(name="total_amount", alias="Amount", datatype=pl.Float64, nullable=False),
     }
     right_schema = ComparisonSchema(columns=right_columns, pk_columns=["customer_id"])
@@ -66,13 +68,12 @@ def sample_config(sample_dataframes):
     ]
 
     config = ComparisonConfig(
-        left_schema=left_schema,
-        right_schema=right_schema,
-        column_mappings=mappings,
-        pk_columns=["id"]
+        left_schema=left_schema, right_schema=right_schema, column_mappings=mappings, pk_columns=["id"]
     )
 
     return config
+
+
 class TestValidationService:
     """Test ValidationService functionality."""
 
@@ -130,10 +131,12 @@ class TestValidationService:
 
     def test_validate_data_types_failure(self):
         """Test data type validation with type mismatches."""
-        df = pl.LazyFrame({
-            "id": ["1", "2", "3"],  # Wrong type - should be Int64
-            "name": ["Alice", "Bob", "Charlie"],
-        })
+        df = pl.LazyFrame(
+            {
+                "id": ["1", "2", "3"],  # Wrong type - should be Int64
+                "name": ["Alice", "Bob", "Charlie"],
+            }
+        )
 
         service = ValidationService()
         expected_types = {"id": pl.Int64, "name": pl.Utf8}
@@ -160,10 +163,12 @@ class TestValidationService:
 
     def test_validate_completeness_failure_null_columns(self):
         """Test completeness validation with entirely null columns."""
-        df = pl.LazyFrame({
-            "good_column": [1, 2, 3],
-            "null_column": [None, None, None],
-        })
+        df = pl.LazyFrame(
+            {
+                "good_column": [1, 2, 3],
+                "null_column": [None, None, None],
+            }
+        )
 
         service = ValidationService()
         result = service.validate_completeness(df=df, required_columns=["good_column", "null_column"])
@@ -175,9 +180,11 @@ class TestValidationService:
 
     def test_validate_numeric_ranges(self):
         """Test numeric range validation."""
-        df = pl.LazyFrame({
-            "value": [10, 20, 30, 40, 50],
-        })
+        df = pl.LazyFrame(
+            {
+                "value": [10, 20, 30, 40, 50],
+            }
+        )
 
         service = ValidationService()
         column_ranges = {"value": {"min": 15, "max": 45}}
@@ -191,9 +198,11 @@ class TestValidationService:
 
     def test_validate_numeric_ranges_success(self):
         """Test successful numeric range validation."""
-        df = pl.LazyFrame({
-            "value": [20, 30, 40],
-        })
+        df = pl.LazyFrame(
+            {
+                "value": [20, 30, 40],
+            }
+        )
 
         service = ValidationService()
         column_ranges = {"value": {"min": 15, "max": 45}}
@@ -205,9 +214,11 @@ class TestValidationService:
 
     def test_validate_numeric_ranges_non_numeric_column(self):
         """Test numeric range validation with non-numeric column."""
-        df = pl.LazyFrame({
-            "text": ["a", "b", "c"],
-        })
+        df = pl.LazyFrame(
+            {
+                "text": ["a", "b", "c"],
+            }
+        )
 
         service = ValidationService()
         column_ranges = {"text": {"min": 10, "max": 20}}
@@ -219,9 +230,11 @@ class TestValidationService:
 
     def test_validate_string_patterns(self):
         """Test string pattern validation."""
-        df = pl.LazyFrame({
-            "email": ["valid@email.com", "invalid-email", "another@valid.com"],
-        })
+        df = pl.LazyFrame(
+            {
+                "email": ["valid@email.com", "invalid-email", "another@valid.com"],
+            }
+        )
 
         service = ValidationService()
         column_patterns = {"email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"}
@@ -234,9 +247,11 @@ class TestValidationService:
 
     def test_validate_string_patterns_success(self):
         """Test successful string pattern validation."""
-        df = pl.LazyFrame({
-            "email": ["test@example.com", "user@domain.org"],
-        })
+        df = pl.LazyFrame(
+            {
+                "email": ["test@example.com", "user@domain.org"],
+            }
+        )
 
         service = ValidationService()
         column_patterns = {"email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"}
@@ -248,9 +263,11 @@ class TestValidationService:
 
     def test_validate_string_patterns_non_string_column(self):
         """Test string pattern validation with non-string column."""
-        df = pl.LazyFrame({
-            "number": [1, 2, 3],
-        })
+        df = pl.LazyFrame(
+            {
+                "number": [1, 2, 3],
+            }
+        )
 
         service = ValidationService()
         column_patterns = {"number": r"^[0-9]+$"}
@@ -262,9 +279,11 @@ class TestValidationService:
 
     def test_validate_uniqueness(self):
         """Test uniqueness validation."""
-        df = pl.LazyFrame({
-            "unique_col": [1, 2, 2, 3],  # Has duplicate
-        })
+        df = pl.LazyFrame(
+            {
+                "unique_col": [1, 2, 2, 3],  # Has duplicate
+            }
+        )
 
         service = ValidationService()
         result = service.validate_uniqueness(df=df, unique_columns=["unique_col"])
@@ -275,9 +294,11 @@ class TestValidationService:
 
     def test_validate_uniqueness_success(self):
         """Test successful uniqueness validation."""
-        df = pl.LazyFrame({
-            "unique_col": [1, 2, 3, 4],
-        })
+        df = pl.LazyFrame(
+            {
+                "unique_col": [1, 2, 3, 4],
+            }
+        )
 
         service = ValidationService()
         result = service.validate_uniqueness(df=df, unique_columns=["unique_col"])
@@ -287,9 +308,11 @@ class TestValidationService:
 
     def test_validate_uniqueness_missing_column(self):
         """Test uniqueness validation with missing column."""
-        df = pl.LazyFrame({
-            "existing_col": [1, 2, 3],
-        })
+        df = pl.LazyFrame(
+            {
+                "existing_col": [1, 2, 3],
+            }
+        )
 
         service = ValidationService()
         result = service.validate_uniqueness(df=df, unique_columns=["missing_col", "existing_col"])
@@ -303,34 +326,34 @@ class TestValidationService:
 
         service = ValidationService()
         # Should not raise any exceptions for valid primary keys
-        service.validate_primary_key_uniqueness(
-            df=right_df, config=sample_config, df_name="right DataFrame"
-        )
+        service.validate_primary_key_uniqueness(df=right_df, config=sample_config, df_name="right DataFrame")
 
     def test_validate_primary_key_uniqueness_with_duplicates(self, sample_config):
         """Test primary key uniqueness validation with duplicates."""
         # Create dataframe with duplicate primary key values
-        df = pl.LazyFrame({
-            "customer_id": [1, 1, 2],  # Duplicate customer_id 1
-            "customer_name": ["Alice", "Bob", "Charlie"],
-            "total_amount": [100.0, 200.0, 300.0],
-        })
+        df = pl.LazyFrame(
+            {
+                "customer_id": [1, 1, 2],  # Duplicate customer_id 1
+                "customer_name": ["Alice", "Bob", "Charlie"],
+                "total_amount": [100.0, 200.0, 300.0],
+            }
+        )
 
         service = ValidationService()
 
         with pytest.raises(PrimaryKeyViolationError):
-            service.validate_primary_key_uniqueness(
-                df=df, config=sample_config, df_name="right DataFrame"
-            )
+            service.validate_primary_key_uniqueness(df=df, config=sample_config, df_name="right DataFrame")
 
     def test_run_comprehensive_validation(self):
         """Test comprehensive validation method."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "email": ["alice@test.com", "bob@test.com", "charlie@test.com"],
-            "score": [85, 90, 95],
-        })
+        df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+                "email": ["alice@test.com", "bob@test.com", "charlie@test.com"],
+                "score": [85, 90, 95],
+            }
+        )
 
         service = ValidationService()
 
@@ -340,7 +363,7 @@ class TestValidationService:
             expected_types={"id": pl.Int64, "name": pl.Utf8},
             column_ranges={"score": {"min": 0, "max": 100}},
             column_patterns={"email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"},
-            unique_columns=["id"]
+            unique_columns=["id"],
         )
 
         assert len(results) == 5
@@ -348,12 +371,14 @@ class TestValidationService:
 
     def test_run_comprehensive_validation_with_failures(self):
         """Test comprehensive validation method with some failures."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 2],  # Duplicate for uniqueness test
-            "name": ["Alice", "Bob", "Charlie"],
-            "email": ["alice@test.com", "invalid-email", "charlie@test.com"],  # Invalid pattern
-            "score": [85, 150, 95],  # Above max for range test
-        })
+        df = pl.LazyFrame(
+            {
+                "id": [1, 2, 2],  # Duplicate for uniqueness test
+                "name": ["Alice", "Bob", "Charlie"],
+                "email": ["alice@test.com", "invalid-email", "charlie@test.com"],  # Invalid pattern
+                "score": [85, 150, 95],  # Above max for range test
+            }
+        )
 
         service = ValidationService()
 
@@ -363,7 +388,7 @@ class TestValidationService:
             expected_types={"id": pl.Int64, "name": pl.Utf8},
             column_ranges={"score": {"min": 0, "max": 100}},
             column_patterns={"email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"},
-            unique_columns=["id"]
+            unique_columns=["id"],
         )
 
         assert len(results) == 5
@@ -373,19 +398,17 @@ class TestValidationService:
 
     def test_run_comprehensive_validation_partial(self):
         """Test comprehensive validation method with partial parameters."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-        })
+        df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+            }
+        )
 
         service = ValidationService()
 
         # Test with only some validation types
-        results = service.run_comprehensive_validation(
-            df=df,
-            required_columns=["id", "name"],
-            unique_columns=["id"]
-        )
+        results = service.run_comprehensive_validation(df=df, required_columns=["id", "name"], unique_columns=["id"])
 
         assert len(results) == 2  # Only completeness and uniqueness
 
@@ -425,23 +448,27 @@ class TestValidationService:
         result = service.validate_data_types(df=df, expected_types=expected_types)
 
         assert result.is_valid
+
+
 class TestConfigHelpers:
     """Test configuration helper functions."""
 
     def test_load_config_from_file_success(self, tmp_path):
         """Test successful config file loading."""
         import json
+
         config_data = {
             "primary_key_columns": ["id"],
             "column_mappings": [{"left_column": "id", "right_column": "customer_id", "comparison_name": "id"}],
-            "ignore_case": True
+            "ignore_case": True,
         }
 
         config_file = tmp_path / "test_config.json"
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config_data, f)
 
         from splurge_lazyframe_compare.utils.config_helpers import load_config_from_file
+
         result = load_config_from_file(config_file)
 
         assert result == config_data
@@ -458,7 +485,7 @@ class TestConfigHelpers:
     def test_load_config_from_file_invalid_json(self, tmp_path):
         """Test invalid JSON config file error."""
         config_file = tmp_path / "invalid_config.json"
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             f.write("{invalid json content")
 
         import pytest
@@ -471,14 +498,16 @@ class TestConfigHelpers:
     def test_save_config_to_file(self, tmp_path):
         """Test config file saving."""
         import json
+
         config_data = {
             "primary_key_columns": ["id"],
-            "column_mappings": [{"left_column": "id", "right_column": "customer_id", "comparison_name": "id"}]
+            "column_mappings": [{"left_column": "id", "right_column": "customer_id", "comparison_name": "id"}],
         }
 
         config_file = tmp_path / "output_config.json"
 
         from splurge_lazyframe_compare.utils.config_helpers import save_config_to_file
+
         save_config_to_file(config_data, config_file)
 
         # Verify file was created and contains correct data
@@ -493,51 +522,35 @@ class TestConfigHelpers:
         base_config = {
             "primary_key_columns": ["id"],
             "reporting": {"max_samples": 10},
-            "performance": {"batch_size": 1000}
+            "performance": {"batch_size": 1000},
         }
 
-        override_config = {
-            "reporting": {"max_samples": 20, "table_format": "grid"},
-            "new_section": {"value": 42}
-        }
+        override_config = {"reporting": {"max_samples": 20, "table_format": "grid"}, "new_section": {"value": 42}}
 
         from splurge_lazyframe_compare.utils.config_helpers import merge_configs
+
         result = merge_configs(base_config, override_config)
 
         expected = {
             "primary_key_columns": ["id"],
             "reporting": {"max_samples": 20, "table_format": "grid"},
             "performance": {"batch_size": 1000},
-            "new_section": {"value": 42}
+            "new_section": {"value": 42},
         }
 
         assert result == expected
 
     def test_merge_configs_nested(self):
         """Test nested config merging."""
-        base_config = {
-            "reporting": {
-                "max_samples": 10,
-                "format": {"table": "simple"}
-            }
-        }
+        base_config = {"reporting": {"max_samples": 10, "format": {"table": "simple"}}}
 
-        override_config = {
-            "reporting": {
-                "max_samples": 20,
-                "format": {"table": "grid", "include_headers": True}
-            }
-        }
+        override_config = {"reporting": {"max_samples": 20, "format": {"table": "grid", "include_headers": True}}}
 
         from splurge_lazyframe_compare.utils.config_helpers import merge_configs
+
         result = merge_configs(base_config, override_config)
 
-        expected = {
-            "reporting": {
-                "max_samples": 20,
-                "format": {"table": "grid", "include_headers": True}
-            }
-        }
+        expected = {"reporting": {"max_samples": 20, "format": {"table": "grid", "include_headers": True}}}
 
         assert result == expected
 
@@ -549,13 +562,14 @@ class TestConfigHelpers:
         monkeypatch.setenv("SPLURGE_INVALID_PREFIX", "should_be_ignored")
 
         from splurge_lazyframe_compare.utils.config_helpers import get_env_config
+
         result = get_env_config()
 
         expected = {
             "comparison": {"": {"ignore": {"case": True}}},
             "reporting": {"": {"max": {"samples": 50}}},
             "performance": {"": {"batch": {"size": 2000}}},
-            "invalid": {"prefix": "should_be_ignored"}  # This should be ignored due to wrong prefix
+            "invalid": {"prefix": "should_be_ignored"},  # This should be ignored due to wrong prefix
         }
 
         assert result == expected
@@ -566,6 +580,7 @@ class TestConfigHelpers:
         monkeypatch.setenv("OTHER_PREFIX", "ignored")
 
         from splurge_lazyframe_compare.utils.config_helpers import get_env_config
+
         result = get_env_config("MYAPP_")
 
         expected = {"ignore": {"case": False}}
@@ -576,6 +591,7 @@ class TestConfigHelpers:
         config = {"existing": {"nested": {"value": 1}}}
 
         from splurge_lazyframe_compare.utils.config_helpers import set_nested_config_value
+
         set_nested_config_value(config, "existing.nested.value", 42)
         set_nested_config_value(config, "new.deep.nested.value", "test")
         set_nested_config_value(config, "top_level", True)
@@ -583,7 +599,7 @@ class TestConfigHelpers:
         expected = {
             "existing": {"nested": {"value": 42}},
             "new": {"deep": {"nested": {"value": "test"}}},
-            "top_level": True
+            "top_level": True,
         }
 
         assert config == expected
@@ -592,19 +608,14 @@ class TestConfigHelpers:
         """Test successful config validation."""
         config = {
             "primary_key_columns": ["id", "name"],
-            "column_mappings": [
-                {
-                    "left": "id",
-                    "right": "customer_id",
-                    "name": "id"
-                }
-            ],
+            "column_mappings": [{"left": "id", "right": "customer_id", "name": "id"}],
             "null_equals_null": True,
             "ignore_case": False,
-            "tolerance": {"amount": 0.01}
+            "tolerance": {"amount": 0.01},
         }
 
         from splurge_lazyframe_compare.utils.config_helpers import validate_config
+
         errors = validate_config(config)
 
         assert errors == []
@@ -614,6 +625,7 @@ class TestConfigHelpers:
         config = {"ignore_case": True}  # Missing primary_key_columns and column_mappings
 
         from splurge_lazyframe_compare.utils.config_helpers import validate_config
+
         errors = validate_config(config)
 
         assert len(errors) >= 2
@@ -624,10 +636,11 @@ class TestConfigHelpers:
         """Test config validation with invalid primary key format."""
         config = {
             "primary_key_columns": [],  # Empty list
-            "column_mappings": [{"left_column": "id", "right_column": "customer_id", "comparison_name": "id"}]
+            "column_mappings": [{"left_column": "id", "right_column": "customer_id", "comparison_name": "id"}],
         }
 
         from splurge_lazyframe_compare.utils.config_helpers import validate_config
+
         errors = validate_config(config)
 
         assert len(errors) > 0
@@ -642,11 +655,12 @@ class TestConfigHelpers:
             "primary_key_columns": ["id"],
             "column_mappings": [
                 {"left_column": "id"},  # Missing required keys
-                {"invalid": "mapping"}  # Not a dict
-            ]
+                {"invalid": "mapping"},  # Not a dict
+            ],
         }
 
         from splurge_lazyframe_compare.utils.config_helpers import validate_config
+
         errors = validate_config(config)
 
         assert len(errors) > 0
@@ -658,10 +672,11 @@ class TestConfigHelpers:
             "column_mappings": [{"left_column": "id", "right_column": "customer_id", "comparison_name": "id"}],
             "null_equals_null": "not_boolean",  # Should be boolean
             "ignore_case": "not_boolean",  # Should be boolean
-            "tolerance": {"amount": -1}  # Should be positive
+            "tolerance": {"amount": -1},  # Should be positive
         }
 
         from splurge_lazyframe_compare.utils.config_helpers import validate_config
+
         errors = validate_config(config)
 
         assert len(errors) >= 3
@@ -669,6 +684,7 @@ class TestConfigHelpers:
     def test_create_default_config(self):
         """Test default config creation."""
         from splurge_lazyframe_compare.utils.config_helpers import create_default_config
+
         config = create_default_config()
 
         required_keys = ["primary_key_columns", "column_mappings", "ignore_case", "null_equals_null", "tolerance"]
@@ -683,16 +699,13 @@ class TestConfigHelpers:
 
     def test_apply_environment_overrides(self, monkeypatch):
         """Test environment variable overrides."""
-        base_config = {
-            "primary_key_columns": ["id"],
-            "ignore_case": False,
-            "reporting": {"max_samples": 10}
-        }
+        base_config = {"primary_key_columns": ["id"], "ignore_case": False, "reporting": {"max_samples": 10}}
 
         monkeypatch.setenv("SPLURGE_COMPARISON__IGNORE_CASE", "true")
         monkeypatch.setenv("SPLURGE_REPORTING__MAX_SAMPLES", "50")
 
         from splurge_lazyframe_compare.utils.config_helpers import apply_environment_overrides
+
         result = apply_environment_overrides(base_config)
 
         # The environment overrides create nested structures based on the prefix
@@ -701,13 +714,7 @@ class TestConfigHelpers:
 
     def test_get_config_value(self):
         """Test nested config value retrieval."""
-        config = {
-            "reporting": {
-                "max_samples": 10,
-                "format": {"table": "grid"}
-            },
-            "performance": {"batch_size": 1000}
-        }
+        config = {"reporting": {"max_samples": 10, "format": {"table": "grid"}}, "performance": {"batch_size": 1000}}
 
         from splurge_lazyframe_compare.utils.config_helpers import get_config_value
 
@@ -718,19 +725,18 @@ class TestConfigHelpers:
 
     def test_create_config_from_dataframes(self):
         """Test config creation from DataFrames."""
-        left_df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "amount": [100.0, 200.0, 300.0]
-        })
+        left_df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "amount": [100.0, 200.0, 300.0]})
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2, 4],
-            "customer_name": ["Alice", "Bob", "David"],
-            "total_amount": [100.0, 200.0, 400.0]
-        })
+        right_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 4],
+                "customer_name": ["Alice", "Bob", "David"],
+                "total_amount": [100.0, 200.0, 400.0],
+            }
+        )
 
         from splurge_lazyframe_compare.utils.config_helpers import create_config_from_dataframes
+
         config = create_config_from_dataframes(left_df, right_df, ["id"], auto_map_columns=True)
 
         assert config["primary_key_columns"] == ["id"]
@@ -744,17 +750,12 @@ class TestConfigHelpers:
 
     def test_create_config_from_dataframes_no_auto_map(self):
         """Test config creation without auto-mapping."""
-        left_df = pl.LazyFrame({
-            "id": [1, 2],
-            "name": ["Alice", "Bob"]
-        })
+        left_df = pl.LazyFrame({"id": [1, 2], "name": ["Alice", "Bob"]})
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "customer_name": ["Alice", "Bob"]
-        })
+        right_df = pl.LazyFrame({"customer_id": [1, 2], "customer_name": ["Alice", "Bob"]})
 
         from splurge_lazyframe_compare.utils.config_helpers import create_config_from_dataframes
+
         config = create_config_from_dataframes(left_df, right_df, ["id"], auto_map_columns=False)
 
         # Should only map the columns that exist in left_df
@@ -765,24 +766,27 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_success(self):
         """Test successful creation of ComparisonConfig from LazyFrames."""
-        left_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "balance": [100.5, 200.0, 300.25],
-            "active": [True, False, True]
-        })
+        left_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],
+                "name": ["Alice", "Bob", "Charlie"],
+                "balance": [100.5, 200.0, 300.25],
+                "active": [True, False, True],
+            }
+        )
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2, 4],
-            "name": ["Alice", "Bob", "David"],
-            "balance": [100.5, 200.0, 400.0],
-            "active": [True, False, False]
-        })
+        right_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 4],
+                "name": ["Alice", "Bob", "David"],
+                "balance": [100.5, 200.0, 400.0],
+                "active": [True, False, False],
+            }
+        )
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
-        config = create_comparison_config_from_lazyframes(
-            left=left_df, right=right_df, pk_columns=["customer_id"]
-        )
+
+        config = create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
         # Verify config structure
         assert isinstance(config, ComparisonConfig)
@@ -827,21 +831,26 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_multiple_pk(self):
         """Test with multiple primary key columns."""
-        left_df = pl.LazyFrame({
-            "store_id": [1, 1, 2],
-            "product_id": [100, 101, 100],
-            "name": ["Widget A", "Widget B", "Widget C"],
-            "price": [10.99, 15.50, 12.25]
-        })
+        left_df = pl.LazyFrame(
+            {
+                "store_id": [1, 1, 2],
+                "product_id": [100, 101, 100],
+                "name": ["Widget A", "Widget B", "Widget C"],
+                "price": [10.99, 15.50, 12.25],
+            }
+        )
 
-        right_df = pl.LazyFrame({
-            "store_id": [1, 1, 2],
-            "product_id": [100, 101, 102],
-            "name": ["Widget A", "Widget B", "Widget D"],
-            "price": [10.99, 16.00, 13.00]
-        })
+        right_df = pl.LazyFrame(
+            {
+                "store_id": [1, 1, 2],
+                "product_id": [100, 101, 102],
+                "name": ["Widget A", "Widget B", "Widget D"],
+                "price": [10.99, 16.00, 13.00],
+            }
+        )
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+
         config = create_comparison_config_from_lazyframes(
             left=left_df, right=right_df, pk_columns=["store_id", "product_id"]
         )
@@ -853,18 +862,12 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_missing_pk_left(self):
         """Test error when primary key column is missing from left DataFrame."""
-        left_df = pl.LazyFrame({
-            "name": ["Alice", "Bob"],
-            "balance": [100.5, 200.0]
-        })
+        left_df = pl.LazyFrame({"name": ["Alice", "Bob"], "balance": [100.5, 200.0]})
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "name": ["Alice", "Bob"],
-            "balance": [100.5, 200.0]
-        })
+        right_df = pl.LazyFrame({"customer_id": [1, 2], "name": ["Alice", "Bob"], "balance": [100.5, 200.0]})
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+
         with pytest.raises(ValueError) as exc_info:
             create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
@@ -873,18 +876,12 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_missing_pk_right(self):
         """Test error when primary key column is missing from right DataFrame."""
-        left_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "name": ["Alice", "Bob"],
-            "balance": [100.5, 200.0]
-        })
+        left_df = pl.LazyFrame({"customer_id": [1, 2], "name": ["Alice", "Bob"], "balance": [100.5, 200.0]})
 
-        right_df = pl.LazyFrame({
-            "name": ["Alice", "Bob"],
-            "balance": [100.5, 200.0]
-        })
+        right_df = pl.LazyFrame({"name": ["Alice", "Bob"], "balance": [100.5, 200.0]})
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
+
         with pytest.raises(ValueError) as exc_info:
             create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
@@ -893,15 +890,9 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_empty_pk(self):
         """Test error when empty primary key list is provided."""
-        left_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "name": ["Alice", "Bob"]
-        })
+        left_df = pl.LazyFrame({"customer_id": [1, 2], "name": ["Alice", "Bob"]})
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "name": ["Alice", "Bob"]
-        })
+        right_df = pl.LazyFrame({"customer_id": [1, 2], "name": ["Alice", "Bob"]})
 
         from splurge_lazyframe_compare.exceptions.comparison_exceptions import SchemaValidationError
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
@@ -914,26 +905,18 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_different_schemas(self):
         """Test with DataFrames having different column sets."""
-        left_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "name": ["Alice", "Bob"],
-            "balance": [100.5, 200.0],
-            "left_only_col": ["A", "B"]
-        })
+        left_df = pl.LazyFrame(
+            {"customer_id": [1, 2], "name": ["Alice", "Bob"], "balance": [100.5, 200.0], "left_only_col": ["A", "B"]}
+        )
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "name": ["Alice", "Bob"],
-            "balance": [100.5, 200.0],
-            "right_only_col": ["X", "Y"]
-        })
+        right_df = pl.LazyFrame(
+            {"customer_id": [1, 2], "name": ["Alice", "Bob"], "balance": [100.5, 200.0], "right_only_col": ["X", "Y"]}
+        )
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
 
         # This should work for common columns only
-        config = create_comparison_config_from_lazyframes(
-            left=left_df, right=right_df, pk_columns=["customer_id"]
-        )
+        config = create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
         # Should include only common columns in mappings
         common_columns = {"customer_id", "name", "balance"}
@@ -952,24 +935,25 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_various_data_types(self):
         """Test with various Polars data types."""
-        left_df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "text_col": ["a", "b", "c"],
-            "int_col": [10, 20, 30],
-            "float_col": [1.1, 2.2, 3.3],
-            "bool_col": [True, False, True],
-            "date_col": pl.date_range(pl.date(2023, 1, 1), pl.date(2023, 1, 3), eager=True),
-            "datetime_col": pl.datetime_range(
-                pl.datetime(2023, 1, 1), pl.datetime(2023, 1, 3), interval="1d", eager=True
-            )
-        })
+        left_df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3],
+                "text_col": ["a", "b", "c"],
+                "int_col": [10, 20, 30],
+                "float_col": [1.1, 2.2, 3.3],
+                "bool_col": [True, False, True],
+                "date_col": pl.date_range(pl.date(2023, 1, 1), pl.date(2023, 1, 3), eager=True),
+                "datetime_col": pl.datetime_range(
+                    pl.datetime(2023, 1, 1), pl.datetime(2023, 1, 3), interval="1d", eager=True
+                ),
+            }
+        )
 
         right_df = left_df.clone()  # Same schema for simplicity
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
-        config = create_comparison_config_from_lazyframes(
-            left=left_df, right=right_df, pk_columns=["id"]
-        )
+
+        config = create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["id"])
 
         # Verify data types are correctly inferred
         left_cols = config.left_schema.columns
@@ -993,9 +977,8 @@ class TestConfigHelpers:
         right_df = pl.LazyFrame(schema={"customer_id": pl.Int64, "name": pl.Utf8})
 
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
-        config = create_comparison_config_from_lazyframes(
-            left=left_df, right=right_df, pk_columns=["customer_id"]
-        )
+
+        config = create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
         # Should still create config even with empty DataFrames
         assert len(config.pk_columns) == 1
@@ -1005,39 +988,35 @@ class TestConfigHelpers:
 
     def test_create_comparison_config_from_lazyframes_integration_with_service(self):
         """Test integration with ComparisonService."""
-        left_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "balance": [100.5, 200.0, 300.25]
-        })
+        left_df = pl.LazyFrame(
+            {"customer_id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "balance": [100.5, 200.0, 300.25]}
+        )
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2, 4],  # ID 3 missing, ID 4 added
-            "name": ["Alice", "Bob", "David"],  # Charlie -> David (but Charlie is in left-only)
-            "balance": [150.5, 250.0, 400.0]  # Balance differences for matching records
-        })
+        right_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 4],  # ID 3 missing, ID 4 added
+                "name": ["Alice", "Bob", "David"],  # Charlie -> David (but Charlie is in left-only)
+                "balance": [150.5, 250.0, 400.0],  # Balance differences for matching records
+            }
+        )
 
         from splurge_lazyframe_compare.services.comparison_service import ComparisonService
         from splurge_lazyframe_compare.utils.config_helpers import create_comparison_config_from_lazyframes
 
         # Create config automatically
-        config = create_comparison_config_from_lazyframes(
-            left=left_df, right=right_df, pk_columns=["customer_id"]
-        )
+        config = create_comparison_config_from_lazyframes(left=left_df, right=right_df, pk_columns=["customer_id"])
 
         # Use with comparison service
         comparison_service = ComparisonService()
-        results = comparison_service.execute_comparison(
-            left=left_df,
-            right=right_df,
-            config=config
-        )
+        results = comparison_service.execute_comparison(left=left_df, right=right_df, config=config)
 
         # Verify results
         assert results.summary.left_only_count == 1  # customer_id=3
         assert results.summary.right_only_count == 1  # customer_id=4
         assert results.summary.value_differences_count == 2  # balance differences for customer_id=1 and 2
         assert results.summary.matching_records == 0  # No exact matches due to balance differences
+
+
 class TestDataHelpers:
     """Test data manipulation helper functions."""
 
@@ -1046,6 +1025,7 @@ class TestDataHelpers:
         df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
         from splurge_lazyframe_compare.utils.data_helpers import validate_dataframe
+
         # Should not raise any exceptions
         validate_dataframe(df, "test_df")
 
@@ -1080,13 +1060,16 @@ class TestDataHelpers:
 
     def test_get_dataframe_info(self):
         """Test DataFrame information retrieval."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3, None],
-            "name": ["Alice", "Bob", "Charlie", "David"],
-            "amount": [100.0, 200.0, 300.0, 400.0]
-        })
+        df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3, None],
+                "name": ["Alice", "Bob", "Charlie", "David"],
+                "amount": [100.0, 200.0, 300.0, 400.0],
+            }
+        )
 
         from splurge_lazyframe_compare.utils.data_helpers import get_dataframe_info
+
         info = get_dataframe_info(df)
 
         assert info["row_count"] == 4
@@ -1098,13 +1081,10 @@ class TestDataHelpers:
 
     def test_estimate_dataframe_memory(self):
         """Test memory estimation for DataFrames."""
-        df = pl.LazyFrame({
-            "int_col": [1, 2, 3],
-            "str_col": ["a", "b", "c"],
-            "float_col": [1.0, 2.0, 3.0]
-        })
+        df = pl.LazyFrame({"int_col": [1, 2, 3], "str_col": ["a", "b", "c"], "float_col": [1.0, 2.0, 3.0]})
 
         from splurge_lazyframe_compare.utils.data_helpers import estimate_dataframe_memory
+
         memory_mb = estimate_dataframe_memory(df)
 
         assert isinstance(memory_mb, float)
@@ -1115,21 +1095,16 @@ class TestDataHelpers:
         df = pl.LazyFrame(schema={"id": pl.Int64, "name": pl.Utf8})
 
         from splurge_lazyframe_compare.utils.data_helpers import estimate_dataframe_memory
+
         memory_mb = estimate_dataframe_memory(df)
 
         assert memory_mb == 0
 
     def test_has_null_values(self):
         """Test null value detection."""
-        df_with_nulls = pl.LazyFrame({
-            "col1": [1, 2, None],
-            "col2": ["a", "b", "c"]
-        })
+        df_with_nulls = pl.LazyFrame({"col1": [1, 2, None], "col2": ["a", "b", "c"]})
 
-        df_without_nulls = pl.LazyFrame({
-            "col1": [1, 2, 3],
-            "col2": ["a", "b", "c"]
-        })
+        df_without_nulls = pl.LazyFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
 
         from splurge_lazyframe_compare.utils.data_helpers import has_null_values
 
@@ -1140,13 +1115,10 @@ class TestDataHelpers:
 
     def test_get_null_summary(self):
         """Test null value summary generation."""
-        df = pl.LazyFrame({
-            "col1": [1, 2, None, None],
-            "col2": ["a", None, "c", "d"],
-            "col3": [1.0, 2.0, 3.0, 4.0]
-        })
+        df = pl.LazyFrame({"col1": [1, 2, None, None], "col2": ["a", None, "c", "d"], "col3": [1.0, 2.0, 3.0, 4.0]})
 
         from splurge_lazyframe_compare.utils.data_helpers import get_null_summary
+
         summary = get_null_summary(df)
 
         assert "col1" in summary
@@ -1162,12 +1134,10 @@ class TestDataHelpers:
 
     def test_optimize_dataframe(self):
         """Test DataFrame optimization."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
         from splurge_lazyframe_compare.utils.data_helpers import optimize_dataframe
+
         optimized = optimize_dataframe(df)
 
         # Should return a LazyFrame (basic optimization)
@@ -1175,12 +1145,10 @@ class TestDataHelpers:
 
     def test_safe_collect(self):
         """Test safe DataFrame collection."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
         from splurge_lazyframe_compare.utils.data_helpers import safe_collect
+
         result = safe_collect(df)
 
         assert isinstance(result, pl.DataFrame)
@@ -1192,6 +1160,7 @@ class TestDataHelpers:
         df = pl.LazyFrame({"id": [1, 2, 3]})
 
         from splurge_lazyframe_compare.utils.data_helpers import safe_collect
+
         result = safe_collect(df)
 
         # Should either succeed or return None
@@ -1199,20 +1168,14 @@ class TestDataHelpers:
 
     def test_compare_dataframe_shapes(self):
         """Test DataFrame shape comparison."""
-        df1 = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"],
-            "amount": [100.0, 200.0, 300.0]
-        })
+        df1 = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "amount": [100.0, 200.0, 300.0]})
 
-        df2 = pl.LazyFrame({
-            "customer_id": [1, 2],
-            "customer_name": ["Alice", "Bob"],
-            "total": [100.0, 200.0],
-            "extra_col": ["x", "y"]
-        })
+        df2 = pl.LazyFrame(
+            {"customer_id": [1, 2], "customer_name": ["Alice", "Bob"], "total": [100.0, 200.0], "extra_col": ["x", "y"]}
+        )
 
         from splurge_lazyframe_compare.utils.data_helpers import compare_dataframe_shapes
+
         comparison = compare_dataframe_shapes(df1, df2)
 
         assert "df1_info" in comparison
@@ -1226,6 +1189,8 @@ class TestDataHelpers:
         assert "extra_col" in comparison["column_overlap"]["df2_only_columns"]
         # No common columns since column names are different
         assert len(comparison["column_overlap"]["common_columns"]) == 0
+
+
 class TestLoggingHelpers:
     """Test logging and monitoring helper functions."""
 
@@ -1239,7 +1204,7 @@ class TestLoggingHelpers:
             operation="test_operation",
             message="Test message",
             details={"key": "value"},
-            duration_ms=150.5
+            duration_ms=150.5,
         )
 
         assert "[INFO]" in message
@@ -1254,10 +1219,7 @@ class TestLoggingHelpers:
         from splurge_lazyframe_compare.utils.logging_helpers import create_log_message
 
         message = create_log_message(
-            level="DEBUG",
-            service_name="TestService",
-            operation="test_operation",
-            message="Simple message"
+            level="DEBUG", service_name="TestService", operation="test_operation", message="Simple message"
         )
 
         assert "[DEBUG]" in message
@@ -1324,7 +1286,7 @@ class TestLoggingHelpers:
             operation="test_operation",
             status="success",
             message="Operation completed",
-            details={"result": "ok"}
+            details={"result": "ok"},
         )
 
     def test_log_service_operation_different_statuses(self):
@@ -1333,20 +1295,14 @@ class TestLoggingHelpers:
 
         for status in ["success", "error", "warning", "info"]:
             # Should not raise any exceptions
-            log_service_operation(
-                service_name="TestService",
-                operation="test_operation",
-                status=status
-            )
+            log_service_operation(service_name="TestService", operation="test_operation", status=status)
 
     def test_create_operation_context(self):
         """Test operation context creation."""
         from splurge_lazyframe_compare.utils.logging_helpers import create_operation_context
 
         ctx = create_operation_context(
-            operation_name="test_operation",
-            input_params={"param1": "value1"},
-            expected_output="test_result"
+            operation_name="test_operation", input_params={"param1": "value1"}, expected_output="test_result"
         )
 
         assert ctx["operation"] == "test_operation"
@@ -1362,10 +1318,7 @@ class TestLoggingHelpers:
         ctx = create_operation_context("test_operation")
 
         update_operation_context(
-            context=ctx,
-            status="completed",
-            result="success",
-            additional_info={"performance": "good"}
+            context=ctx, status="completed", result="success", additional_info={"performance": "good"}
         )
 
         assert ctx["status"] == "completed"
@@ -1379,11 +1332,7 @@ class TestLoggingHelpers:
 
         ctx = create_operation_context("test_operation")
 
-        update_operation_context(
-            context=ctx,
-            status="failed",
-            error="Something went wrong"
-        )
+        update_operation_context(context=ctx, status="failed", error="Something went wrong")
 
         assert ctx["status"] == "failed"
         assert ctx["error"] == "Something went wrong"
@@ -1397,7 +1346,7 @@ class TestLoggingHelpers:
             "column_count": 5,
             "memory_estimate_mb": 50.5,
             "has_nulls": True,
-            "column_types": ["Int64", "Utf8", "Float64"]
+            "column_types": ["Int64", "Utf8", "Float64"],
         }
 
         # Should not raise any exceptions
@@ -1426,6 +1375,8 @@ class TestLoggingHelpers:
 
         # Should not raise any exceptions
         log_service_health("TestService", health_data)
+
+
 class TestTypeHelpers:
     """Test type helper functions."""
 
@@ -1443,6 +1394,7 @@ class TestTypeHelpers:
         assert is_numeric_datatype(pl.Utf8) is False
         assert is_numeric_datatype(pl.Boolean) is False
         assert is_numeric_datatype(pl.Date) is False
+
     def test_get_friendly_dtype_name(self):
         """Test human-readable data type names."""
         from splurge_lazyframe_compare.utils.type_helpers import get_polars_datatype_name
@@ -1471,6 +1423,8 @@ class TestTypeHelpers:
         result = get_polars_datatype_name(UnknownDataType())
         assert isinstance(result, str)
         assert len(result) > 0
+
+
 class TestFileOperations:
     """Test file operation utility functions."""
 
@@ -1480,6 +1434,7 @@ class TestFileOperations:
         assert not test_dir.exists()
 
         from splurge_lazyframe_compare.utils.file_operations import ensure_directory_exists
+
         ensure_directory_exists(test_dir)
 
         assert test_dir.exists()
@@ -1491,6 +1446,7 @@ class TestFileOperations:
         test_dir.mkdir()
 
         from splurge_lazyframe_compare.utils.file_operations import ensure_directory_exists
+
         # Should not raise any exceptions
         ensure_directory_exists(test_dir)
 
@@ -1521,14 +1477,12 @@ class TestFileOperations:
 
     def test_export_lazyframe_parquet(self, tmp_path):
         """Test exporting LazyFrame to parquet."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
         output_file = tmp_path / "test_output.parquet"
 
         from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
+
         export_lazyframe(df, output_file, "parquet")
 
         assert output_file.exists()
@@ -1539,14 +1493,12 @@ class TestFileOperations:
 
     def test_export_lazyframe_csv(self, tmp_path):
         """Test exporting LazyFrame to CSV."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
         output_file = tmp_path / "test_output.csv"
 
         from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
+
         export_lazyframe(df, output_file, "csv")
 
         assert output_file.exists()
@@ -1557,14 +1509,12 @@ class TestFileOperations:
 
     def test_export_lazyframe_ndjson(self, tmp_path):
         """Test exporting LazyFrame to NDJSON."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
         output_file = tmp_path / "test_output.ndjson"
 
         from splurge_lazyframe_compare.utils.file_operations import export_lazyframe
+
         export_lazyframe(df, output_file, "json")
 
         assert output_file.exists()
@@ -1598,6 +1548,7 @@ class TestFileOperations:
         df.sink_parquet(test_file)
 
         from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
+
         imported = import_lazyframe(test_file, "parquet")
 
         assert isinstance(imported, pl.LazyFrame)
@@ -1611,6 +1562,7 @@ class TestFileOperations:
         df.sink_csv(test_file)
 
         from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
+
         imported = import_lazyframe(test_file, "csv")
 
         assert isinstance(imported, pl.LazyFrame)
@@ -1624,6 +1576,7 @@ class TestFileOperations:
         df.sink_ndjson(test_file)
 
         from splurge_lazyframe_compare.utils.file_operations import import_lazyframe
+
         imported = import_lazyframe(test_file, "json")
 
         assert isinstance(imported, pl.LazyFrame)
@@ -1722,6 +1675,7 @@ class TestFileOperations:
         test_file = tmp_path / "test.txt"
 
         from splurge_lazyframe_compare.utils.file_operations import validate_file_path
+
         # Should not raise any exceptions
         validate_file_path(test_file)
 
@@ -1771,6 +1725,8 @@ class TestFileOperations:
 
         files = list_files_by_pattern(Path("nonexistent"), "*.txt")
         assert files == []
+
+
 class TestFormatting:
     """Test formatting utility functions."""
 
@@ -1840,11 +1796,13 @@ class TestFormatting:
 
     def test_format_dataframe_sample(self):
         """Test DataFrame sample formatting."""
-        df = pl.LazyFrame({
-            "id": [1, 2, 3, 4, 5],
-            "name": ["Alice", "Bob", "Charlie", "David", "Eve"],
-            "value": [100, 200, 300, 400, 500]
-        })
+        df = pl.LazyFrame(
+            {
+                "id": [1, 2, 3, 4, 5],
+                "name": ["Alice", "Bob", "Charlie", "David", "Eve"],
+                "value": [100, 200, 300, 400, 500],
+            }
+        )
 
         from splurge_lazyframe_compare.utils.formatting import format_dataframe_sample
 
@@ -1869,12 +1827,7 @@ class TestFormatting:
 
     def test_format_dataframe_sample_limited_columns(self):
         """Test DataFrame sample formatting with column limit."""
-        df = pl.LazyFrame({
-            "col1": [1, 2],
-            "col2": [3, 4],
-            "col3": [5, 6],
-            "col4": [7, 8]
-        })
+        df = pl.LazyFrame({"col1": [1, 2], "col2": [3, 4], "col3": [5, 6], "col4": [7, 8]})
 
         from splurge_lazyframe_compare.utils.formatting import format_dataframe_sample
 
@@ -1975,6 +1928,8 @@ class TestFormatting:
         result = create_summary_table(data, headers=["Custom Header 1", "Custom Header 2"])
         assert isinstance(result, str)
         assert len(result) > 0
+
+
 class TestDataPreparationService:
     """Test DataPreparationService functionality."""
 
@@ -1988,11 +1943,7 @@ class TestDataPreparationService:
         left_df, right_df = sample_dataframes
 
         service = DataPreparationService()
-        mapped_left, mapped_right = service.apply_column_mappings(
-            left=left_df,
-            right=right_df,
-            config=sample_config
-        )
+        mapped_left, mapped_right = service.apply_column_mappings(left=left_df, right=right_df, config=sample_config)
 
         # Check that columns were renamed according to mappings
         left_columns = mapped_left.collect_schema().names()
@@ -2005,10 +1956,7 @@ class TestDataPreparationService:
 
     def test_apply_case_insensitive(self):
         """Test case insensitive transformation."""
-        df = pl.LazyFrame({
-            "NAME": ["Alice", "BOB", "Charlie"],
-            "VALUE": ["ABC", "def", "GHI"]
-        })
+        df = pl.LazyFrame({"NAME": ["Alice", "BOB", "Charlie"], "VALUE": ["ABC", "def", "GHI"]})
 
         service = DataPreparationService()
         result = service.apply_case_insensitive(df)
@@ -2030,6 +1978,8 @@ class TestDataPreparationService:
         assert "R_name" in column_order
         assert "L_amount" in column_order
         assert "R_amount" in column_order
+
+
 class TestReportingService:
     """Test ReportingService functionality."""
 
@@ -2050,7 +2000,7 @@ class TestReportingService:
             value_differences_count=2,
             left_only_count=1,
             right_only_count=1,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2058,7 +2008,7 @@ class TestReportingService:
             value_differences=sample_dataframes[0].limit(0),  # Empty
             left_only_records=sample_dataframes[0].limit(0),  # Empty
             right_only_records=sample_dataframes[0].limit(0),  # Empty
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2080,7 +2030,7 @@ class TestReportingService:
             value_differences_count=0,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2088,7 +2038,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2112,7 +2062,7 @@ class TestReportingService:
             value_differences_count=300000,
             left_only_count=200000,
             right_only_count=1200000,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2120,7 +2070,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2141,7 +2091,7 @@ class TestReportingService:
             value_differences_count=2,
             left_only_count=1,
             right_only_count=1,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2149,7 +2099,7 @@ class TestReportingService:
             value_differences=sample_dataframes[0].limit(0),
             left_only_records=sample_dataframes[0].limit(0),
             right_only_records=sample_dataframes[0].limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2170,7 +2120,7 @@ class TestReportingService:
             value_differences_count=25,
             left_only_count=15,
             right_only_count=10,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2178,7 +2128,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2195,23 +2145,11 @@ class TestReportingService:
         from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
 
         # Create sample data for value differences
-        diff_data = {
-            "id": [1, 2],
-            "name": ["Alice", "Bob"],
-            "amount": [100.0, 200.0]
-        }
+        diff_data = {"id": [1, 2], "name": ["Alice", "Bob"], "amount": [100.0, 200.0]}
 
-        left_only_data = {
-            "id": [3],
-            "name": ["Charlie"],
-            "amount": [300.0]
-        }
+        left_only_data = {"id": [3], "name": ["Charlie"], "amount": [300.0]}
 
-        right_only_data = {
-            "customer_id": [5],
-            "customer_name": ["Eve"],
-            "total_amount": [500.0]
-        }
+        right_only_data = {"customer_id": [5], "customer_name": ["Eve"], "total_amount": [500.0]}
 
         summary = ComparisonSummary(
             total_left_records=4,
@@ -2220,7 +2158,7 @@ class TestReportingService:
             value_differences_count=2,
             left_only_count=1,
             right_only_count=1,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2228,7 +2166,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame(left_only_data),
             right_only_records=pl.LazyFrame(right_only_data),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2257,7 +2195,7 @@ class TestReportingService:
             value_differences_count=0,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2265,7 +2203,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2285,7 +2223,7 @@ class TestReportingService:
         diff_data = {
             "id": list(range(1, 6)),  # 5 records
             "name": [f"Person{i}" for i in range(1, 6)],
-            "amount": [i * 100.0 for i in range(1, 6)]
+            "amount": [i * 100.0 for i in range(1, 6)],
         }
 
         summary = ComparisonSummary(
@@ -2295,7 +2233,7 @@ class TestReportingService:
             value_differences_count=5,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2303,7 +2241,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2323,11 +2261,7 @@ class TestReportingService:
         """Test detailed report generation with different table formats."""
         from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
 
-        diff_data = {
-            "id": [1, 2],
-            "name": ["Alice", "Bob"],
-            "amount": [100.0, 200.0]
-        }
+        diff_data = {"id": [1, 2], "name": ["Alice", "Bob"], "amount": [100.0, 200.0]}
 
         summary = ComparisonSummary(
             total_left_records=4,
@@ -2336,7 +2270,7 @@ class TestReportingService:
             value_differences_count=2,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2344,7 +2278,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2373,7 +2307,7 @@ class TestReportingService:
             value_differences_count=2,
             left_only_count=1,
             right_only_count=1,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2381,7 +2315,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame(left_data),
             right_only_records=pl.LazyFrame(right_data),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2389,11 +2323,7 @@ class TestReportingService:
         # Test different formats
         formats = ["parquet", "csv", "json"]
         for fmt in formats:
-            exported_files = service.export_results(
-                results=result,
-                format=fmt,
-                output_dir=str(tmp_path)
-            )
+            exported_files = service.export_results(results=result, format=fmt, output_dir=str(tmp_path))
 
             # Should export all files when data is present
             assert "value_differences" in exported_files
@@ -2416,7 +2346,7 @@ class TestReportingService:
             value_differences_count=0,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2424,15 +2354,11 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
-        exported_files = service.export_results(
-            results=result,
-            format="csv",
-            output_dir=str(tmp_path)
-        )
+        exported_files = service.export_results(results=result, format="csv", output_dir=str(tmp_path))
 
         # Should only export summary when data is empty
         assert "summary" in exported_files
@@ -2454,7 +2380,7 @@ class TestReportingService:
             value_differences_count=0,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2462,17 +2388,13 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
 
         with pytest.raises(ValueError, match="Unsupported format"):
-            service.export_results(
-                results=result,
-                format="invalid_format",
-                output_dir=str(tmp_path)
-            )
+            service.export_results(results=result, format="invalid_format", output_dir=str(tmp_path))
 
     def test_export_results_invalid_directory(self, sample_config):
         """Test export_results with invalid directory."""
@@ -2485,7 +2407,7 @@ class TestReportingService:
             value_differences_count=0,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2493,26 +2415,18 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
 
         # Test with non-existent absolute path
         with pytest.raises(ValueError, match="Parent directory does not exist"):
-            service.export_results(
-                results=result,
-                format="csv",
-                output_dir="C:/definitely/does/not/exist"
-            )
+            service.export_results(results=result, format="csv", output_dir="C:/definitely/does/not/exist")
 
         # Test with non-existent relative path
         with pytest.raises(ValueError, match="Parent directory does not exist"):
-            service.export_results(
-                results=result,
-                format="csv",
-                output_dir="non/existent/directory"
-            )
+            service.export_results(results=result, format="csv", output_dir="non/existent/directory")
 
     def test_export_results_non_writable_directory(self, sample_config, tmp_path, monkeypatch):
         """Test export_results with non-writable directory."""
@@ -2525,7 +2439,7 @@ class TestReportingService:
             value_differences_count=0,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2533,7 +2447,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2545,11 +2459,7 @@ class TestReportingService:
         monkeypatch.setattr("os.access", mock_access)
 
         with pytest.raises(ValueError, match="Parent directory is not writable"):
-            service.export_results(
-                results=result,
-                format="csv",
-                output_dir=str(tmp_path)
-            )
+            service.export_results(results=result, format="csv", output_dir=str(tmp_path))
 
     def test_input_validation_invalid_results(self):
         """Test input validation for invalid results parameter."""
@@ -2566,6 +2476,7 @@ class TestReportingService:
 
         with pytest.raises(ValueError, match="results must be a ComparisonResult"):
             service.export_results(results="invalid")
+
     def test_edge_case_special_characters_in_data(self, sample_config):
         """Test handling of special characters in data."""
         from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
@@ -2573,7 +2484,7 @@ class TestReportingService:
         # Create data with special characters
         diff_data = {
             "name": ["José", "Müller", "O'Connor", "测试"],
-            "description": ["Line 1\nLine 2", "Tab\there", "Quote\"here", "Unicode: 🎉"]
+            "description": ["Line 1\nLine 2", "Tab\there", 'Quote"here', "Unicode: 🎉"],
         }
 
         summary = ComparisonSummary(
@@ -2583,7 +2494,7 @@ class TestReportingService:
             value_differences_count=4,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2591,7 +2502,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2606,11 +2517,7 @@ class TestReportingService:
         from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
 
         # Create data with null values
-        diff_data = {
-            "id": [1, 2, None],
-            "name": ["Alice", None, "Charlie"],
-            "amount": [100.0, None, None]
-        }
+        diff_data = {"id": [1, 2, None], "name": ["Alice", None, "Charlie"], "amount": [100.0, None, None]}
 
         summary = ComparisonSummary(
             total_left_records=3,
@@ -2619,7 +2526,7 @@ class TestReportingService:
             value_differences_count=3,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2627,7 +2534,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2652,7 +2559,7 @@ class TestReportingService:
             value_differences_count=2,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2660,7 +2567,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2687,7 +2594,7 @@ class TestReportingService:
             value_differences_count=3,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2695,7 +2602,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame(diff_data),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2715,12 +2622,7 @@ class TestReportingService:
         from splurge_lazyframe_compare.models.comparison import ComparisonResult, ComparisonSummary
 
         # Test different timestamp formats
-        timestamps = [
-            "2025-01-01T00:00:00",
-            "2025-01-01 00:00:00",
-            "2025-01-01T00:00:00.123456",
-            "2025-01-01"
-        ]
+        timestamps = ["2025-01-01T00:00:00", "2025-01-01 00:00:00", "2025-01-01T00:00:00.123456", "2025-01-01"]
 
         service = ReportingService()
 
@@ -2732,7 +2634,7 @@ class TestReportingService:
                 value_differences_count=0,
                 left_only_count=0,
                 right_only_count=0,
-                comparison_timestamp=timestamp
+                comparison_timestamp=timestamp,
             )
 
             result = ComparisonResult(
@@ -2740,13 +2642,13 @@ class TestReportingService:
                 value_differences=pl.LazyFrame({}).limit(0),
                 left_only_records=pl.LazyFrame({}).limit(0),
                 right_only_records=pl.LazyFrame({}).limit(0),
-                config=sample_config
+                config=sample_config,
             )
 
             report = service.generate_summary_report(results=result)
 
             # Should contain the timestamp in some form
-            assert timestamp.split('T')[0] in report  # At least the date should be present
+            assert timestamp.split("T")[0] in report  # At least the date should be present
 
     def test_export_results_relative_path(self, sample_config, tmp_path):
         """Test export_results with relative paths."""
@@ -2759,7 +2661,7 @@ class TestReportingService:
             value_differences_count=0,
             left_only_count=0,
             right_only_count=0,
-            comparison_timestamp="2025-01-01T00:00:00"
+            comparison_timestamp="2025-01-01T00:00:00",
         )
 
         result = ComparisonResult(
@@ -2767,7 +2669,7 @@ class TestReportingService:
             value_differences=pl.LazyFrame({}).limit(0),
             left_only_records=pl.LazyFrame({}).limit(0),
             right_only_records=pl.LazyFrame({}).limit(0),
-            config=sample_config
+            config=sample_config,
         )
 
         service = ReportingService()
@@ -2776,14 +2678,11 @@ class TestReportingService:
         original_cwd = tmp_path.cwd()
         try:
             import os
+
             os.chdir(tmp_path)
 
             # Test with relative path
-            exported_files = service.export_results(
-                results=result,
-                format="csv",
-                output_dir="relative_output"
-            )
+            exported_files = service.export_results(results=result, format="csv", output_dir="relative_output")
 
             # Should create the relative directory and export files
             assert "summary" in exported_files
@@ -2795,6 +2694,8 @@ class TestReportingService:
 
         finally:
             os.chdir(original_cwd)
+
+
 class TestComparisonService:
     """Test ComparisonService functionality."""
 
@@ -2808,11 +2709,7 @@ class TestComparisonService:
         left_df, right_df = sample_dataframes
 
         service = ComparisonService()
-        result = service.execute_comparison(
-            left=left_df,
-            right=right_df,
-            config=sample_config
-        )
+        result = service.execute_comparison(left=left_df, right=right_df, config=sample_config)
 
         assert result.summary.total_left_records == 4
         assert result.summary.total_right_records == 4
@@ -2825,6 +2722,8 @@ class TestComparisonService:
         assert result.value_differences is not None
         assert result.left_only_records is not None
         assert result.right_only_records is not None
+
+
 class TestComparisonOrchestrator:
     """Test ComparisonOrchestrator functionality."""
 
@@ -2840,11 +2739,7 @@ class TestComparisonOrchestrator:
         left_df, right_df = sample_dataframes
 
         orchestrator = ComparisonOrchestrator()
-        result = orchestrator.compare_dataframes(
-            config=sample_config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=sample_config, left=left_df, right=right_df)
 
         assert result.summary.total_left_records == 4
         assert result.summary.total_right_records == 4
@@ -2856,10 +2751,7 @@ class TestComparisonOrchestrator:
 
         orchestrator = ComparisonOrchestrator()
         report = orchestrator.compare_and_report(
-            config=sample_config,
-            left=left_df,
-            right=right_df,
-            include_samples=False
+            config=sample_config, left=left_df, right=right_df, include_samples=False
         )
 
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report
@@ -2876,24 +2768,20 @@ class TestComparisonOrchestrator:
 
         # Create comparison service with injected dependencies
         comparison_service = ComparisonService(
-            validation_service=validation_service,
-            preparation_service=preparation_service
+            validation_service=validation_service, preparation_service=preparation_service
         )
 
         # Create orchestrator with custom services
         orchestrator = ComparisonOrchestrator(
-            comparison_service=comparison_service,
-            reporting_service=reporting_service
+            comparison_service=comparison_service, reporting_service=reporting_service
         )
 
         # Test that it works
-        result = orchestrator.compare_dataframes(
-            config=sample_config,
-            left=left_df,
-            right=right_df
-        )
+        result = orchestrator.compare_dataframes(config=sample_config, left=left_df, right=right_df)
 
         assert result.summary.matching_records >= 0
+
+
 class TestComparisonOrchestratorComprehensive:
     """Comprehensive tests for ComparisonOrchestrator public APIs."""
 
@@ -2909,8 +2797,12 @@ class TestComparisonOrchestratorComprehensive:
         self.right_columns = {
             "cust_id": ColumnDefinition(name="cust_id", alias="Customer ID", datatype=pl.Int64, nullable=False),
             "order_dt": ColumnDefinition(name="order_dt", alias="Order Date", datatype=pl.Date, nullable=False),
-            "total_amount": ColumnDefinition(name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False),
-            "order_status": ColumnDefinition(name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True),
+            "total_amount": ColumnDefinition(
+                name="total_amount", alias="Order Amount", datatype=pl.Float64, nullable=False
+            ),
+            "order_status": ColumnDefinition(
+                name="order_status", alias="Order Status", datatype=pl.Utf8, nullable=True
+            ),
         }
 
         self.left_schema = ComparisonSchema(
@@ -2950,9 +2842,7 @@ class TestComparisonOrchestratorComprehensive:
             "status": ["pending", "completed", "pending"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right dataframe with correct column names for right schema
         right_data = {
@@ -2961,16 +2851,10 @@ class TestComparisonOrchestratorComprehensive:
             "total_amount": [100.0, 200.0, 300.0],
             "order_status": ["pending", "completed", "pending"],
         }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Test successful comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         assert result.summary.total_left_records == 3
         assert result.summary.total_right_records == 3
@@ -2994,18 +2878,10 @@ class TestComparisonOrchestratorComprehensive:
             "order_status": ["pending", "completed", "shipped"],  # Different status
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         assert result.summary.total_left_records == 3
         assert result.summary.total_right_records == 3
@@ -3023,9 +2899,7 @@ class TestComparisonOrchestratorComprehensive:
             "status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right dataframe with correct column names for right schema
         right_data = {
@@ -3034,16 +2908,10 @@ class TestComparisonOrchestratorComprehensive:
             "total_amount": [100.0, 200.0],
             "order_status": ["pending", "completed"],
         }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Test with default parameters
-        report = self.orchestrator.compare_and_report(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        report = self.orchestrator.compare_and_report(config=self.config, left=left_df, right=right_df)
 
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report
         assert "RECORD COUNTS:" in report
@@ -3055,7 +2923,7 @@ class TestComparisonOrchestratorComprehensive:
             right=right_df,
             include_samples=False,
             max_samples=5,
-            table_format="simple"
+            table_format="simple",
         )
 
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in report_custom
@@ -3072,9 +2940,7 @@ class TestComparisonOrchestratorComprehensive:
             "status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right dataframe with correct column names for right schema
         right_data = {
@@ -3083,37 +2949,27 @@ class TestComparisonOrchestratorComprehensive:
             "total_amount": [100.0, 200.0],
             "order_status": ["pending", "completed"],
         }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test parquet export
             exported_files = self.orchestrator.compare_and_export(
-                config=self.config,
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="parquet"
+                config=self.config, left=left_df, right=right_df, output_dir=temp_dir, format="parquet"
             )
 
             assert len(exported_files) == 1  # Only summary file when no differences
             for file_path in exported_files.values():
                 assert Path(file_path).exists()
-                assert file_path.endswith('.json')
+                assert file_path.endswith(".json")
 
             # Test CSV export
             exported_csv = self.orchestrator.compare_and_export(
-                config=self.config,
-                left=left_df,
-                right=right_df,
-                output_dir=temp_dir,
-                format="csv"
+                config=self.config, left=left_df, right=right_df, output_dir=temp_dir, format="csv"
             )
 
             for file_path in exported_csv.values():
                 assert Path(file_path).exists()
-                assert file_path.endswith('.json')  # Summary is always JSON
+                assert file_path.endswith(".json")  # Summary is always JSON
 
     def test_generate_report_from_result_comprehensive(self) -> None:
         """Test generate_report_from_result with different report types."""
@@ -3124,9 +2980,7 @@ class TestComparisonOrchestratorComprehensive:
             "status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right dataframe with correct column names for right schema
         right_data = {
@@ -3135,50 +2989,33 @@ class TestComparisonOrchestratorComprehensive:
             "total_amount": [100.0, 200.0],
             "order_status": ["pending", "completed"],
         }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Test detailed report
-        detailed_report = self.orchestrator.generate_report_from_result(
-            result=result,
-            report_type="detailed"
-        )
+        detailed_report = self.orchestrator.generate_report_from_result(result=result, report_type="detailed")
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in detailed_report
 
         # Test summary report
-        summary_report = self.orchestrator.generate_report_from_result(
-            result=result,
-            report_type="summary"
-        )
+        summary_report = self.orchestrator.generate_report_from_result(result=result, report_type="summary")
         assert "SPLURGE LAZYFRAME COMPARISON SUMMARY" in summary_report
 
         # Test table report
-        table_report = self.orchestrator.generate_report_from_result(
-            result=result,
-            report_type="table"
-        )
+        table_report = self.orchestrator.generate_report_from_result(result=result, report_type="table")
         assert "Left DataFrame" in table_report
 
         # Test invalid report type
         with pytest.raises(ValueError) as exc_info:
-            self.orchestrator.generate_report_from_result(
-                result=result,
-                report_type="invalid"
-            )
+            self.orchestrator.generate_report_from_result(result=result, report_type="invalid")
 
         # Test that error message contains key information
         error_msg = str(exc_info.value)
         assert "report" in error_msg.lower()
         assert "type" in error_msg.lower()
         assert "invalid" in error_msg.lower() or "unknown" in error_msg.lower()
+
     def test_get_comparison_summary_comprehensive(self) -> None:
         """Test get_comparison_summary method."""
         left_data = {
@@ -3188,9 +3025,7 @@ class TestComparisonOrchestratorComprehensive:
             "status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right dataframe with correct column names for right schema
         right_data = {
@@ -3199,16 +3034,10 @@ class TestComparisonOrchestratorComprehensive:
             "total_amount": [100.0, 200.0],
             "order_status": ["pending", "completed"],
         }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Test getting summary
         summary = self.orchestrator.get_comparison_summary(result=result)
@@ -3224,9 +3053,7 @@ class TestComparisonOrchestratorComprehensive:
             "status": ["pending", "completed"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right dataframe with correct column names for right schema
         right_data = {
@@ -3235,44 +3062,33 @@ class TestComparisonOrchestratorComprehensive:
             "total_amount": [100.0, 200.0],
             "order_status": ["pending", "completed"],
         }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Execute comparison
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Test getting table with different formats
         table_default = self.orchestrator.get_comparison_table(result=result)
         assert "Left DataFrame" in table_default
 
-        table_simple = self.orchestrator.get_comparison_table(
-            result=result,
-            table_format="simple"
-        )
+        table_simple = self.orchestrator.get_comparison_table(result=result, table_format="simple")
         assert "Left DataFrame" in table_simple
 
     def test_compare_dataframes_input_validation(self) -> None:
         """Test input validation for compare_dataframes."""
-        valid_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "order_date": ["2023-01-01", "2023-01-02", "2023-01-03"],
-            "amount": [100.0, 200.0, 300.0],
-            "status": ["pending", "completed", "pending"]
-        }).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        valid_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],
+                "order_date": ["2023-01-01", "2023-01-02", "2023-01-03"],
+                "amount": [100.0, 200.0, 300.0],
+                "status": ["pending", "completed", "pending"],
+            }
+        ).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
         invalid_df = "not a dataframe"
 
         # Test with invalid config
         with pytest.raises(ValueError) as exc_info:
-            self.orchestrator.compare_dataframes(
-                config="invalid_config",
-                left=valid_df,
-                right=valid_df
-            )
+            self.orchestrator.compare_dataframes(config="invalid_config", left=valid_df, right=valid_df)
 
         # Test that error message contains key information
         error_msg = str(exc_info.value)
@@ -3281,11 +3097,7 @@ class TestComparisonOrchestratorComprehensive:
 
         # Test with invalid left dataframe
         with pytest.raises(ValueError) as exc_info:
-            self.orchestrator.compare_dataframes(
-                config=self.config,
-                left=invalid_df,
-                right=valid_df
-            )
+            self.orchestrator.compare_dataframes(config=self.config, left=invalid_df, right=valid_df)
 
         # Test that error message contains key information
         error_msg = str(exc_info.value)
@@ -3294,11 +3106,7 @@ class TestComparisonOrchestratorComprehensive:
 
         # Test with invalid right dataframe
         with pytest.raises(ValueError) as exc_info:
-            self.orchestrator.compare_dataframes(
-                config=self.config,
-                left=valid_df,
-                right=invalid_df
-            )
+            self.orchestrator.compare_dataframes(config=self.config, left=valid_df, right=invalid_df)
 
         # Test that error message contains key information
         error_msg = str(exc_info.value)
@@ -3307,47 +3115,45 @@ class TestComparisonOrchestratorComprehensive:
 
     def test_compare_and_report_input_validation(self) -> None:
         """Test input validation for compare_and_report."""
-        valid_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "order_date": ["2023-01-01", "2023-01-02", "2023-01-03"],
-            "amount": [100.0, 200.0, 300.0],
-            "status": ["pending", "completed", "pending"]
-        }).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        valid_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],
+                "order_date": ["2023-01-01", "2023-01-02", "2023-01-03"],
+                "amount": [100.0, 200.0, 300.0],
+                "status": ["pending", "completed", "pending"],
+            }
+        ).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
         invalid_df = "not a dataframe"
 
         # Test with invalid config
         with pytest.raises(ValueError, match="config must be a ComparisonConfig"):
-            self.orchestrator.compare_and_report(
-                config="invalid_config",
-                left=valid_df,
-                right=valid_df
-            )
+            self.orchestrator.compare_and_report(config="invalid_config", left=valid_df, right=valid_df)
 
         # Test with invalid dataframes
         with pytest.raises(ValueError):
-            self.orchestrator.compare_and_report(
-                config=self.config,
-                left=invalid_df,
-                right=valid_df
-            )
+            self.orchestrator.compare_and_report(config=self.config, left=invalid_df, right=valid_df)
 
     def test_compare_and_export_input_validation(self) -> None:
         """Test input validation for compare_and_export."""
         import tempfile
 
-        left_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],
-            "order_date": ["2023-01-01", "2023-01-02", "2023-01-03"],
-            "amount": [100.0, 200.0, 300.0],
-            "status": ["pending", "completed", "pending"]
-        }).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
+        left_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],
+                "order_date": ["2023-01-01", "2023-01-02", "2023-01-03"],
+                "amount": [100.0, 200.0, 300.0],
+                "status": ["pending", "completed", "pending"],
+            }
+        ).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
-        right_df = pl.LazyFrame({
-            "cust_id": [1, 2, 3],
-            "order_dt": ["2023-01-01", "2023-01-02", "2023-01-03"],
-            "total_amount": [100.0, 200.0, 300.0],
-            "order_status": ["pending", "completed", "pending"]
-        }).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
+        right_df = pl.LazyFrame(
+            {
+                "cust_id": [1, 2, 3],
+                "order_dt": ["2023-01-01", "2023-01-02", "2023-01-03"],
+                "total_amount": [100.0, 200.0, 300.0],
+                "order_status": ["pending", "completed", "pending"],
+            }
+        ).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         invalid_df = "not a dataframe"
 
@@ -3355,20 +3161,13 @@ class TestComparisonOrchestratorComprehensive:
             # Test with invalid format
             with pytest.raises((ValueError, TypeError)):
                 self.orchestrator.compare_and_export(
-                    config=self.config,
-                    left=left_df,
-                    right=right_df,
-                    output_dir=temp_dir,
-                    format="invalid_format"
+                    config=self.config, left=left_df, right=right_df, output_dir=temp_dir, format="invalid_format"
                 )
 
             # Test with invalid dataframe
             with pytest.raises(ValueError):
                 self.orchestrator.compare_and_export(
-                    config=self.config,
-                    left=invalid_df,
-                    right=right_df,
-                    output_dir=temp_dir
+                    config=self.config, left=invalid_df, right=right_df, output_dir=temp_dir
                 )
 
     def test_orchestrator_initialization_with_custom_services(self) -> None:
@@ -3378,10 +3177,7 @@ class TestComparisonOrchestratorComprehensive:
         custom_reporting = ReportingService()
 
         # Initialize orchestrator with custom services
-        orchestrator = ComparisonOrchestrator(
-            comparison_service=custom_comparison,
-            reporting_service=custom_reporting
-        )
+        orchestrator = ComparisonOrchestrator(comparison_service=custom_comparison, reporting_service=custom_reporting)
 
         # Verify services are set correctly
         assert orchestrator.comparison_service == custom_comparison
@@ -3398,23 +3194,18 @@ class TestComparisonOrchestratorComprehensive:
     def test_compare_dataframes_with_schema_validation_error(self) -> None:
         """Test compare_dataframes with schema validation error."""
         # Create dataframes with mismatched schemas
-        left_df = pl.LazyFrame({
-            "id": [1, 2, 3],
-            "name": ["Alice", "Bob", "Charlie"]
-        })
+        left_df = pl.LazyFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
 
-        right_df = pl.LazyFrame({
-            "customer_id": [1, 2, 3],  # Different column name
-            "full_name": ["Alice", "Bob", "Charlie"]  # Different column name
-        })
+        right_df = pl.LazyFrame(
+            {
+                "customer_id": [1, 2, 3],  # Different column name
+                "full_name": ["Alice", "Bob", "Charlie"],  # Different column name
+            }
+        )
 
         # This should raise a SchemaValidationError
         with pytest.raises(SchemaValidationError):
-            self.orchestrator.compare_dataframes(
-                config=self.config,
-                left=left_df,
-                right=right_df
-            )
+            self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
     def test_compare_dataframes_with_duplicates_allowed(self) -> None:
         """Test compare_dataframes handles duplicate primary keys gracefully."""
@@ -3426,9 +3217,7 @@ class TestComparisonOrchestratorComprehensive:
             "status": ["pending", "completed", "pending"],
         }
 
-        left_df = pl.LazyFrame(left_data).with_columns(
-            pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        left_df = pl.LazyFrame(left_data).with_columns(pl.col("order_date").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Create right dataframe with correct column names for right schema
         right_data = {
@@ -3437,16 +3226,10 @@ class TestComparisonOrchestratorComprehensive:
             "total_amount": [100.0, 200.0, 300.0],
             "order_status": ["pending", "completed", "pending"],
         }
-        right_df = pl.LazyFrame(right_data).with_columns(
-            pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d")
-        )
+        right_df = pl.LazyFrame(right_data).with_columns(pl.col("order_dt").str.strptime(pl.Date, "%Y-%m-%d"))
 
         # Comparison should succeed (current behavior allows duplicates)
-        result = self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left_df,
-            right=right_df
-        )
+        result = self.orchestrator.compare_dataframes(config=self.config, left=left_df, right=right_df)
 
         # Verify the comparison completed
         assert result.summary.total_left_records == 3

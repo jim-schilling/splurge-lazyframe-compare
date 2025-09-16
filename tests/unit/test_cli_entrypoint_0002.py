@@ -13,7 +13,7 @@ def _reload_main() -> ModuleType:
 
 def test_report_dry_run(capsys: pytest.CaptureFixture[str]) -> None:
     mod = _reload_main()
-    main = getattr(mod, "main")
+    main = mod.main
     code = main(["report", "--dry-run"])
     out = capsys.readouterr().out
     assert code == 0
@@ -22,10 +22,8 @@ def test_report_dry_run(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_export_dry_run(capsys: pytest.CaptureFixture[str]) -> None:
     mod = _reload_main()
-    main = getattr(mod, "main")
+    main = mod.main
     code = main(["export", "--dry-run"])
     out = capsys.readouterr().out
     assert code == 0
     assert "Dry run: export" in out
-
-

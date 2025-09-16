@@ -8,40 +8,7 @@ from typing import Any
 
 import polars as pl
 
-class DataHelperConstants:
-    """Constants for data manipulation operations."""
-
-    # Data validation
-    MIN_ROWS_THRESHOLD: int = 0
-    MAX_ROWS_THRESHOLD: int = 1000000
-
-    # Memory optimization
-    BATCH_SIZE_DEFAULT: int = 10000
-    MEMORY_LIMIT_MB: int = 1000
-
-    # Memory estimation (bytes per value)
-    BYTES_PER_INT64: int = 8
-    BYTES_PER_INT32: int = 4
-    BYTES_PER_FLOAT64: int = 8
-    BYTES_PER_FLOAT32: int = 4
-    BYTES_PER_BOOLEAN: int = 1
-    BYTES_PER_STRING_AVG: int = 16  # Average string length in bytes
-    BYTES_PER_DEFAULT: int = 8
-
-    # Performance tuning
-    OPTIMIZE_THRESHOLD: int = 100000
-    PARALLEL_WORKERS: int = 4
-
 DOMAINS: list[str] = ["utils", "data", "performance"]
-"""Data manipulation helpers for the comparison framework.
-
-Copyright (c) 2025 Jim Schilling.
-Licensed under the MIT License. See the LICENSE file for details.
-"""
-
-from typing import Any
-
-import polars as pl
 
 
 class DataHelperConstants:
@@ -143,11 +110,16 @@ def estimate_dataframe_memory(df: pl.LazyFrame) -> float:
         # Rough estimation based on Polars internals
         # This is approximate and may vary by system
         bytes_per_row = sum(
-            DataHelperConstants.BYTES_PER_INT64 if dtype in [pl.Int64, pl.Float64, pl.Datetime] else
-            DataHelperConstants.BYTES_PER_INT32 if dtype in [pl.Int32, pl.Float32] else
-            DataHelperConstants.BYTES_PER_BOOLEAN if dtype == pl.Boolean else
-            DataHelperConstants.BYTES_PER_STRING_AVG if dtype == pl.Utf8 else  # Average string length
-            DataHelperConstants.BYTES_PER_DEFAULT  # Default for other types
+            DataHelperConstants.BYTES_PER_INT64
+            if dtype in [pl.Int64, pl.Float64, pl.Datetime]
+            else DataHelperConstants.BYTES_PER_INT32
+            if dtype in [pl.Int32, pl.Float32]
+            else DataHelperConstants.BYTES_PER_BOOLEAN
+            if dtype == pl.Boolean
+            else DataHelperConstants.BYTES_PER_STRING_AVG
+            if dtype == pl.Utf8
+            # Average string length
+            else DataHelperConstants.BYTES_PER_DEFAULT  # Default for other types
             for dtype in sample_df.dtypes
         )
 
@@ -294,5 +266,3 @@ def compare_dataframe_shapes(df1: pl.LazyFrame, df2: pl.LazyFrame) -> dict[str, 
             "shape_comparison": {},
             "column_overlap": {},
         }
-
-

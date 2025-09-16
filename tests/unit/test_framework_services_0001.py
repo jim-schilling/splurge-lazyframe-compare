@@ -34,4 +34,3 @@ def test_handle_error_preserves_type_and_context() -> None:
 
     # Cause is chained to preserve traceback context
     assert exc_info.value.__cause__ is not None
-

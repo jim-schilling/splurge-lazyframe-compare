@@ -4,8 +4,7 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
-DOMAINS: list[str] = ["services", "comparison", "processing"]
-
+from typing import Literal, cast
 
 import polars as pl
 
@@ -23,6 +22,8 @@ from splurge_lazyframe_compare.utils.constants import (
 )
 from splurge_lazyframe_compare.utils.logging_helpers import performance_monitor
 
+DOMAINS: list[str] = ["services", "comparison", "processing"]
+
 
 class ComparisonService(BaseService):
     """Core comparison service for LazyFrames.
@@ -35,7 +36,7 @@ class ComparisonService(BaseService):
     def __init__(
         self,
         validation_service: ValidationService | None = None,
-        preparation_service: DataPreparationService | None = None
+        preparation_service: DataPreparationService | None = None,
     ) -> None:
         """Initialize the comparison service.
 
@@ -101,26 +102,18 @@ class ComparisonService(BaseService):
                 )
 
                 # Get record counts - optimized to collect once
-                counts_df = pl.concat([
-                    prepared_left.select(pl.len().alias("count")),
-                    prepared_right.select(pl.len().alias("count"))
-                ]).collect()
+                counts_df = pl.concat(
+                    [prepared_left.select(pl.len().alias("count")), prepared_right.select(pl.len().alias("count"))]
+                ).collect()
 
                 total_left_records = counts_df["count"][0]
                 total_right_records = counts_df["count"][1]
 
-                ctx["record_counts"] = {
-                    "left": total_left_records,
-                    "right": total_right_records
-                }
+                ctx["record_counts"] = {"left": total_left_records, "right": total_right_records}
 
                 # Execute comparison patterns
-                value_differences = self.find_value_differences(
-                    left=prepared_left, right=prepared_right, config=config
-                )
-                left_only_records = self.find_left_only_records(
-                    left=prepared_left, right=prepared_right, config=config
-                )
+                value_differences = self.find_value_differences(left=prepared_left, right=prepared_right, config=config)
+                left_only_records = self.find_left_only_records(left=prepared_left, right=prepared_right, config=config)
                 right_only_records = self.find_right_only_records(
                     left=prepared_left, right=prepared_right, config=config
                 )
@@ -152,13 +145,11 @@ class ComparisonService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "comparison_execution"})
+            raise
+            raise
 
     def find_value_differences(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame,
-        config: ComparisonConfig
+        self, *, left: pl.LazyFrame, right: pl.LazyFrame, config: ComparisonConfig
     ) -> pl.LazyFrame:
         """Find records with same keys but different values.
 
@@ -176,7 +167,9 @@ class ComparisonService(BaseService):
 
             # Join on primary key columns
             joined = left.join(
-                right, on=pk_columns, how=JOIN_INNER
+                right,
+                on=pk_columns,
+                how=cast(Literal["inner", "left", "right", "full", "semi", "anti", "cross", "outer"], JOIN_INNER),
             )
 
             # Create difference conditions for each mapped column
@@ -200,32 +193,38 @@ class ComparisonService(BaseService):
                     # When null_equals_null=False, any null comparison should be a difference
                     null_condition = (
                         # Both are null: always different when null_equals_null=False
-                        (pl.col(left_col).is_null() & pl.col(right_col).is_null()) |
+                        (pl.col(left_col).is_null() & pl.col(right_col).is_null())
+                        |
                         # One is null, one is not: always different
-                        (pl.col(left_col).is_null() & pl.col(right_col).is_not_null()) |
-                        (pl.col(left_col).is_not_null() & pl.col(right_col).is_null()) |
+                        (pl.col(left_col).is_null() & pl.col(right_col).is_not_null())
+                        | (pl.col(left_col).is_not_null() & pl.col(right_col).is_null())
+                        |
                         # Both are non-null: use standard inequality
-                        (pl.col(left_col).is_not_null() & pl.col(right_col).is_not_null() &
-                         (pl.col(left_col) != pl.col(right_col)))
+                        (
+                            pl.col(left_col).is_not_null()
+                            & pl.col(right_col).is_not_null()
+                            & (pl.col(left_col) != pl.col(right_col))
+                        )
                     )
 
                 # Apply tolerance for numeric columns if specified
-                if (
-                    config.tolerance
-                    and mapping.name in config.tolerance
-                ):
+                if config.tolerance and mapping.name in config.tolerance:
                     tolerance = config.tolerance[mapping.name]
 
                     # Use null_condition as base, but override the non-null case to use tolerance
-                    condition = pl.when(
-                        # Both values are non-null: use tolerance comparison
-                        pl.col(left_col).is_not_null() & pl.col(right_col).is_not_null()
-                    ).then(
-                        # Check if difference exceeds tolerance
-                        (pl.col(left_col) - pl.col(right_col)).abs() > tolerance
-                    ).otherwise(
-                        # Use the null_condition for all null cases
-                        null_condition
+                    condition = (
+                        pl.when(
+                            # Both values are non-null: use tolerance comparison
+                            pl.col(left_col).is_not_null() & pl.col(right_col).is_not_null()
+                        )
+                        .then(
+                            # Check if difference exceeds tolerance
+                            (pl.col(left_col) - pl.col(right_col)).abs() > tolerance
+                        )
+                        .otherwise(
+                            # Use the null_condition for all null cases
+                            null_condition
+                        )
                     )
                 else:
                     # No tolerance, use null condition as-is
@@ -249,11 +248,7 @@ class ComparisonService(BaseService):
             self._handle_error(e, {"operation": "value_differences"})
 
     def find_left_only_records(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame,
-        config: ComparisonConfig
+        self, *, left: pl.LazyFrame, right: pl.LazyFrame, config: ComparisonConfig
     ) -> pl.LazyFrame:
         """Find records that exist only in left DataFrame.
 
@@ -270,9 +265,7 @@ class ComparisonService(BaseService):
             pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
             # Join and filter for left-only records (anti-join)
-            left_only_joined = left.join(
-                right.select(pk_columns), on=pk_columns, how="anti"
-            )
+            left_only_joined = left.join(right.select(pk_columns), on=pk_columns, how="anti")
 
             # Select only primary key columns and left columns (drop right columns which are null)
             left_only_columns = self.preparation_service.get_left_only_column_order(config=config)
@@ -283,11 +276,7 @@ class ComparisonService(BaseService):
             self._handle_error(e, {"operation": "left_only_records"})
 
     def find_right_only_records(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame,
-        config: ComparisonConfig
+        self, *, left: pl.LazyFrame, right: pl.LazyFrame, config: ComparisonConfig
     ) -> pl.LazyFrame:
         """Find records that exist only in right DataFrame.
 
@@ -304,9 +293,7 @@ class ComparisonService(BaseService):
             pk_columns = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
             # Join and filter for right-only records (anti-join)
-            right_only_joined = right.join(
-                left.select(pk_columns), on=pk_columns, how="anti"
-            )
+            right_only_joined = right.join(left.select(pk_columns), on=pk_columns, how="anti")
 
             # Select only primary key columns and right columns (drop left columns which are null)
             right_only_columns = self.preparation_service.get_right_only_column_order(config=config)

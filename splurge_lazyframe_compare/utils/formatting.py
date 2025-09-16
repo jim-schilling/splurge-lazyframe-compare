@@ -4,11 +4,16 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
-DOMAINS: list[str] = ["utils", "formatting", "presentation"]
-
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import polars as pl
+
+if TYPE_CHECKING:
+    from tabulate import tabulate  # type: ignore
+else:
+    tabulate: Any = __import__("tabulate").tabulate
+
+DOMAINS: list[str] = ["utils", "formatting", "presentation"]
 
 
 class FormattingConstants:
@@ -82,14 +87,11 @@ def truncate_string(text: str, max_length: int = FormattingConstants.MAX_COLUMN_
     if len(text) <= max_length:
         return text
 
-    return text[:max_length - len(FormattingConstants.TRUNCATION_SUFFIX)] + FormattingConstants.TRUNCATION_SUFFIX
+    return text[: max_length - len(FormattingConstants.TRUNCATION_SUFFIX)] + FormattingConstants.TRUNCATION_SUFFIX
 
 
 def format_dataframe_sample(
-    df: pl.LazyFrame,
-    max_rows: int = 10,
-    max_cols: int | None = None,
-    truncate_values: bool = True
+    df: pl.LazyFrame, max_rows: int = 10, max_cols: int | None = None, truncate_values: bool = True
 ) -> str:
     """Format a DataFrame sample for display.
 
@@ -156,9 +158,7 @@ def format_validation_errors(errors: list[str]) -> str:
 
 
 def create_summary_table(
-    data: dict[str, Any],
-    headers: list[str] | None = None,
-    table_format: str = FormattingConstants.DEFAULT_TABLE_FORMAT
+    data: dict[str, Any], headers: list[str] | None = None, table_format: str = FormattingConstants.DEFAULT_TABLE_FORMAT
 ) -> str:
     """Create a formatted table from dictionary data.
 
@@ -178,13 +178,7 @@ def create_summary_table(
 
         table_data = [[key, value] for key, value in data.items()]
 
-        return tabulate(
-            table_data,
-            headers=headers,
-            tablefmt=table_format,
-            numalign='right',
-            stralign='left'
-        )
+        return tabulate(table_data, headers=headers, tablefmt=table_format, numalign="right", stralign="left")
     except ImportError:
         # Fallback to simple formatting if tabulate is not available
         lines = []

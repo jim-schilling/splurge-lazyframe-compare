@@ -39,5 +39,3 @@ def test_compare_shapes_and_optimize_and_safe_collect():
 
     collected = safe_collect(left)
     assert collected is not None and collected.shape == (3, 2)
-
-
