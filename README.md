@@ -9,7 +9,7 @@
 [![Py 3.12](https://img.shields.io/github/actions/workflow/status/jim-schilling/splurge-lazyframe-compare/test-py312.yml?branch=main&label=py3.12)](https://github.com/jim-schilling/splurge-lazyframe-compare/actions/workflows/test-py312.yml)
 [![Py 3.13](https://img.shields.io/github/actions/workflow/status/jim-schilling/splurge-lazyframe-compare/test-py313.yml?branch=main&label=py3.13)](https://github.com/jim-schilling/splurge-lazyframe-compare/actions/workflows/test-py313.yml)
 
-[![Coverage](docs/coverage-badge.svg)](docs/coverage-badge.svg)
+[![Coverage](https://raw.githubusercontent.com/jim-schilling/splurge-lazyframe-compare/main/docs/coverage-badge.svg)](https://raw.githubusercontent.com/jim-schilling/splurge-lazyframe-compare/main/docs/coverage-badge.svg)
 [![ruff](https://img.shields.io/badge/ruff-passed-brightgreen)](https://github.com/charliermarsh/ruff)
 [![mypy](https://img.shields.io/badge/mypy-passed-brightgreen)](https://mypy-lang.org/)
 
