@@ -13,3 +13,5 @@ __all__ = [
     "LazyFrameComparator",
     "ComparisonReport",
 ]
+
+DOMAINS: list[str] = ["comparison", "core"]

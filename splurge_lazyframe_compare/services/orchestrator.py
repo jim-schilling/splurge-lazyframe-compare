@@ -4,25 +4,23 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
-
 import polars as pl
 
 from splurge_lazyframe_compare.models.comparison import ComparisonResult
-from splurge_lazyframe_compare.utils.constants import DEFAULT_FORMAT
 from splurge_lazyframe_compare.models.schema import ComparisonConfig
 from splurge_lazyframe_compare.services.base_service import BaseService
 from splurge_lazyframe_compare.services.comparison_service import ComparisonService
 from splurge_lazyframe_compare.services.reporting_service import ReportingService
+from splurge_lazyframe_compare.utils.constants import DEFAULT_FORMAT
+
+DOMAINS: list[str] = ["services", "orchestration", "comparison"]
 
 
 class ComparisonOrchestrator(BaseService):
     """Main orchestrator for LazyFrame comparisons."""
 
     def __init__(
-        self,
-        *,
-        comparison_service: ComparisonService | None = None,
-        reporting_service: ReportingService | None = None
+        self, *, comparison_service: ComparisonService | None = None, reporting_service: ReportingService | None = None
     ) -> None:
         """Initialize the comparison orchestrator.
 
@@ -46,11 +44,7 @@ class ComparisonOrchestrator(BaseService):
             raise ValueError("right must be a polars LazyFrame")
 
     def compare_dataframes(
-        self,
-        *,
-        config: ComparisonConfig,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame
+        self, *, config: ComparisonConfig, left: pl.LazyFrame, right: pl.LazyFrame
     ) -> ComparisonResult:
         """Execute a complete comparison between two LazyFrames.
 
@@ -73,16 +67,13 @@ class ComparisonOrchestrator(BaseService):
             self._validate_inputs(config=config, left=left, right=right)
 
             # Execute comparison using the comparison service
-            result = self.comparison_service.execute_comparison(
-                left=left,
-                right=right,
-                config=config
-            )
+            result = self.comparison_service.execute_comparison(left=left, right=right, config=config)
 
             return result
 
         except Exception as e:
             self._handle_error(e, {"operation": "dataframe_comparison"})
+            raise
 
     def compare_and_report(
         self,
@@ -115,18 +106,12 @@ class ComparisonOrchestrator(BaseService):
                 raise ValueError("max_samples must be non-negative")
 
             # Execute comparison
-            result = self.compare_dataframes(
-                config=config,
-                left=left,
-                right=right
-            )
+            result = self.compare_dataframes(config=config, left=left, right=right)
 
             # Generate detailed report
             if include_samples:
                 report = self.reporting_service.generate_detailed_report(
-                    results=result,
-                    max_samples=max_samples,
-                    table_format=table_format
+                    results=result, max_samples=max_samples, table_format=table_format
                 )
             else:
                 report = self.reporting_service.generate_summary_report(results=result)
@@ -135,6 +120,7 @@ class ComparisonOrchestrator(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "compare_and_report"})
+            raise
 
     def compare_and_export(
         self,
@@ -161,23 +147,16 @@ class ComparisonOrchestrator(BaseService):
             self._validate_inputs(config=config, left=left, right=right)
 
             # Execute comparison
-            result = self.compare_dataframes(
-                config=config,
-                left=left,
-                right=right
-            )
+            result = self.compare_dataframes(config=config, left=left, right=right)
 
             # Export results
-            exported_files = self.reporting_service.export_results(
-                results=result,
-                output_dir=output_dir,
-                format=format
-            )
+            exported_files = self.reporting_service.export_results(results=result, output_dir=output_dir, format=format)
 
             return exported_files
 
         except Exception as e:
             self._handle_error(e, {"operation": "compare_and_export"})
+            raise
 
     def generate_report_from_result(
         self,
@@ -203,21 +182,15 @@ class ComparisonOrchestrator(BaseService):
                 return self.reporting_service.generate_summary_report(results=result)
             elif report_type == "detailed":
                 return self.reporting_service.generate_detailed_report(
-                    results=result,
-                    max_samples=max_samples,
-                    table_format=table_format
+                    results=result, max_samples=max_samples, table_format=table_format
                 )
             elif report_type == "table":
-                return self.reporting_service.generate_summary_table(
-                    results=result,
-                    table_format=table_format
-                )
+                return self.reporting_service.generate_summary_table(results=result, table_format=table_format)
             else:
                 raise ValueError(f"Unknown report type: {report_type}")
 
         except Exception as e:
             self._handle_error(e, {"operation": "generate_report_from_result", "report_type": report_type})
-
 
     def get_comparison_summary(self, *, result: ComparisonResult) -> str:
         """Get a quick summary of comparison results.
@@ -250,10 +223,7 @@ class ComparisonOrchestrator(BaseService):
             Formatted table string.
         """
         try:
-            return self.reporting_service.generate_summary_table(
-                results=result,
-                table_format=table_format
-            )
+            return self.reporting_service.generate_summary_table(results=result, table_format=table_format)
 
         except Exception as e:
             self._handle_error(e, {"operation": "get_comparison_table"})

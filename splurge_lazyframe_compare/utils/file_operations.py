@@ -12,12 +12,15 @@ from pathlib import Path
 from typing import Any
 
 import polars as pl
+
 from splurge_lazyframe_compare.utils.constants import (
     DEFAULT_FORMAT,
     FORMAT_CSV,
     FORMAT_JSON,
     FORMAT_PARQUET,
 )
+
+DOMAINS: list[str] = ["utils", "io", "file_ops"]
 
 
 class FileOperationConstants:
@@ -55,10 +58,7 @@ def atomic_write(file_path: Path) -> Generator[Path, None, None]:
 
     # Create temporary file in the same directory as target
     with tempfile.NamedTemporaryFile(
-        dir=file_path.parent,
-        prefix=f"{file_path.stem}_tmp_",
-        suffix=file_path.suffix,
-        delete=False
+        dir=file_path.parent, prefix=f"{file_path.stem}_tmp_", suffix=file_path.suffix, delete=False
     ) as temp_file:
         temp_path = Path(temp_file.name)
 
@@ -143,18 +143,14 @@ def get_file_extension(format_name: str) -> str:
 
     if format_name not in format_map:
         raise ValueError(
-            f"Unsupported format: {format_name}. Supported formats: "
-            f"{FileOperationConstants.SUPPORTED_FORMATS}"
+            f"Unsupported format: {format_name}. Supported formats: {FileOperationConstants.SUPPORTED_FORMATS}"
         )
 
     return format_map[format_name]
 
 
 def export_lazyframe(
-    lazyframe: pl.LazyFrame,
-    file_path: Path,
-    format_name: str = FileOperationConstants.DEFAULT_FORMAT,
-    **kwargs: Any
+    lazyframe: pl.LazyFrame, file_path: Path, format_name: str = FileOperationConstants.DEFAULT_FORMAT, **kwargs: Any
 ) -> None:
     """Export a LazyFrame to a file with atomic writes and proper cleanup.
 
@@ -201,11 +197,7 @@ def export_lazyframe(
             raise OSError(f"Failed to export LazyFrame to {file_path}: {e}") from e
 
 
-def import_lazyframe(
-    file_path: Path,
-    format_name: str | None = None,
-    **kwargs: Any
-) -> pl.LazyFrame:
+def import_lazyframe(file_path: Path, format_name: str | None = None, **kwargs: Any) -> pl.LazyFrame:
     """Import a LazyFrame from a file with proper validation and error handling.
 
     Args:
@@ -270,11 +262,7 @@ def import_lazyframe(
         raise OSError(f"Failed to import LazyFrame from {file_path}: {e}") from e
 
 
-def get_export_file_paths(
-    base_name: str,
-    output_dir: Path,
-    formats: list | None = None
-) -> dict[str, Path]:
+def get_export_file_paths(base_name: str, output_dir: Path, formats: list | None = None) -> dict[str, Path]:
     """Generate file paths for multiple export formats.
 
     Args:
@@ -294,7 +282,6 @@ def get_export_file_paths(
         file_paths[format_name] = output_dir / f"{base_name}{extension}"
 
     return file_paths
-
 
 
 def list_files_by_pattern(directory: Path, pattern: str) -> list[Path]:

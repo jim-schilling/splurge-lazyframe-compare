@@ -242,3 +242,5 @@ __all__ = [
     "is_numeric_datatype",
     "get_polars_datatype_name",
 ]
+
+DOMAINS: list[str] = ["utils", "helpers", "io"]

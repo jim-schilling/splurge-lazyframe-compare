@@ -6,11 +6,13 @@ Licensed under the MIT License. See the LICENSE file for details.
 
 import polars as pl
 
+DOMAINS: list[str] = ["utils", "types", "polars"]
+
 # Constants
 DEFAULT_DECIMAL_PRECISION: int = 38
 DEFAULT_DECIMAL_SCALE: int = 9
 DEFAULT_TIME_UNIT: str = "us"
-DEFAULT_LIST_INNER_TYPE: pl.DataType = pl.Int64
+DEFAULT_LIST_INNER_TYPE: pl.DataType = pl.Int64()
 
 
 def is_numeric_datatype(datatype: pl.DataType) -> bool:
@@ -91,7 +93,7 @@ def get_polars_datatype_name(datatype: pl.DataType) -> str:
             return name
 
     # Try __name__ for simple types (works for class constants like pl.Int64)
-    if hasattr(datatype, '__name__'):
+    if hasattr(datatype, "__name__"):
         name = datatype.__name__
         # Handle the Utf8 -> String alias consistently
         if name == "Utf8":

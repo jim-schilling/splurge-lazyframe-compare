@@ -5,11 +5,13 @@ Licensed under the MIT License. See the LICENSE file for details.
 """
 
 import polars as pl
-from splurge_lazyframe_compare.utils.constants import DEFAULT_FORMAT
 
 from splurge_lazyframe_compare.models.comparison import ComparisonResult
 from splurge_lazyframe_compare.models.schema import ComparisonConfig
 from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
+from splurge_lazyframe_compare.utils.constants import DEFAULT_FORMAT
+
+DOMAINS: list[str] = ["comparison", "lazyframe", "core"]
 
 
 class LazyFrameComparator:
@@ -28,12 +30,7 @@ class LazyFrameComparator:
         self.config = config
         self.orchestrator = ComparisonOrchestrator()
 
-    def compare(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame
-    ) -> ComparisonResult:
+    def compare(self, *, left: pl.LazyFrame, right: pl.LazyFrame) -> ComparisonResult:
         """Execute complete comparison between two LazyFrames.
 
         Args:
@@ -47,11 +44,7 @@ class LazyFrameComparator:
             SchemaValidationError: If DataFrames don't match their schemas.
             PrimaryKeyViolationError: If primary key constraints are violated.
         """
-        return self.orchestrator.compare_dataframes(
-            config=self.config,
-            left=left,
-            right=right
-        )
+        return self.orchestrator.compare_dataframes(config=self.config, left=left, right=right)
 
     def compare_and_report(
         self,
@@ -60,7 +53,7 @@ class LazyFrameComparator:
         right: pl.LazyFrame,
         include_samples: bool = True,
         max_samples: int = 10,
-        table_format: str = "grid"
+        table_format: str = "grid",
     ) -> str:
         """Compare DataFrames and generate a complete report.
 
@@ -80,16 +73,11 @@ class LazyFrameComparator:
             right=right,
             include_samples=include_samples,
             max_samples=max_samples,
-            table_format=table_format
+            table_format=table_format,
         )
 
     def compare_and_export(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame,
-        output_dir: str = ".",
-        format: str = DEFAULT_FORMAT
+        self, *, left: pl.LazyFrame, right: pl.LazyFrame, output_dir: str = ".", format: str = DEFAULT_FORMAT
     ) -> dict[str, str]:
         """Compare DataFrames and export results to files.
 
@@ -103,11 +91,7 @@ class LazyFrameComparator:
             Dictionary mapping result type to file path.
         """
         return self.orchestrator.compare_and_export(
-            config=self.config,
-            left=left,
-            right=right,
-            output_dir=output_dir,
-            format=format
+            config=self.config, left=left, right=right, output_dir=output_dir, format=format
         )
 
     def to_report(self) -> "ComparisonReport":
@@ -122,11 +106,7 @@ class LazyFrameComparator:
 class ComparisonReport:
     """Report generator using the service architecture."""
 
-    def __init__(
-        self,
-        orchestrator: ComparisonOrchestrator,
-        config: ComparisonConfig
-    ) -> None:
+    def __init__(self, orchestrator: ComparisonOrchestrator, config: ComparisonConfig) -> None:
         """Initialize the report generator.
 
         Args:
@@ -147,10 +127,7 @@ class ComparisonReport:
             Formatted report string.
         """
         self._last_result = result
-        return self.orchestrator.generate_report_from_result(
-            result=result,
-            report_type="detailed"
-        )
+        return self.orchestrator.generate_report_from_result(result=result, report_type="detailed")
 
     def generate_summary_report(self, result: ComparisonResult | None = None) -> str:
         """Generate summary report.
@@ -165,17 +142,14 @@ class ComparisonReport:
             raise ValueError("No comparison result available. Call generate_from_result first.")
 
         target_result = result or self._last_result
+        from typing import cast
+
         return self.orchestrator.generate_report_from_result(
-            result=target_result,
-            report_type="summary"
+            result=cast(ComparisonResult, target_result), report_type="summary"
         )
 
     def generate_detailed_report(
-        self,
-        *,
-        result: ComparisonResult | None = None,
-        max_samples: int = 10,
-        table_format: str = "grid"
+        self, *, result: ComparisonResult | None = None, max_samples: int = 10, table_format: str = "grid"
     ) -> str:
         """Generate detailed report with samples.
 
@@ -191,19 +165,16 @@ class ComparisonReport:
             raise ValueError("No comparison result available. Call generate_from_result first.")
 
         target_result = result or self._last_result
+        from typing import cast
+
         return self.orchestrator.generate_report_from_result(
-            result=target_result,
+            result=cast(ComparisonResult, target_result),
             report_type="detailed",
             max_samples=max_samples,
-            table_format=table_format
+            table_format=table_format,
         )
 
-    def generate_summary_table(
-        self,
-        *,
-        result: ComparisonResult | None = None,
-        table_format: str = "grid"
-    ) -> str:
+    def generate_summary_table(self, *, result: ComparisonResult | None = None, table_format: str = "grid") -> str:
         """Generate summary statistics as a table.
 
         Args:
@@ -217,9 +188,8 @@ class ComparisonReport:
             raise ValueError("No comparison result available. Call generate_from_result first.")
 
         target_result = result or self._last_result
+        from typing import cast
+
         return self.orchestrator.generate_report_from_result(
-            result=target_result,
-            report_type="table"
+            result=cast(ComparisonResult, target_result), report_type="table"
         )
-
-

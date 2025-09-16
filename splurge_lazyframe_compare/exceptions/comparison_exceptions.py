@@ -4,6 +4,8 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
+DOMAINS: list[str] = ["exceptions", "errors", "validation"]
+
 
 class ComparisonError(Exception):
     """Base exception for comparison framework errors."""

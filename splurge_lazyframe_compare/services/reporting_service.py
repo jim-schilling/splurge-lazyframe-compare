@@ -8,9 +8,15 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import polars as pl
-from tabulate import tabulate
+
+if TYPE_CHECKING:
+    from tabulate import tabulate  # type: ignore
+else:
+    # Provide a runtime binding with an Any type so mypy doesn't require stubs
+    tabulate: Any = __import__("tabulate").tabulate
 
 from splurge_lazyframe_compare.models.comparison import ComparisonResult
 from splurge_lazyframe_compare.services.base_service import BaseService
@@ -31,17 +37,19 @@ from splurge_lazyframe_compare.utils.constants import (
     RIGHT_ONLY_SECTION,
     SECTION_SEPARATOR,
     SUMMARY_FILENAME,
+    SUMMARY_SCHEMA_VERSION,
     TIMESTAMP_FORMAT,
     VALUE_DIFFERENCES_FILENAME,
     VALUE_DIFFERENCES_SECTION,
     ZERO_THRESHOLD,
-    SUMMARY_SCHEMA_VERSION,
 )
 from splurge_lazyframe_compare.utils.file_operations import FileOperationConstants, export_lazyframe
 from splurge_lazyframe_compare.utils.formatting import (
     format_large_number,
     format_percentage,
 )
+
+DOMAINS: list[str] = ["services", "reporting", "export"]
 
 
 class ReportingService(BaseService):
@@ -98,13 +106,15 @@ class ReportingService(BaseService):
                 diff_pct = summary.value_differences_count / summary.total_left_records
                 left_only_pct = summary.left_only_count / summary.total_left_records
 
-                report_lines.extend([
-                    PERCENTAGES_SECTION,
-                    f"  Matching:      {format_percentage(match_pct)}",
-                    f"  Differences:   {format_percentage(diff_pct)}",
-                    f"  Left-Only:     {format_percentage(left_only_pct)}",
-                    "",
-                ])
+                report_lines.extend(
+                    [
+                        PERCENTAGES_SECTION,
+                        f"  Matching:      {format_percentage(match_pct)}",
+                        f"  Differences:   {format_percentage(diff_pct)}",
+                        f"  Left-Only:     {format_percentage(left_only_pct)}",
+                        "",
+                    ]
+                )
 
             if summary.total_right_records > ZERO_THRESHOLD:
                 right_only_pct = summary.right_only_count / summary.total_right_records
@@ -116,6 +126,7 @@ class ReportingService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "summary_report_generation"})
+            raise
 
     def generate_detailed_report(
         self,
@@ -140,10 +151,12 @@ class ReportingService(BaseService):
 
             # Add value differences samples
             if results.summary.value_differences_count > ZERO_THRESHOLD:
-                report_lines.extend([
-                    VALUE_DIFFERENCES_SECTION,
-                    SECTION_SEPARATOR,
-                ])
+                report_lines.extend(
+                    [
+                        VALUE_DIFFERENCES_SECTION,
+                        SECTION_SEPARATOR,
+                    ]
+                )
 
                 # Get sample of value differences
                 sample_diff = results.value_differences.limit(max_samples).collect()
@@ -159,8 +172,8 @@ class ReportingService(BaseService):
                             headers=headers,
                             tablefmt=table_format,
                             showindex=False,
-                            numalign='right',
-                            stralign='left'
+                            numalign="right",
+                            stralign="left",
                         )
                         report_lines.append(table)
                     except Exception:
@@ -173,10 +186,12 @@ class ReportingService(BaseService):
 
             # Add left-only samples
             if results.summary.left_only_count > ZERO_THRESHOLD:
-                report_lines.extend([
-                    LEFT_ONLY_SECTION,
-                    SECTION_SEPARATOR,
-                ])
+                report_lines.extend(
+                    [
+                        LEFT_ONLY_SECTION,
+                        SECTION_SEPARATOR,
+                    ]
+                )
 
                 sample_left = results.left_only_records.limit(max_samples).collect()
                 if not sample_left.is_empty():
@@ -191,8 +206,8 @@ class ReportingService(BaseService):
                             headers=headers,
                             tablefmt=table_format,
                             showindex=False,
-                            numalign='right',
-                            stralign='left'
+                            numalign="right",
+                            stralign="left",
                         )
                         report_lines.append(table)
                     except Exception:
@@ -205,10 +220,12 @@ class ReportingService(BaseService):
 
             # Add right-only samples
             if results.summary.right_only_count > ZERO_THRESHOLD:
-                report_lines.extend([
-                    RIGHT_ONLY_SECTION,
-                    SECTION_SEPARATOR,
-                ])
+                report_lines.extend(
+                    [
+                        RIGHT_ONLY_SECTION,
+                        SECTION_SEPARATOR,
+                    ]
+                )
 
                 sample_right = results.right_only_records.limit(max_samples).collect()
                 if not sample_right.is_empty():
@@ -223,8 +240,8 @@ class ReportingService(BaseService):
                             headers=headers,
                             tablefmt=table_format,
                             showindex=False,
-                            numalign='right',
-                            stralign='left'
+                            numalign="right",
+                            stralign="left",
                         )
                         report_lines.append(table)
                     except Exception:
@@ -237,6 +254,7 @@ class ReportingService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "detailed_report_generation"})
+            raise
 
     def generate_summary_table(self, *, results: ComparisonResult, table_format: str = "grid") -> str:
         """Generate summary statistics as a formatted table.
@@ -268,11 +286,13 @@ class ReportingService(BaseService):
                 diff_pct = summary.value_differences_count / summary.total_left_records
                 left_only_pct = summary.left_only_count / summary.total_left_records
 
-                table_data.extend([
-                    ["Matching %", format_percentage(match_pct), "of left records"],
-                    ["Differences %", format_percentage(diff_pct), "of left records"],
-                    ["Left-Only %", format_percentage(left_only_pct), "of left records"],
-                ])
+                table_data.extend(
+                    [
+                        ["Matching %", format_percentage(match_pct), "of left records"],
+                        ["Differences %", format_percentage(diff_pct), "of left records"],
+                        ["Left-Only %", format_percentage(left_only_pct), "of left records"],
+                    ]
+                )
 
             if summary.total_right_records > ZERO_THRESHOLD:
                 right_only_pct = summary.right_only_count / summary.total_right_records
@@ -284,8 +304,8 @@ class ReportingService(BaseService):
                     table_data,
                     headers=["Metric", "Value", "Unit"],
                     tablefmt=table_format,
-                    numalign='right',
-                    stralign='left'
+                    numalign="right",
+                    stralign="left",
                 )
                 return table
             except Exception:
@@ -294,6 +314,7 @@ class ReportingService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "summary_table_generation"})
+            raise
 
     def export_results(
         self,
@@ -347,31 +368,19 @@ class ReportingService(BaseService):
             # Export value differences
             if results.value_differences.select(pl.len()).collect().item() > ZERO_THRESHOLD:
                 value_diff_path = output_path / VALUE_DIFFERENCES_FILENAME.format(timestamp, format)
-                self._export_lazyframe(
-                    lazyframe=results.value_differences,
-                    file_path=value_diff_path,
-                    format=format
-                )
+                self._export_lazyframe(lazyframe=results.value_differences, file_path=value_diff_path, format=format)
                 exported_files["value_differences"] = str(value_diff_path)
 
             # Export left-only records
             if results.left_only_records.select(pl.len()).collect().item() > ZERO_THRESHOLD:
                 left_only_path = output_path / LEFT_ONLY_FILENAME.format(timestamp, format)
-                self._export_lazyframe(
-                    lazyframe=results.left_only_records,
-                    file_path=left_only_path,
-                    format=format
-                )
+                self._export_lazyframe(lazyframe=results.left_only_records, file_path=left_only_path, format=format)
                 exported_files["left_only_records"] = str(left_only_path)
 
             # Export right-only records
             if results.right_only_records.select(pl.len()).collect().item() > ZERO_THRESHOLD:
                 right_only_path = output_path / RIGHT_ONLY_FILENAME.format(timestamp, format)
-                self._export_lazyframe(
-                    lazyframe=results.right_only_records,
-                    file_path=right_only_path,
-                    format=format
-                )
+                self._export_lazyframe(lazyframe=results.right_only_records, file_path=right_only_path, format=format)
                 exported_files["right_only_records"] = str(right_only_path)
 
             # Export summary
@@ -383,14 +392,9 @@ class ReportingService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "results_export"})
+            raise
 
-    def _export_lazyframe(
-        self,
-        *,
-        lazyframe: pl.LazyFrame,
-        file_path: Path,
-        format: str = DEFAULT_FORMAT
-    ) -> None:
+    def _export_lazyframe(self, *, lazyframe: pl.LazyFrame, file_path: Path, format: str = DEFAULT_FORMAT) -> None:
         """Export a LazyFrame to a file.
 
         Args:
@@ -402,6 +406,7 @@ class ReportingService(BaseService):
             export_lazyframe(lazyframe, file_path, format)
         except Exception as e:
             self._handle_error(e, {"operation": "lazyframe_export", "format": format})
+            raise
 
     def _export_summary(self, *, results: ComparisonResult, file_path: Path) -> None:
         """Export summary to JSON file.
@@ -422,3 +427,4 @@ class ReportingService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "summary_export"})
+            raise

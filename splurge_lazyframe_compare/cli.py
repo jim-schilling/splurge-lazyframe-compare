@@ -10,18 +10,20 @@ from pathlib import Path
 
 import polars as pl
 
-from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
 from splurge_lazyframe_compare.exceptions import (
     ComparisonError,
     ConfigError,
     DataSourceError,
 )
+from splurge_lazyframe_compare.services.orchestrator import ComparisonOrchestrator
 from splurge_lazyframe_compare.utils.config_helpers import (
     apply_environment_overrides,
     load_config_from_file,
     validate_config,
 )
 from splurge_lazyframe_compare.utils.logging_helpers import configure_logging
+
+DOMAINS: list[str] = ["cli", "tools", "comparison"]
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -94,6 +96,7 @@ def _scan_lazyframe(path_str: str | None) -> pl.LazyFrame | None:
 
 def _to_schema(schema: pl.Schema) -> dict:
     from splurge_lazyframe_compare.models.schema import ColumnDefinition
+
     return {
         name: ColumnDefinition(name=name, alias=name, datatype=dtype, nullable=True)
         for name, dtype in zip(schema.names(), schema.dtypes(), strict=False)
@@ -152,9 +155,7 @@ def main(argv: list[str] | None = None) -> int:
 
             pk_cols = cfg.get("primary_key_columns", [])
             mappings_cfg = cfg.get("column_mappings", [])
-            mappings = [
-                ColumnMapping(name=m["name"], left=m["left"], right=m["right"]) for m in mappings_cfg
-            ]
+            mappings = [ColumnMapping(name=m["name"], left=m["left"], right=m["right"]) for m in mappings_cfg]
 
             config = ComparisonConfig(
                 left_schema=ComparisonSchema(columns=_to_schema(left_schema), pk_columns=pk_cols),
@@ -212,9 +213,7 @@ def main(argv: list[str] | None = None) -> int:
 
             pk_cols = cfg.get("primary_key_columns", [])
             mappings_cfg = cfg.get("column_mappings", [])
-            mappings = [
-                ColumnMapping(name=m["name"], left=m["left"], right=m["right"]) for m in mappings_cfg
-            ]
+            mappings = [ColumnMapping(name=m["name"], left=m["left"], right=m["right"]) for m in mappings_cfg]
 
             config = ComparisonConfig(
                 left_schema=ComparisonSchema(columns=_to_schema(left_schema), pk_columns=pk_cols),
@@ -246,5 +245,3 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
     return 0
-
-

@@ -25,3 +25,5 @@ __all__ = [
     "ComparisonSchema",
     "ValidationResult",
 ]
+
+DOMAINS: list[str] = ["models", "data", "schema"]

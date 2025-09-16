@@ -12,6 +12,8 @@ from typing import Any
 
 from splurge_lazyframe_compare.utils.constants import TIMESTAMP_FORMAT
 
+DOMAINS: list[str] = ["utils", "logging", "monitoring"]
+
 
 def get_logger(name: str) -> logging.Logger:
     """Get a configured logger instance.
@@ -81,7 +83,7 @@ def create_log_message(
     operation: str,
     message: str,
     details: dict[str, Any] | None = None,
-    duration_ms: float | None = None
+    duration_ms: float | None = None,
 ) -> str:
     """Create a standardized log message.
 
@@ -98,13 +100,7 @@ def create_log_message(
     """
     timestamp = time.strftime(TIMESTAMP_FORMAT)
 
-    log_parts = [
-        f"[{timestamp}]",
-        f"[{level}]",
-        f"[{service_name}]",
-        f"[{operation}]",
-        message
-    ]
+    log_parts = [f"[{timestamp}]", f"[{level}]", f"[{service_name}]", f"[{operation}]", message]
 
     if duration_ms is not None:
         log_parts.append(f"({duration_ms:.2f}ms)")
@@ -117,10 +113,7 @@ def create_log_message(
 
 
 def log_performance(
-    service_name: str,
-    operation: str,
-    duration_ms: float,
-    details: dict[str, Any] | None = None
+    service_name: str, operation: str, duration_ms: float, details: dict[str, Any] | None = None
 ) -> None:
     """Log performance information for an operation.
 
@@ -153,7 +146,7 @@ def log_performance(
         operation=operation,
         message=message,
         details=details,
-        duration_ms=duration_ms
+        duration_ms=duration_ms,
     )
 
     # Log using appropriate level
@@ -188,7 +181,7 @@ def performance_monitor(service_name: str, operation: str) -> "Generator[dict[st
             ctx["operation_status"] = "completed"
     """
     start_time = time.perf_counter()
-    context = {}
+    context: dict[str, Any] = {}
 
     try:
         yield context
@@ -199,12 +192,7 @@ def performance_monitor(service_name: str, operation: str) -> "Generator[dict[st
         # Add performance context
         context.setdefault("duration_ms", duration_ms)
 
-        log_performance(
-            service_name=service_name,
-            operation=operation,
-            duration_ms=duration_ms,
-            details=context
-        )
+        log_performance(service_name=service_name, operation=operation, duration_ms=duration_ms, details=context)
 
 
 def log_service_initialization(service_name: str, config: dict[str, Any] | None = None) -> None:
@@ -226,18 +214,14 @@ def log_service_initialization(service_name: str, config: dict[str, Any] | None 
         service_name=service_name,
         operation="initialization",
         message=message,
-        details=details
+        details=details,
     )
 
     service_logger.info(log_message)
 
 
 def log_service_operation(
-    service_name: str,
-    operation: str,
-    status: str,
-    message: str | None = None,
-    details: dict[str, Any] | None = None
+    service_name: str, operation: str, status: str, message: str | None = None, details: dict[str, Any] | None = None
 ) -> None:
     """Log a service operation with status.
 
@@ -263,11 +247,7 @@ def log_service_operation(
 
     # Create structured log message
     log_details = create_log_message(
-        level=level,
-        service_name=service_name,
-        operation=operation,
-        message=log_message,
-        details=details
+        level=level, service_name=service_name, operation=operation, message=log_message, details=details
     )
 
     # Log using appropriate level
@@ -282,9 +262,7 @@ def log_service_operation(
 
 
 def create_operation_context(
-    operation_name: str,
-    input_params: dict[str, Any] | None = None,
-    expected_output: str | None = None
+    operation_name: str, input_params: dict[str, Any] | None = None, expected_output: str | None = None
 ) -> dict[str, Any]:
     """Create a context dictionary for operation tracking.
 
@@ -310,7 +288,7 @@ def update_operation_context(
     status: str,
     result: Any | None = None,
     error: str | None = None,
-    additional_info: dict[str, Any] | None = None
+    additional_info: dict[str, Any] | None = None,
 ) -> None:
     """Update operation context with results.
 
@@ -321,10 +299,12 @@ def update_operation_context(
         error: Error message if operation failed.
         additional_info: Additional information to include.
     """
-    context.update({
-        "status": status,
-        "completed_at": time.strftime(TIMESTAMP_FORMAT),
-    })
+    context.update(
+        {
+            "status": status,
+            "completed_at": time.strftime(TIMESTAMP_FORMAT),
+        }
+    )
 
     if result is not None:
         context["result"] = str(result)[:200] + "..." if len(str(result)) > 200 else str(result)
@@ -336,12 +316,7 @@ def update_operation_context(
         context.update(additional_info)
 
 
-def log_dataframe_stats(
-    service_name: str,
-    operation: str,
-    df_info: dict[str, Any],
-    stage: str = "input"
-) -> None:
+def log_dataframe_stats(service_name: str, operation: str, df_info: dict[str, Any], stage: str = "input") -> None:
     """Log DataFrame statistics for monitoring.
 
     Args:
@@ -354,8 +329,7 @@ def log_dataframe_stats(
         return
 
     message = (
-        f"{stage.capitalize()} DataFrame: {df_info.get('row_count', 0)} rows, "
-        f"{df_info.get('column_count', 0)} cols"
+        f"{stage.capitalize()} DataFrame: {df_info.get('row_count', 0)} rows, {df_info.get('column_count', 0)} cols"
     )
 
     details = {
@@ -370,11 +344,7 @@ def log_dataframe_stats(
 
     # Create structured log message
     log_message = create_log_message(
-        level=LoggingConstants.DEBUG,
-        service_name=service_name,
-        operation=operation,
-        message=message,
-        details=details
+        level=LoggingConstants.DEBUG, service_name=service_name, operation=operation, message=message, details=details
     )
 
     service_logger.debug(log_message)
@@ -416,11 +386,7 @@ def log_service_health(service_name: str, health_data: dict[str, Any]) -> None:
 
     # Create structured log message
     log_message = create_log_message(
-        level=level,
-        service_name=service_name,
-        operation="health_check",
-        message=message,
-        details=health_data
+        level=level, service_name=service_name, operation="health_check", message=message, details=health_data
     )
 
     # Log using appropriate level

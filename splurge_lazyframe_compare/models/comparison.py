@@ -41,6 +41,9 @@ class ComparisonConstants:
     DUPLICATE_PK_MSG: str = "Duplicate primary keys found in {}: {} duplicates"
 
 
+DOMAINS: list[str] = ["models", "comparison", "reporting"]
+
+
 @dataclass
 class ComparisonSummary:
     """Summary statistics for comparison results.
@@ -103,7 +106,7 @@ class ComparisonSummary:
         total_right_records: int,
         value_differences: pl.LazyFrame,
         left_only_records: pl.LazyFrame,
-        right_only_records: pl.LazyFrame
+        right_only_records: pl.LazyFrame,
     ) -> "ComparisonSummary":
         """Create a comparison summary from result DataFrames.
 

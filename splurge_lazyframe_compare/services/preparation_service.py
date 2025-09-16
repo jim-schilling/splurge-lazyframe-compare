@@ -4,7 +4,6 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
-
 import polars as pl
 
 from splurge_lazyframe_compare.models.schema import ComparisonConfig
@@ -14,6 +13,8 @@ from splurge_lazyframe_compare.utils.constants import (
     PRIMARY_KEY_PREFIX,
     RIGHT_PREFIX,
 )
+
+DOMAINS: list[str] = ["services", "data_preparation", "transformation"]
 
 
 class DataPreparationService(BaseService):
@@ -34,11 +35,7 @@ class DataPreparationService(BaseService):
         pass
 
     def prepare_dataframes(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame,
-        config: ComparisonConfig
+        self, *, left: pl.LazyFrame, right: pl.LazyFrame, config: ComparisonConfig
     ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
         """Prepare and validate DataFrames for comparison.
 
@@ -52,9 +49,7 @@ class DataPreparationService(BaseService):
         """
         try:
             # Apply column mappings and create standardized column names
-            prepared_left, prepared_right = self.apply_column_mappings(
-                left=left, right=right, config=config
-            )
+            prepared_left, prepared_right = self.apply_column_mappings(left=left, right=right, config=config)
 
             # Apply case sensitivity settings
             if config.ignore_case:
@@ -65,13 +60,10 @@ class DataPreparationService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "dataframe_preparation"})
+            raise
 
     def apply_column_mappings(
-        self,
-        *,
-        left: pl.LazyFrame,
-        right: pl.LazyFrame,
-        config: ComparisonConfig
+        self, *, left: pl.LazyFrame, right: pl.LazyFrame, config: ComparisonConfig
     ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
         """Apply column mappings and create standardized column names.
 
@@ -121,6 +113,7 @@ class DataPreparationService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "column_mapping"})
+            raise
 
     def apply_case_insensitive(self, df: pl.LazyFrame) -> pl.LazyFrame:
         """Apply case-insensitive transformations to string columns.
@@ -148,6 +141,7 @@ class DataPreparationService(BaseService):
 
         except Exception as e:
             self._handle_error(e, {"operation": "case_insensitive_transformation"})
+            raise
 
     def get_alternating_column_order(self, *, config: ComparisonConfig) -> list[str]:
         """Get column order with alternating Left/Right columns for non-primary key columns.
@@ -162,10 +156,7 @@ class DataPreparationService(BaseService):
         column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
         # Add non-primary key columns in alternating Left/Right order
-        non_pk_mappings = [
-            mapping for mapping in config.column_mappings
-            if mapping.name not in config.pk_columns
-        ]
+        non_pk_mappings = [mapping for mapping in config.column_mappings if mapping.name not in config.pk_columns]
 
         for mapping in non_pk_mappings:
             left_col = f"{LEFT_PREFIX}{mapping.name}"
@@ -187,10 +178,7 @@ class DataPreparationService(BaseService):
         column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
         # Add only left columns for non-primary key columns
-        non_pk_mappings = [
-            mapping for mapping in config.column_mappings
-            if mapping.name not in config.pk_columns
-        ]
+        non_pk_mappings = [mapping for mapping in config.column_mappings if mapping.name not in config.pk_columns]
 
         for mapping in non_pk_mappings:
             left_col = f"{LEFT_PREFIX}{mapping.name}"
@@ -211,10 +199,7 @@ class DataPreparationService(BaseService):
         column_order = [f"{PRIMARY_KEY_PREFIX}{pk}" for pk in config.pk_columns]
 
         # Add only right columns for non-primary key columns
-        non_pk_mappings = [
-            mapping for mapping in config.column_mappings
-            if mapping.name not in config.pk_columns
-        ]
+        non_pk_mappings = [mapping for mapping in config.column_mappings if mapping.name not in config.pk_columns]
 
         for mapping in non_pk_mappings:
             right_col = f"{RIGHT_PREFIX}{mapping.name}"

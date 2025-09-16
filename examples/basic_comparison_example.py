@@ -162,19 +162,12 @@ def main() -> None:
     # Display detailed results
     print("\n7. Detailed Results:")
     print("-" * 40)
-    detailed_report = reporter.generate_detailed_report(
-        results=results,
-        max_samples=5
-    )
+    detailed_report = reporter.generate_detailed_report(results=results, max_samples=5)
     print(detailed_report)
 
     # Export results (optional)
     print("\n8. Exporting results...")
-    exported_files = reporter.export_results(
-        results=results,
-        format="csv",
-        output_dir="./comparison_results"
-    )
+    exported_files = reporter.export_results(results=results, format="csv", output_dir="./comparison_results")
     print(f"   Exported files: {list(exported_files.keys())}")
 
     print("\n9. Example completed successfully!")

@@ -7,6 +7,8 @@ Licensed under the MIT License. See the LICENSE file for details.
 from dataclasses import dataclass
 from typing import Any
 
+DOMAINS: list[str] = ["models", "validation"]
+
 
 @dataclass
 class ValidationConstants:

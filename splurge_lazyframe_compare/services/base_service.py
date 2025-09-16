@@ -5,12 +5,14 @@ Licensed under the MIT License. See the LICENSE file for details.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, NoReturn
 
 from splurge_lazyframe_compare.utils.logging_helpers import (
     log_service_initialization,
     log_service_operation,
 )
+
+DOMAINS: list[str] = ["services", "framework"]
 
 
 class ServiceConstants:
@@ -63,23 +65,21 @@ class BaseService(ABC):
         """
         pass
 
-    def _handle_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
+    def _handle_error(self, error: Exception, context: dict[str, Any] | None = None) -> NoReturn:
         """Handle errors with context information.
 
         Args:
             error: The exception that occurred.
             context: Additional context information.
         """
-        # Log the error
+        # Log the error (avoid assigning unused intermediate variables)
         context_info = f" in {context}" if context else ""
-        error_msg = f"{self.service_name}: {error}{context_info}"
-
         log_service_operation(
             service_name=self.service_name,
             operation="error_handling",
             status="error",
-            message=str(error),
-            details=context
+            message=f"{self.service_name}: {error}{context_info}",
+            details=context,
         )
 
         # Re-raise the error with augmented context while preserving type and cause
