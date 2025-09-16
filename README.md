@@ -956,6 +956,12 @@ pytest --cov=splurge_lazyframe_compare
 pytest tests/test_comparator.py
 ```
 
+Note: Test names in this repository were updated using the `splurge-test-namer` utility. The tool renames and organizes tests based on a module-level `DOMAINS` sentinel that is added to code modules. If you add or modify a module's `DOMAINS` sentinel, re-run the tool to keep test names aligned with module domains. Example usage (run from the repository root):
+
+```bash
+splurge-test-namer --import-root splurge_lazyframe_compare --test-root tests --repo-root .
+```
+
 ### Logging in Development
 
 The framework uses structured logging throughout. During development, you can enable debug logging to see detailed information:
@@ -1002,6 +1008,7 @@ slc compare --dry-run
 - **Error handling**: Robust exception handling with custom exceptions and graceful recovery
 - **Polars integration**: Seamless integration with Polars LazyFrames for efficient data processing
 - **Improved error messages**: Clear guidance for proper usage of complex data types
+ - **Test renaming tooling**: Tests were updated using `splurge-test-namer` to rename tests based on module `DOMAINS` sentinels added to each code module. This keeps test names aligned with module domains and improves discoverability.
 
 ## Contributing
 
