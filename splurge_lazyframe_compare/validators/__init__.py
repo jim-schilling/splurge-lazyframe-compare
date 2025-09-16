@@ -11,3 +11,5 @@ Licensed under the MIT License. See the LICENSE file for details.
 # Main validation functionality is now in services.ValidationService
 
 __all__ = []
+
+DOMAINS: list[str] = ["validation", "services"]

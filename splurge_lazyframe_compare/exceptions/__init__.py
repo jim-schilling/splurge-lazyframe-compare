@@ -25,3 +25,5 @@ __all__ = [
     "ColumnMappingError",
     "ReportError",
 ]
+
+DOMAINS: list[str] = ["exceptions", "errors"]

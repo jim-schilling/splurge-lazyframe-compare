@@ -87,3 +87,5 @@ UNIQUENESS_FAILED_MSG: Final[str] = "Uniqueness validation failed: {} violations
 ALL_UNIQUE_MSG: Final[str] = "All specified columns contain unique values"
 VALIDATION_SUCCESS_MSG: Final[str] = "All validations passed"
 FIRST_COLUMN_INDEX: Final[int] = 0
+
+DOMAINS: list[str] = ["utils", "constants"]

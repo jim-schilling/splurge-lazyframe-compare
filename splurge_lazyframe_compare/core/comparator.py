@@ -4,6 +4,8 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
+DOMAINS: list[str] = ["comparison", "lazyframe", "core"]
+
 import polars as pl
 from splurge_lazyframe_compare.utils.constants import DEFAULT_FORMAT
 

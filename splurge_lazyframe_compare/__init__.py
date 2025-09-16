@@ -27,6 +27,44 @@ from .services.orchestrator import ComparisonOrchestrator
 
 __version__ = "2025.2.0"
 
+# High-level domains for the package. This helps tooling and consumers
+# understand the primary responsibilities provided by this library.
+__domains__: list[str] = [
+    "cli",
+    "comparison",
+    "config",
+    "constants",
+    "core",
+    "data",
+    "data_preparation",
+    "data_quality",
+    "entrypoint",
+    "errors",
+    "exceptions",
+    "export",
+    "file_ops",
+    "formatting",
+    "framework",
+    "helpers",
+    "io",
+    "lazyframe",
+    "logging",
+    "monitoring",
+    "models",
+    "orchestration",
+    "performance",
+    "polars",
+    "presentation",
+    "processing",
+    "reporting",
+    "schema",
+    "services",
+    "tools",
+    "types",
+    "validation",
+    "utils",
+]
+
 __all__ = [
     # Service-based architecture
     "LazyFrameComparator",

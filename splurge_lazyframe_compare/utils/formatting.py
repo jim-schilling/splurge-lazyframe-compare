@@ -4,6 +4,8 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
+DOMAINS: list[str] = ["utils", "formatting", "presentation"]
+
 from typing import Any
 
 import polars as pl

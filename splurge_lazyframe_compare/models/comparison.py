@@ -39,6 +39,8 @@ class ComparisonConstants:
 
     # Error messages
     DUPLICATE_PK_MSG: str = "Duplicate primary keys found in {}: {} duplicates"
+    
+DOMAINS: list[str] = ["models", "comparison", "reporting"]
 
 
 @dataclass

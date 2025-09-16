@@ -8,6 +8,41 @@ from typing import Any
 
 import polars as pl
 
+class DataHelperConstants:
+    """Constants for data manipulation operations."""
+
+    # Data validation
+    MIN_ROWS_THRESHOLD: int = 0
+    MAX_ROWS_THRESHOLD: int = 1000000
+
+    # Memory optimization
+    BATCH_SIZE_DEFAULT: int = 10000
+    MEMORY_LIMIT_MB: int = 1000
+
+    # Memory estimation (bytes per value)
+    BYTES_PER_INT64: int = 8
+    BYTES_PER_INT32: int = 4
+    BYTES_PER_FLOAT64: int = 8
+    BYTES_PER_FLOAT32: int = 4
+    BYTES_PER_BOOLEAN: int = 1
+    BYTES_PER_STRING_AVG: int = 16  # Average string length in bytes
+    BYTES_PER_DEFAULT: int = 8
+
+    # Performance tuning
+    OPTIMIZE_THRESHOLD: int = 100000
+    PARALLEL_WORKERS: int = 4
+
+DOMAINS: list[str] = ["utils", "data", "performance"]
+"""Data manipulation helpers for the comparison framework.
+
+Copyright (c) 2025 Jim Schilling.
+Licensed under the MIT License. See the LICENSE file for details.
+"""
+
+from typing import Any
+
+import polars as pl
+
 
 class DataHelperConstants:
     """Constants for data manipulation operations."""

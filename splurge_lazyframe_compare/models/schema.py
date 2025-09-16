@@ -14,6 +14,8 @@ from splurge_lazyframe_compare.utils.type_helpers import (
     get_polars_datatype_type,
 )
 
+DOMAINS: list[str] = ["models", "schema", "validation"]
+
 
 class SchemaConstants:
     """Constants for schema operations."""

@@ -4,6 +4,8 @@ Copyright (c) 2025 Jim Schilling.
 Licensed under the MIT License. See the LICENSE file for details.
 """
 
+DOMAINS: list[str] = ["cli", "tools", "comparison"]
+
 import argparse
 import json
 from pathlib import Path

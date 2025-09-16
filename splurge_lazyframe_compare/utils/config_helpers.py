@@ -1,5 +1,7 @@
 """Configuration and settings helpers for the comparison framework."""
 
+DOMAINS: list[str] = ["utils", "config", "cli"]
+
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any

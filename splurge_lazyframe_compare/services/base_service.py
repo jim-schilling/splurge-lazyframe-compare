@@ -12,6 +12,8 @@ from splurge_lazyframe_compare.utils.logging_helpers import (
     log_service_operation,
 )
 
+DOMAINS: list[str] = ["services", "framework"]
+
 
 class ServiceConstants:
     """Constants for service operations."""
@@ -45,6 +47,7 @@ class BaseService(ABC):
 
         # Log service initialization
         log_service_initialization(self.service_name)
+
 
     def _validate_service_initialization(self) -> None:
         """Validate service initialization parameters."""
