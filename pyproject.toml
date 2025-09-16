@@ -8,7 +8,7 @@ exclude = ["tests*", "examples*", "plans*", "docs*"]
 
 [project]
 name = "splurge-lazyframe-compare"
-version = "2025.2.0"
+version = "2025.3.0"
 description = "A Python package for comparing splurge and lazyframe functionality"
 readme = "README.md"
 license = "MIT"
